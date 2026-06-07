@@ -45,7 +45,7 @@ clean light theme when printed to PDF.
 
 ## Local setup
 
-Requirements: PHP 8.4+, Composer, Node 20+, pnpm, MySQL.
+Requirements: PHP 8.4+, Composer, Node 20+, pnpm, a running MySQL server.
 
 ```bash
 # 1. Install dependencies
@@ -57,15 +57,23 @@ cp .env.example .env
 php artisan key:generate
 # then edit .env: DB_* credentials and the ADMIN_* values (see below)
 
-# 3. Database
-php artisan migrate --seed        # schema + FR/EN content + admin user
+# 3. Create the database (Laravel's migrate does not create it for you)
+mysql -h 127.0.0.1 -u root -e \
+  "CREATE DATABASE IF NOT EXISTS aguet_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# 4. Front-end assets
+# 4. Migrate + seed  (schema + FR/EN content + admin user)
+php artisan migrate --seed
+
+# 5. Front-end assets
 pnpm run build                    # or: pnpm run dev  (HMR during development)
 
-# 5. Serve
+# 6. Serve
 php artisan serve                 # http://127.0.0.1:8000  (FR)  ·  /en  (EN)
 ```
+
+**Shortcuts.** Once the database exists (step 3), `composer setup` runs the whole
+install in one command (deps, `.env`, key, migrate, `pnpm install` + build). During
+development, `composer dev` runs the server, queue, logs and Vite together.
 
 The admin panel is at **`/admin`**. The admin user is created by `AdminUserSeeder` from the
 `ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` values in `.env`. (You can also create one
