@@ -1,58 +1,127 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# aguet.dev
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Personal one-page portfolio for **Steve Aguet**, a full-stack (back-end-leaning) Laravel
+developer in the Lake Geneva region. Bilingual (FR default, EN), self-editable through a
+Filament admin panel. The site itself is meant as a demonstration of craft — the code is
+public.
 
-## About Laravel
+The visual direction is **"Terminal v2"**: a dark terminal/IDE aesthetic, monospace
+throughout, with a typed boot intro, a ⌘K command palette, a tmux-style status bar, and a
+clean light theme when printed to PDF.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- **Laravel 13** · PHP 8.4+
+- **Filament 5** — admin panel for editing content
+- **spatie/laravel-translatable** + **outerweb/filament-translatable-fields** — per-locale
+  JSON translations, edited as FR/EN tabs in Filament
+- **MySQL**
+- **Tailwind v4** + **Vite** — the terminal aesthetic is authored as custom CSS on top
+- **Alpine.js** — bundled with Filament 5 / Livewire 4 (not installed separately); the
+  front-end registers its components on `alpine:init`
+- **JetBrains Mono** — self-hosted at build time via the Vite Bunny font helper
+- **pnpm** for front-end tooling
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## How it works
 
-## Learning Laravel
+### Bilingual
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- French is served at `/`, English at `/en`. The `SetLocale` middleware reads the locale
+  from the URL and shares the alternate URL with views (used by the FR/EN switch and the
+  `hreflang` tags). Adding a locale is just a `config/aguet.php` change.
+- **UI chrome** strings (nav, buttons, labels) live in `lang/fr/site.php` + `lang/en/site.php`.
+- **Editorial content** (hero, about, projects, contact) lives in the database, is
+  translatable, and is edited in Filament — never in Git.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Content model
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **`SiteContent`** — an editorial singleton (`SiteContent::current()`): hero fields,
+  about (Markdown), contact lead. `hero_title` uses a small convention: `**word**` renders
+  as an accent emphasis and a newline as a line break.
+- **`Project`** — the projects collection: translatable `name/client/role/summary`, plus
+  `slug`, `stack[]`, `url`, `featured`, `sort_order`, `is_published`. Featured projects
+  render full-width.
+- Skills are static content in `config/skills.php` (titles translated via the lang files).
 
-## Agentic Development
+## Local setup
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Requirements: PHP 8.4+, Composer, Node 20+, pnpm, MySQL.
 
 ```bash
-composer require laravel/boost --dev
+# 1. Install dependencies
+composer install
+pnpm install
 
-php artisan boost:install
+# 2. Environment
+cp .env.example .env
+php artisan key:generate
+# then edit .env: DB_* credentials and the ADMIN_* values (see below)
+
+# 3. Database
+php artisan migrate --seed        # schema + FR/EN content + admin user
+
+# 4. Front-end assets
+pnpm run build                    # or: pnpm run dev  (HMR during development)
+
+# 5. Serve
+php artisan serve                 # http://127.0.0.1:8000  (FR)  ·  /en  (EN)
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+The admin panel is at **`/admin`**. The admin user is created by `AdminUserSeeder` from the
+`ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` values in `.env`. (You can also create one
+with `php artisan make:filament-user`.)
 
-## Contributing
+## Deployment — Infomaniak shared hosting
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Shared hosting with SSH, Composer and cron is enough; no external services are required.
 
-## Code of Conduct
+```bash
+# On the server, in the project directory:
+git pull
+composer install --no-dev --optimize-autoloader
+php artisan migrate --force
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Front-end: build locally and deploy public/build, OR build on the server if Node is
+# available:
+pnpm install && pnpm run build
 
-## Security Vulnerabilities
+# Filament's static assets (gitignored) — publish them after deploy:
+php artisan filament:assets:publish
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Cache config, routes and views for performance:
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+Point the web server's document root at **`public/`**. Set `APP_ENV=production` and
+`APP_DEBUG=false` in `.env`. After changing `.env` or code, re-run the cache commands
+(`php artisan optimize` does config + route + view + events in one go;
+`php artisan optimize:clear` reverts).
+
+### Database backups
+
+A `mysqldump`-based script is provided (it reads credentials from `.env`, writes a
+timestamped gzip to a directory outside the repo, and prunes old dumps):
+
+```bash
+BACKUP_DIR=~/backups/aguet ./scripts/backup-db.sh
+```
+
+Schedule it with cron, e.g. daily at 03:00:
+
+```cron
+0 3 * * *  BACKUP_DIR=$HOME/backups/aguet /path/to/aguet/scripts/backup-db.sh >> $HOME/backups/aguet/backup.log 2>&1
+```
+
+## Security notes (public repo)
+
+- `.env` is never committed; `.env.example` carries no secrets. Set real `ADMIN_*` values
+  locally / on the server only.
+- No credentials are hard-coded anywhere.
+- No internal detail of client projects beyond what is on the public site.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Code under the [MIT license](https://opensource.org/licenses/MIT). Site content and the
+visual design are © Steve Aguet.
