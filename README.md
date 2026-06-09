@@ -45,7 +45,7 @@ clean light theme when printed to PDF.
 
 ## Local setup
 
-Requirements: PHP 8.4+, Composer, Node 20+, pnpm, a running MySQL server.
+Requirements: PHP 8.4+, Composer, Node 24+, pnpm 11, a running MySQL server.
 
 ```bash
 # 1. Install dependencies
