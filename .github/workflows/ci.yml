@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Run Node-based actions on the runner's Node 24 runtime instead of the
+# default Node 20. pnpm/action-setup's self-installer runs on the action
+# runtime, and pnpm 11 requires Node >= 22.13.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test:
     name: Lint, build & test
@@ -28,10 +34,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
-        with:
-          # Self-contained binary bundling its own Node; the npm self-installer
-          # otherwise runs on the runtime's Node 20, which pnpm 11 rejects.
-          standalone: true
 
       - name: Get pnpm store directory
         shell: bash
