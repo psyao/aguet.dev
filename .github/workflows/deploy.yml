@@ -76,7 +76,7 @@ jobs:
     env:
       DEPLOY_ENV: production
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
-      DEPLOY_PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || '/opt/php8.4/bin/php' }}
+      DEPLOY_PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || '/opt/php8.5/bin/php' }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0

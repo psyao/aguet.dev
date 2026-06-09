@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail   # exit on error, treat unset vars as errors, catch pipe failures
 
-PHP_BIN="${1:-/opt/php8.4/bin/php}"
+PHP_BIN="${1:-/opt/php8.5/bin/php}"
 COMPOSER_BIN="$(dirname "$PHP_BIN")/composer2.phar"
 APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
