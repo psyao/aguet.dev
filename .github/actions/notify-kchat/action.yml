@@ -1,0 +1,73 @@
+name: Notify Kchat
+description: Send a Kchat webhook notification
+
+inputs:
+  title:
+    description: Notification title
+    required: true
+  color:
+    description: Attachment color (hex)
+    required: true
+  sha:
+    description: Full commit SHA
+    required: true
+  branch:
+    description: Branch name
+    required: true
+  repo:
+    description: Repository (owner/name)
+    required: true
+  run_url:
+    description: URL to the Actions run
+    required: true
+  commit_url:
+    description: URL to the commit
+    required: true
+  webhook_url:
+    description: Kchat incoming webhook URL
+    required: true
+  context:
+    description: Optional context label (e.g. "production", "CI") — omitted if empty
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Send notification
+      shell: bash
+      env:
+        TITLE: ${{ inputs.title }}
+        COLOR: ${{ inputs.color }}
+        SHA: ${{ inputs.sha }}
+        BRANCH: ${{ inputs.branch }}
+        REPO: ${{ inputs.repo }}
+        RUN_URL: ${{ inputs.run_url }}
+        COMMIT_URL: ${{ inputs.commit_url }}
+        KCHAT_WEBHOOK_URL: ${{ inputs.webhook_url }}
+        CONTEXT: ${{ inputs.context }}
+      run: |
+        SHORT_SHA="${SHA:0:7}"
+        LINKS="[Repo](https://github.com/$REPO) · [Action run]($RUN_URL) · [Commit]($COMMIT_URL)"
+        PAYLOAD=$(jq -n \
+          --arg color   "$COLOR" \
+          --arg title   "$TITLE" \
+          --arg repo    "$REPO" \
+          --arg context "$CONTEXT" \
+          --arg branch  "$BRANCH" \
+          --arg sha     "$SHORT_SHA" \
+          --arg links   "$LINKS" \
+          '{attachments: [{
+              color: $color,
+              title: $title,
+              fields: ([
+                {short: true, title: "Repository", value: $repo},
+                {short: true, title: "Context",    value: $context},
+                {short: true, title: "Branch",     value: $branch},
+                {short: true, title: "Commit",     value: $sha}
+              ] | map(select(.value != ""))),
+              text: $links
+          }]}')
+        curl -s -X POST "$KCHAT_WEBHOOK_URL" \
+          -H 'Content-Type: application/json' \
+          -d "$PAYLOAD"
