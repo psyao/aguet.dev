@@ -80,6 +80,26 @@ class ManageSiteContent extends Page
                             ->label('Accroche')
                             ->rows(2)
                             ->translatable(),
+                        TextInput::make('contact_email')
+                            ->label('Email')
+                            ->email()
+                            ->maxLength(255),
+                        TextInput::make('contact_linkedin')
+                            ->label('LinkedIn (URL)')
+                            ->url()
+                            ->maxLength(255),
+                        TextInput::make('contact_linkedin_label')
+                            ->label('LinkedIn (libellé affiché)')
+                            ->maxLength(255)
+                            ->placeholder('/in/steveaguet'),
+                        TextInput::make('contact_github')
+                            ->label('GitHub (URL)')
+                            ->url()
+                            ->maxLength(255),
+                        TextInput::make('contact_github_label')
+                            ->label('GitHub (libellé affiché)')
+                            ->maxLength(255)
+                            ->placeholder('/psyao'),
                     ]),
             ])
             ->statePath('data');

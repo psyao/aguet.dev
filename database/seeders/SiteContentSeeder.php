@@ -57,6 +57,11 @@ class SiteContentSeeder extends Seeder
                 'fr' => 'Un projet Laravel, une plateforme à reprendre ou à faire évoluer ?',
                 'en' => 'A Laravel project, a platform to take over or to grow?',
             ],
+            'contact_email' => 'steve@aguet.dev',
+            'contact_linkedin' => 'https://www.linkedin.com/in/steveaguet',
+            'contact_linkedin_label' => '/in/steveaguet',
+            'contact_github' => 'https://github.com/psyao',
+            'contact_github_label' => '/psyao',
         ])->save();
     }
 }
