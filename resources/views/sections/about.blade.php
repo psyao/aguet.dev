@@ -26,7 +26,7 @@
                         <dt>Host</dt><dd>{{ $content->hero_location }}</dd>
                         <dt>Uptime</dt><dd>{{ $content->hero_exp }}</dd>
                         <dt>Shell</dt><dd>full-stack · back-end</dd>
-                        <dt>Focus</dt><dd class="hot">{{ __('site.skills.g3') }}</dd>
+                        <dt>Focus</dt><dd class="hot">{{ $skills->first(fn ($g) => $g->focus)?->title ?? $content->hero_focus }}</dd>
                         <dt>Lang</dt><dd>FR · EN · DE</dd>
                     </dl>
                     <div class="nf-sw" aria-hidden="true">

@@ -39,13 +39,6 @@ return [
     ],
 
     'skills' => [
-        'g1' => 'Cœur Laravel',
-        'g2' => 'Front-end',
-        'g3' => 'Intégration & automatisation',
-        'g4' => 'Bases de données',
-        'g5' => 'Langues',
-        'g3_note' => 'là où je fais la différence',
-        'g5_items' => 'FR (natif) · EN (pro) · DE (notions)',
         'groups_word' => 'groupes',
         'tech_word' => 'technologies',
     ],

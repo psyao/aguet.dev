@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\SiteContent;
+use App\Models\SkillGroup;
 use Illuminate\Contracts\View\View;
 
 class HomeController extends Controller
@@ -17,7 +18,7 @@ class HomeController extends Controller
         return view('home', [
             'content' => SiteContent::current(),
             'projects' => Project::published()->get(),
-            'skills' => config('skills.groups', []),
+            'skills' => SkillGroup::ordered()->get(),
         ]);
     }
 }

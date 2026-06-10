@@ -1,10 +1,10 @@
 {{-- Contact: a contact.json block with click-to-copy on each coordinate. --}}
 @php
-    $email = config('aguet.contact.email');
-    $linkedin = config('aguet.contact.linkedin');
-    $linkedinLabel = config('aguet.contact.linkedin_label');
-    $github = config('aguet.contact.github');
-    $githubLabel = config('aguet.contact.github_label');
+    $email = $content->contact_email;
+    $linkedin = $content->contact_linkedin;
+    $linkedinLabel = $content->contact_linkedin_label;
+    $github = $content->contact_github;
+    $githubLabel = $content->contact_github_label;
 @endphp
 <section id="contact" class="contact block">
     <div class="wrap">

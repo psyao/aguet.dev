@@ -38,13 +38,6 @@ return [
     ],
 
     'skills' => [
-        'g1' => 'Laravel core',
-        'g2' => 'Front-end',
-        'g3' => 'Integration & automation',
-        'g4' => 'Databases',
-        'g5' => 'Languages',
-        'g3_note' => 'where I make the difference',
-        'g5_items' => 'FR (native) · EN (professional) · DE (basics)',
         'groups_word' => 'groups',
         'tech_word' => 'technologies',
     ],

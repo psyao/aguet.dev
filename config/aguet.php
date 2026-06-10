@@ -24,19 +24,4 @@ return [
     'locales' => ['fr', 'en'],
     'default_locale' => 'fr',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Contact coordinates
-    |--------------------------------------------------------------------------
-    | Shared across the contact section and the command palette. Not editorial
-    | (no translation needed), so kept in config rather than the database.
-    */
-    'contact' => [
-        'email' => 'steve@aguet.dev',
-        'linkedin' => 'https://www.linkedin.com/in/steveaguet',
-        'linkedin_label' => '/in/steveaguet',
-        'github' => 'https://github.com/psyao',
-        'github_label' => '/psyao',
-    ],
-
 ];
