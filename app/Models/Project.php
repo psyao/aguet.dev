@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -35,6 +36,15 @@ class Project extends Model
             'is_published' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    /** Tags in manual display order (pivot position), name as tiebreaker. */
+    public function tags(): MorphToMany
+    {
+        return $this->morphToMany(Tag::class, 'taggable')
+            ->withPivot('position')
+            ->orderByPivot('position')
+            ->orderBy('name');
     }
 
     /** Published projects, in display order: featured first, then sort_order. */
