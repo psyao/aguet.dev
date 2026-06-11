@@ -2,7 +2,8 @@
 
 namespace App\Filament\Resources\Projects\Schemas;
 
-use Filament\Forms\Components\TagsInput;
+use App\Rules\UniqueTagName;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -55,9 +56,27 @@ class ProjectForm
                             ->url()
                             ->maxLength(255)
                             ->placeholder('https://exemple.ch'),
-                        TagsInput::make('stack')
+                        Select::make('tags')
                             ->label('Stack (tags)')
-                            ->placeholder('Ajouter un tag')
+                            ->relationship('tags', 'name')
+                            ->multiple()
+                            ->searchable()
+                            ->preload()
+                            ->createOptionForm([
+                                TextInput::make('name')
+                                    ->label('Nom')
+                                    ->required()
+                                    ->maxLength(50)
+                                    ->rule(new UniqueTagName),
+                            ])
+                            ->saveRelationshipsUsing(function (Select $component, ?array $state): void {
+                                $component->getRecord()->tags()->sync(
+                                    collect($state ?? [])
+                                        ->values()
+                                        ->mapWithKeys(fn ($tagId, int $index) => [(int) $tagId => ['position' => $index]])
+                                        ->all(),
+                                );
+                            })
                             ->columnSpanFull(),
                         TextInput::make('sort_order')
                             ->label('Ordre de tri')

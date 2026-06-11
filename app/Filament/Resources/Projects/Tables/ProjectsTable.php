@@ -27,7 +27,7 @@ class ProjectsTable
                     ->label('Client')
                     ->color('gray')
                     ->toggleable(),
-                TextColumn::make('stack')
+                TextColumn::make('tags.name')
                     ->label('Stack')
                     ->badge()
                     ->toggleable(),
