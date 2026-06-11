@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasTags;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
@@ -15,6 +16,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class SkillGroup extends Model
 {
+    use HasTags;
     use HasTranslations;
 
     protected $guarded = [];
