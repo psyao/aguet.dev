@@ -10,7 +10,7 @@
                 <div class="pname">{{ $project->name }}</div>
                 <p class="desc">{{ $project->summary }}</p>
                 <div class="stack">
-                    @foreach ($project->stack ?? [] as $tag)<span>{{ $tag }}</span>@endforeach
+                    @foreach ($project->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
                 </div>
                 @if ($project->url)
                     <a class="open" href="{{ $project->url }}" target="_blank" rel="noopener">
@@ -33,7 +33,7 @@
             <dt>{{ __('site.projects.role') }}</dt><dd>{{ $project->role }}</dd>
         </dl>
         <div class="stack">
-            @foreach ($project->stack ?? [] as $tag)<span>{{ $tag }}</span>@endforeach
+            @foreach ($project->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
         </div>
         <p class="desc">{{ $project->summary }}</p>
         @if ($project->url)

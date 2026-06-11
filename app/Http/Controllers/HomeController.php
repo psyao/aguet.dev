@@ -17,7 +17,7 @@ class HomeController extends Controller
     {
         return view('home', [
             'content' => SiteContent::current(),
-            'projects' => Project::published()->get(),
+            'projects' => Project::published()->with('tags')->get(),
             'skills' => SkillGroup::ordered()->get(),
         ]);
     }

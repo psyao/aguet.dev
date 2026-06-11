@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Project;
+use App\Models\Tag;
 use Illuminate\Database\Seeder;
 
 class ProjectSeeder extends Seeder
@@ -29,7 +30,7 @@ class ProjectSeeder extends Seeder
                     'fr' => 'Portail institutionnel : SSO Microsoft Entra, synchronisation CRM Dataverse, forte exigence d’accessibilité.',
                     'en' => 'Institutional portal: Microsoft Entra SSO, Dataverse CRM synchronization, strong accessibility requirements.',
                 ],
-                'stack' => ['Laravel', 'SSO Entra', 'Dataverse', 'a11y'],
+                'tags' => ['Laravel', 'SSO Entra', 'Dataverse', 'a11y'],
                 'url' => 'https://cvci.ch',
                 'featured' => true,
                 'sort_order' => 1,
@@ -47,7 +48,7 @@ class ProjectSeeder extends Seeder
                     'fr' => 'Back-end de la première assurance santé animale suisse : logique métier, données, API.',
                     'en' => 'Back-end of Switzerland’s first animal health insurance: business logic, data, API.',
                 ],
-                'stack' => ['Laravel', 'API'],
+                'tags' => ['Laravel', 'API'],
                 'url' => 'https://animalia.ch',
                 'featured' => false,
                 'sort_order' => 2,
@@ -65,7 +66,7 @@ class ProjectSeeder extends Seeder
                     'fr' => 'Catalogue de randonnées, moteur de recherche, espace membre et back-office sur mesure.',
                     'en' => 'Hike catalog, search engine, member area and a custom back-office.',
                 ],
-                'stack' => ['Laravel'],
+                'tags' => ['Laravel'],
                 'url' => 'https://vaud-rando.ch',
                 'featured' => false,
                 'sort_order' => 3,
@@ -83,7 +84,7 @@ class ProjectSeeder extends Seeder
                     'fr' => 'Pipeline d’ingestion automatisé : flux XML + images via FTP → création d’articles.',
                     'en' => 'Automated ingestion pipeline: XML feeds + images over FTP → article creation.',
                 ],
-                'stack' => ['XML', 'FTP', 'Laravel'],
+                'tags' => ['XML', 'FTP', 'Laravel'],
                 'url' => 'https://terrenature.ch',
                 'featured' => false,
                 'sort_order' => 4,
@@ -92,7 +93,20 @@ class ProjectSeeder extends Seeder
         ];
 
         foreach ($projects as $data) {
-            Project::updateOrCreate(['slug' => $data['slug']], $data);
+            $tags = $data['tags'];
+            unset($data['tags']);
+
+            $project = Project::updateOrCreate(['slug' => $data['slug']], $data);
+
+            // sync (not attach) keeps re-seeding idempotent.
+            $project->tags()->sync(
+                collect($tags)
+                    ->values()
+                    ->mapWithKeys(fn (string $name, int $index) => [
+                        Tag::firstOrCreate(['name' => $name])->id => ['position' => $index],
+                    ])
+                    ->all(),
+            );
         }
     }
 }

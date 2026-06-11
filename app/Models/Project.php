@@ -31,7 +31,6 @@ class Project extends Model
     protected function casts(): array
     {
         return [
-            'stack' => 'array',
             'featured' => 'boolean',
             'is_published' => 'boolean',
             'sort_order' => 'integer',

@@ -57,6 +57,15 @@ class HomePageTest extends TestCase
         $this->get('/en')->assertSee('Laravel core', false);
     }
 
+    public function test_project_tags_render_from_database_in_order(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        // cvci's tags, distinctive to that card, in seeded position order.
+        $response->assertSeeInOrder(['SSO Entra', 'Dataverse', 'a11y'], false);
+    }
+
     public function test_contact_links_render_from_database(): void
     {
         $response = $this->get('/');
