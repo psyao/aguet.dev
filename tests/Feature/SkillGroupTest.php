@@ -22,7 +22,10 @@ class SkillGroupTest extends TestCase
         $this->assertCount(5, $groups);
         $this->assertSame('Cœur Laravel', $groups->first()->getTranslation('title', 'fr'));
         $this->assertSame('Laravel core', $groups->first()->getTranslation('title', 'en'));
-        $this->assertSame(['PHP', 'Laravel', 'Filament', 'Eloquent', 'Blade'], $groups->first()->items);
+        $this->assertSame(
+            ['PHP', 'Laravel', 'Filament', 'Eloquent', 'Blade'],
+            $groups->first()->tags->pluck('name')->all(),
+        );
     }
 
     public function test_focus_note_and_languages_text(): void
@@ -34,7 +37,7 @@ class SkillGroupTest extends TestCase
         $this->assertSame('là où je fais la différence', $focus->getTranslation('note', 'fr'));
 
         $languages = SkillGroup::ordered()->get()->last();
-        $this->assertNull($languages->items);
+        $this->assertTrue($languages->tags->isEmpty());
         $this->assertSame('FR (natif) · EN (pro) · DE (notions)', $languages->getTranslation('text', 'fr'));
         $this->assertSame('FR (native) · EN (professional) · DE (basics)', $languages->getTranslation('text', 'en'));
     }

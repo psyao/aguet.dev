@@ -1,6 +1,6 @@
 {{-- Skills: a tree of stack groups; the ★ focus group is highlighted. --}}
 @php
-    $techCount = $skills->sum(fn ($g) => count($g->items ?? []));
+    $techCount = $skills->sum(fn ($g) => $g->tags->count());
     $focusGroup = $skills->first(fn ($g) => $g->focus && $g->note);
 @endphp
 <section id="skills" class="block">
@@ -13,13 +13,13 @@
             @foreach ($skills as $group)
                 <div @class(['row', 'focus' => $group->focus])>
                     <span class="branch">{{ $loop->last ? '└─' : '├─' }}
-                        @if ($group->focus)<span class="star">★</span> @endif<span class="name">{{ $group->title }}</span>@if ($group->items) <span class="cnt">({{ count($group->items) }})</span>@endif
+                        @if ($group->focus)<span class="star">★</span> @endif<span class="name">{{ $group->title }}</span>@if ($group->tags->isNotEmpty()) <span class="cnt">({{ $group->tags->count() }})</span>@endif
                     </span>
                     <span class="items">
                         @if ($group->text)
                             <span>{{ $group->text }}</span>
                         @else
-                            @foreach ($group->items ?? [] as $item)<span>{{ $item }}</span>@endforeach
+                            @foreach ($group->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
                         @endif
                     </span>
                 </div>

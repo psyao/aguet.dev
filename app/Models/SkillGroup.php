@@ -35,7 +35,6 @@ class SkillGroup extends Model
     protected function casts(): array
     {
         return [
-            'items' => 'array',
             'focus' => 'boolean',
             'sort_order' => 'integer',
         ];

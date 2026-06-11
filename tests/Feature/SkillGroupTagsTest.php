@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\SkillGroup;
 use App\Models\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class SkillGroupTagsTest extends TestCase
@@ -40,5 +41,10 @@ class SkillGroupTagsTest extends TestCase
 
         $this->assertSame(1, $group->tags()->count());
         $this->assertSame(0, $tag->projects()->count());
+    }
+
+    public function test_items_column_is_gone(): void
+    {
+        $this->assertFalse(Schema::hasColumn('skill_groups', 'items'));
     }
 }
