@@ -22,7 +22,7 @@ class SkillGroupsTable
                 TextColumn::make('title')
                     ->label('Titre')
                     ->weight('medium'),
-                TextColumn::make('items')
+                TextColumn::make('tags.name')
                     ->label('Tags')
                     ->badge()
                     ->toggleable(),

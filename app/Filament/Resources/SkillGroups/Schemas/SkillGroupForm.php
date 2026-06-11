@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\SkillGroups\Schemas;
 
-use Filament\Forms\Components\TagsInput;
+use App\Filament\Forms\TagsSelect;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -37,9 +37,9 @@ class SkillGroupForm
                 Section::make('Métadonnées')
                     ->columns(2)
                     ->schema([
-                        TagsInput::make('items')
+                        TagsSelect::make()
                             ->label('Tags')
-                            ->placeholder('Ajouter un tag')
+                            ->helperText('Laisser vide si « Texte » est rempli — ex. le groupe « Langues ».')
                             ->columnSpanFull(),
                         TextInput::make('sort_order')
                             ->label('Ordre de tri')
