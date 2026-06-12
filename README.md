@@ -9,6 +9,16 @@ The visual direction is **"Terminal v2"**: a dark terminal/IDE aesthetic, monosp
 throughout, with a typed boot intro, a ⌘K command palette, a tmux-style status bar, and a
 clean light theme when printed to PDF.
 
+## Contents
+
+- [Stack](#stack) · [How it works](#how-it-works) · [Content model](#content-model)
+- [Editing the site (Filament admin)](#editing-the-site-filament-admin) — the day-to-day
+  owner workflow
+- [Front-end architecture](#front-end-architecture) — Blade + Alpine, the terminal layer
+- [Local setup](#local-setup) · [Deployment](#deployment--infomaniak-shared-hosting)
+- Companion docs: [visual regression testing](docs/visual-testing.md) ·
+  [CI deploy pipeline](DEPLOY.md)
+
 ## Stack
 
 - **Laravel 13** · PHP 8.4+
@@ -35,13 +45,147 @@ clean light theme when printed to PDF.
 
 ### Content model
 
-- **`SiteContent`** — an editorial singleton (`SiteContent::current()`): hero fields,
-  about (Markdown), contact lead. `hero_title` uses a small convention: `**word**` renders
-  as an accent emphasis and a newline as a line break.
-- **`Project`** — the projects collection: translatable `name/client/role/summary`, plus
-  `slug`, `stack[]`, `url`, `featured`, `sort_order`, `is_published`. Featured projects
-  render full-width.
-- Skills are static content in `config/skills.php` (titles translated via the lang files).
+Four tables back the editorial content. Translatable fields are stored as JSON, one key per
+locale (spatie/laravel-translatable); everything else is shared across languages.
+
+- **`SiteContent`** — the editorial singleton, fetched with `SiteContent::current()` (the
+  one row, created on demand). Translatable: `hero_title`, `hero_subtitle`, `hero_role`,
+  `hero_location`, `hero_exp`, `hero_focus`, `about_body` (Markdown), `contact_lead`.
+  Language-neutral: `contact_email`, `contact_linkedin`, `contact_linkedin_label`,
+  `contact_github`, `contact_github_label`. `hero_title` uses a small convention rendered by
+  `App\Support\Content::heroTitle()`: `**word**` becomes a green accent emphasis, a newline
+  becomes a line break.
+- **`Project`** — the projects collection. Translatable: `name`, `client`, `role`,
+  `summary`. Shared: `slug` (unique), `url`, `featured`, `sort_order`, `is_published`.
+  `Project::published()` returns published rows ordered featured-first then `sort_order`;
+  featured projects render full-width. `host()` derives the card's display host from `url`
+  (strips `www.`). Tech tags come from the shared `Tag` table (below), not a column.
+- **`SkillGroup`** — the rows of the `tree ~/stack` skills section, in `sort_order`
+  (`SkillGroup::ordered()`). Translatable: `title`, `text`, `note`. A group renders its
+  tags, unless `text` is set, which renders that sentence instead (e.g. the « Langues »
+  group). `focus` flags the ★ group, highlighted in the tree, whose `note` feeds the tree
+  footer.
+- **`Tag`** — shared, non-translatable tech tags (« Laravel », « a11y », …), attached to
+  both projects and skill groups through the `taggables` morph pivot. The pivot's `position`
+  preserves a manual per-item tag order (the `HasTags` trait orders by it). Names are unique
+  and normalized (trimmed, inner whitespace collapsed; max 50 chars).
+
+> Earlier versions kept skills in a static `config/skills.php` and stored tags as
+> `projects.stack[]` / `skill_groups.items[]` JSON columns. Both moved into the database —
+> the `SkillGroup` model and the shared `Tag` table — so skills and tags are now editable in
+> Filament without a deploy.
+
+## Editing the site (Filament admin)
+
+Everything editorial — hero, about, projects, skills, contact — is edited in the Filament
+admin panel and stored in the database, never in Git. The panel is in French (it has one
+user: the owner) and themed emerald to match the site.
+
+### Sign in
+
+Open **`/admin`** and sign in. The admin user is seeded by `AdminUserSeeder` from the
+`ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` values in `.env`; you can also create one
+with `php artisan make:filament-user`. Translatable fields show **FR / EN** tabs (one per
+locale) — fill both.
+
+### Site content (« Contenu du site »)
+
+The first nav item edits the `SiteContent` singleton, in three sections:
+
+- **Hero** — `Titre`, `Sous-titre`, `Rôle`, `Localisation`, `Expérience`, `Focus`. In the
+  title, `**mot**` renders the word as a green accent and a line break becomes a `<br>`.
+- **À propos** — `Texte`, written in Markdown (leave a blank line between paragraphs).
+- **Contact** — the lead line plus the email, LinkedIn and GitHub URLs and their displayed
+  labels (e.g. `/in/steveaguet`). These feed the contact section and the ⌘K palette.
+
+### Projects
+
+The **Projects** resource is the collection. Each project has:
+
+- **Contenu** (translatable): `Nom`, `Client`, `Rôle`, `Résumé`.
+- **Métadonnées**: `Slug` (unique, auto-slugified as you type), `URL`, **Stack (tags)**,
+  `Ordre de tri`, **Projet phare** (renders full-width, in front), **Publié**.
+
+To feature a project, toggle **Projet phare**; to hide it, turn off **Publié**. Display
+order is `Ordre de tri` ascending, with featured projects first.
+
+### Skill groups
+
+The **Skill Groups** resource drives the `tree ~/stack` section. Each group has a `Titre`,
+a set of **Tags**, an `Ordre de tri`, and a **Groupe ★ (focus)** toggle. Leave the tags
+empty and fill **Texte** instead to render a sentence rather than tags (used for the
+« Langues » group). The focus group's **Note** shows in the tree footer.
+
+### Tags
+
+The **Tags** resource is the shared vocabulary used by both projects and skill groups.
+Names are unique (case-insensitive, max 50 chars). You rarely open it directly: the
+Stack/Tags picker on a project or skill group searches existing tags and lets you create a
+new one inline, and the order you pick them in is the order they display.
+
+## Front-end architecture
+
+The site is server-rendered Blade with a thin Alpine.js layer for the terminal feel. It is
+built as **progressive enhancement**: every section renders and every link works with
+JavaScript disabled — the script only adds the boot animation, the live clock,
+click-to-copy, and the ⌘K palette.
+
+### Request flow
+
+`routes/web.php` serves the one page through `HomeController`, behind the `SetLocale`
+middleware. `SetLocale` reads the locale from the first URL segment (default `fr` at `/`,
+others under their own prefix, e.g. `/en`), calls `app()->setLocale()`, and shares `locale`,
+`altUrl`, and the per-locale `homeUrls` with every view (used by the FR/EN switch and the
+`hreflang` tags). The controller loads the `SiteContent` singleton plus published projects
+and ordered skill groups, each with their tags eager-loaded.
+
+### Layout and chrome
+
+`layouts/app.blade.php` is the shell: window chrome (traffic-light dots, terminal title, the
+⌘K button, the FR/EN switch), the section `tabs`, the `main` content, a tmux-style
+`statusbar` (mode, branch, live clock, locale, year), and the command-palette markup. The
+current locale's UI strings and the palette data (projects, contact links) are injected once
+as `window.__AGUET`, so the script stays locale-agnostic.
+
+### Alpine, from Livewire
+
+Alpine is **not** bundled separately. Filament 5 / Livewire 4 ships Alpine, starts it, and
+exposes `window.Alpine`; `resources/js/app.js` registers its components on the `alpine:init`
+event against that shared instance (no `import`, no `Alpine.start()`). The components:
+
+- **`terminal`** (root) — kicks off the one-shot boot intro and the scrollspy that lights
+  the active section tab.
+- **`clock`** — the status-bar clock, `Europe/Zurich`, refreshed every 15 s.
+- **`copy`** — click-to-copy a contact value, with a transient « copied » state and an
+  `execCommand` fallback when the clipboard API is unavailable.
+- **`$store.cmdk`** — the ⌘K command palette: it builds a grouped item list (navigation,
+  projects, actions), fuzzy-filters it, and supports keyboard navigation. A global `⌘K` /
+  `Ctrl-K` listener toggles it.
+
+### The boot intro
+
+The hero types itself out (`whoami`, then `cat headline.txt`) on first paint. An inline head
+script adds `html.boot` to hide the hero up front, with a `2800 ms` failsafe that removes it
+so content can never stay stuck hidden; the animation is skipped entirely under
+`prefers-reduced-motion`. The CSS base state is **visible**, so no-JS, reduced-motion, and
+print all render the final state directly.
+
+### Theme tokens
+
+The terminal palette lives in `resources/css/app.css` as Tailwind v4 `@theme static` tokens
+(`--color-bg`, `--color-accent`, …). `static` matters: Tailwind v4 prunes theme vars that no
+utility class references, and these are consumed by hand-written `var(--color-*)` CSS, not
+utilities. The runtime font is a separate `--mono` var (it has no Tailwind default, so it
+always wins). Two `data-*` knobs on `<body>` tune the look: `data-density`
+(`comfortable` / `compact`) and `data-fx` (`off` / `subtle` / `full` — the glow and scanline
+intensity).
+
+### Screenshot mode
+
+`?screenshot=1` (honored only under `APP_ENV=testing`) settles the page for the Pest visual
+harness: it skips the boot intro, disables all animations and `backdrop-filter`, freezes the
+clock and year, and re-asserts JetBrains Mono so captures are deterministic. It is inert in
+production. See [docs/visual-testing.md](docs/visual-testing.md).
 
 ## Local setup
 
