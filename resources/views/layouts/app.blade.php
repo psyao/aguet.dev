@@ -1,4 +1,9 @@
 @php
+    // Visually-neutral screenshot mode for the Pest visual-regression harness:
+    // only active under APP_ENV=testing, triggered by ?screenshot=1. Settles the
+    // page (no boot intro, no animations, frozen clock/year, real font) so captures
+    // are deterministic. Inert in production.
+    $shot = app()->environment('testing') && request()->boolean('screenshot');
     $ogLocales = ['fr' => 'fr_CH', 'en' => 'en_GB'];
     $defaultLocale = config('aguet.default_locale', 'fr');
     $jsConfig = [
@@ -41,7 +46,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     {{-- Boot reveal: hide the hero only while typing plays; a failsafe clears it. --}}
+    @unless($shot)
     <script>(function(){try{var m=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;if(!m){document.documentElement.classList.add("boot");setTimeout(function(){document.documentElement.classList.remove("boot");},2800);}}catch(e){}})();</script>
+    @else
+    {{-- Screenshot mode: settle the page deterministically (no animations, real font, fonts ready). --}}
+    <style>
+        *, *::before, *::after {
+            animation: none !important;
+            transition: none !important;
+            /* GPU backdrop blur (chrome bar, command-palette overlay) rasterizes
+               non-deterministically run-to-run; neutralize it so baselines are stable. */
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .cur { background: transparent !important; }
+        /* assertScreenshotMatches() force-injects "* { font-family: Arial !important }"
+           for cross-machine portability. Beat it with a higher-specificity !important
+           rule (html * = 0,0,1 > * = 0,0,0) so the baseline shows the real JetBrains
+           Mono terminal. Deterministic because the font is self-hosted + env is pinned. */
+        html, html * { font-family: var(--mono) !important; }
+    </style>
+    <script>document.addEventListener('DOMContentLoaded',function(){if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){document.documentElement.classList.add('fonts-ready');});}else{document.documentElement.classList.add('fonts-ready');}});</script>
+    @endunless
 
     <title>{{ __('site.meta.title') }}</title>
     <meta name="description" content="{{ __('site.meta.description') }}">

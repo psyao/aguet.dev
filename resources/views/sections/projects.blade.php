@@ -5,7 +5,7 @@
     $rest = $projects->where('featured', false)->values();
     $restCount = $rest->count();
 @endphp
-<section id="projects" class="block">
+<section id="projects" class="section">
     <div class="wrap">
         <h2 class="visually-hidden">{{ __('site.sections.projects') }}</h2>
         <p class="cmd"><span class="prompt">steve@aguet ~ %</span> <span class="arg">ls -l ~/projects</span></p>

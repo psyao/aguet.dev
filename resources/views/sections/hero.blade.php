@@ -1,5 +1,5 @@
 {{-- Hero: typed boot intro → headline reveal. Base state is visible (no-JS / print safe). --}}
-<section class="hero block" aria-label="{{ __('site.sections.hero') }}">
+<section class="hero section" aria-label="{{ __('site.sections.hero') }}">
     <div class="wrap">
         <p class="who">
             <span class="prompt">steve@aguet ~ %</span>
