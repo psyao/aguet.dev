@@ -3,7 +3,7 @@
     $techCount = $skills->sum(fn ($g) => $g->tags->count());
     $focusGroup = $skills->first(fn ($g) => $g->focus && $g->note);
 @endphp
-<section id="skills" class="block">
+<section id="skills" class="section">
     <div class="wrap">
         <h2 class="visually-hidden">{{ __('site.sections.skills') }}</h2>
         <p class="cmd"><span class="prompt">steve@aguet ~ %</span> <span class="arg">tree ~/stack</span></p>

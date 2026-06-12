@@ -1,5 +1,5 @@
 {{-- About: prose (Markdown) + an ASCII fastfetch profile card. --}}
-<section id="about" class="about block">
+<section id="about" class="about section">
     <div class="wrap">
         <h2 class="visually-hidden">{{ __('site.sections.about') }}</h2>
         <p class="cmd"><span class="prompt">steve@aguet ~ %</span> <span class="arg">cat about.md &amp;&amp; fastfetch</span></p>

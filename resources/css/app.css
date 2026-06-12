@@ -93,7 +93,7 @@ a{color:inherit;text-decoration:none}
 .tabs a.active::before{color:var(--accent)}
 
 main{padding:0 0 30px}
-.block{padding:var(--bpy) 0;border-bottom:1px solid var(--line-soft)}
+.section{padding:var(--bpy) 0;border-bottom:1px solid var(--line-soft)}
 .cmd{color:var(--muted);font-size:13px;margin-bottom:6px}
 .cmd .arg{color:var(--fg)}
 
@@ -256,7 +256,7 @@ main{padding:0 0 30px}
   body::before,body::after{display:none !important}
   .chrome,.tabs,.statusbar,.cmdk,.skip,.kbtn,.hero .cline,.cur{display:none !important}
   main{padding:0}
-  .block{padding:16px 0;break-inside:avoid;border-color:#ebebe7}
+  .section{padding:16px 0;break-inside:avoid;border-color:#ebebe7}
   .hero h1{font-size:34px}
   .boot-hide{opacity:1 !important;transform:none !important}
   .neofetch,.json,.pcard{break-inside:avoid}
