@@ -51,7 +51,14 @@
     @else
     {{-- Screenshot mode: settle the page deterministically (no animations, real font, fonts ready). --}}
     <style>
-        *, *::before, *::after { animation: none !important; transition: none !important; }
+        *, *::before, *::after {
+            animation: none !important;
+            transition: none !important;
+            /* GPU backdrop blur (chrome bar, command-palette overlay) rasterizes
+               non-deterministically run-to-run; neutralize it so baselines are stable. */
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
         .cur { background: transparent !important; }
         /* assertScreenshotMatches() force-injects "* { font-family: Arial !important }"
            for cross-machine portability. Beat it with a higher-specificity !important
