@@ -30,7 +30,7 @@
                         <dt>Lang</dt><dd>FR · EN · DE</dd>
                     </dl>
                     <div class="nf-sw" aria-hidden="true">
-                        <i style="background:var(--accent)"></i>
+                        <i style="background:var(--color-accent)"></i>
                         <i style="background:#3a4a40"></i>
                         <i style="background:#566459"></i>
                         <i style="background:#869589"></i>
