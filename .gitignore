@@ -31,3 +31,8 @@ Homestead.yaml
 Thumbs.db
 .gstack/
 .context/
+
+# Visual-testing local DB (rebuilt by the browser test beforeEach)
+/database/testing.sqlite
+# Pest browser debug screenshots + image-diff views (baselines live in tests/.pest)
+/tests/Browser/Screenshots/
