@@ -5,6 +5,7 @@ use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
 use App\Models\SiteContent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
@@ -108,7 +109,7 @@ it('casts the kChat delivery columns', function () {
 
     $row->refresh();
 
-    expect($row->kchat_notified_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class)
+    expect($row->kchat_notified_at)->toBeInstanceOf(Carbon::class)
         ->and($row->kchat_notify_attempts)->toBe(2);
 });
 

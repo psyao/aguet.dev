@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Console\Commands\NotifyContactMessages;
+use App\Livewire\ContactForm;
 use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
 use App\Models\SiteContent;
@@ -18,9 +20,9 @@ use Illuminate\Support\Facades\Notification;
  * other.
  *
  * Two callers share this logic:
- *  - the after-response defer() path in {@see \App\Livewire\ContactForm} (near-
+ *  - the after-response defer() path in {@see ContactForm} (near-
  *    instant delivery for a single fresh row, no queue worker required); and
- *  - the {@see \App\Console\Commands\NotifyContactMessages} sweep (the durable
+ *  - the {@see NotifyContactMessages} sweep (the durable
  *    15-min backstop that retries anything the deferred run didn't flag).
  *
  * Delivery is at-least-once: a rail sends, then saves its flag.

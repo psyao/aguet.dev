@@ -4,6 +4,7 @@ use App\Filament\Resources\ContactMessages\ContactMessageResource;
 use App\Models\ContactMessage;
 use App\Notifications\ContactMessageReceived;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
@@ -49,7 +50,7 @@ it('never leaks the webhook url in the failure message (non-2xx)', function () {
         Notification::route('kchat', 'https://secret.test/hook')
             ->notifyNow(new ContactMessageReceived($row));
         $this->fail('Expected the channel to throw.');
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         expect($e->getMessage())->not->toContain('secret.test');
     }
 });
@@ -58,7 +59,7 @@ it('redacts the url when the request throws a connection error', function () {
     // A connection-level failure (DNS/timeout/TLS) throws before a response
     // exists; its message commonly contains the host.
     Http::fake(function () {
-        throw new \Illuminate\Http\Client\ConnectionException(
+        throw new ConnectionException(
             'cURL error 6: Could not resolve host: secret.test'
         );
     });
@@ -68,7 +69,7 @@ it('redacts the url when the request throws a connection error', function () {
         Notification::route('kchat', 'https://secret.test/hook')
             ->notifyNow(new ContactMessageReceived($row));
         $this->fail('Expected the channel to throw.');
-    } catch (\Throwable $e) {
+    } catch (Throwable $e) {
         expect($e->getMessage())->not->toContain('secret.test');
     }
 });
