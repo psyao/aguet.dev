@@ -31,10 +31,12 @@ class ContactMessageReceived extends Notification
 
         return (new KChatMessage)
             ->title('New contact message')
-            ->color('#2563eb')
+            ->color('#3ecf8e')
+            ->link('Open in inbox', ContactMessageResource::getUrl(name: 'index', panel: 'admin'))
+            ->body(Str::limit((string) $message->message, 500))
             ->field('Subject', (string) $message->subject)
             ->field('From', (string) $message->email)
-            ->body(Str::limit((string) $message->message, 500))
-            ->link('Open in inbox', ContactMessageResource::getUrl(name: 'index', panel: 'admin'));
+            ->field('Application', config('app.name'))
+            ->field('Environment', app()->environment());
     }
 }
