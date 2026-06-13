@@ -53,6 +53,37 @@ return [
         'copy' => 'copy',
         'copied' => 'copied',
         'cta' => 'Send a message',
+
+        // Terminal-prompt contact modal.
+        'form' => [
+            'title' => 'Send a message',
+            'intro' => 'It lands straight in my inbox — I reply quickly.',
+            'subject_label' => 'Subject',
+            'subject_placeholder' => 'What’s it about?',
+            'email_label' => 'Your email',
+            'email_placeholder' => 'you@example.com',
+            'message_label' => 'Message',
+            'message_placeholder' => 'Tell me everything…',
+            'send' => 'send',
+            'sending' => 'sending…',
+            'success' => 'Message sent. Thanks — I’ll get back to you soon.',
+            'another' => 'Write another message',
+            'error' => 'Couldn’t save your message. Please try again in a moment.',
+            'throttled' => 'Too many attempts. Wait a minute before trying again.',
+            'close' => 'Close',
+
+            // Custom validation messages (kept symmetric with the FR file).
+            'err' => [
+                'required' => ':attribute is required.',
+                'email' => 'Enter a valid email address.',
+                'max' => ':attribute is too long (:max characters max).',
+            ],
+            'attr' => [
+                'subject' => 'The subject',
+                'email' => 'The email',
+                'message' => 'The message',
+            ],
+        ],
     ],
 
     'cmd' => [

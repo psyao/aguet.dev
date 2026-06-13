@@ -178,6 +178,67 @@ document.addEventListener('alpine:init', () => {
     },
     enter() { const f = this.filtered; if (f[this.active]) this.run(f[this.active]); },
   });
+
+  // Contact modal: accessible dialog shell around the <livewire:contact-form>.
+  // Mirrors cmdk but adds what cmdk lacks — a real focus trap, focus return to
+  // the trigger, and an inert background — since Livewire's bundled Alpine has
+  // no @alpinejs/focus (x-trap) plugin.
+  Alpine.store('contact', {
+    isOpen: false,
+    trigger: null,
+
+    // Tabbable elements inside the panel (visible, not tabindex=-1 → the
+    // off-screen honeypot input and the success region are excluded).
+    _tabbable(root) {
+      const sel = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]';
+      return Array.from(root.querySelectorAll(sel)).filter((el) => el.tabIndex >= 0 && el.offsetParent !== null);
+    },
+
+    _setBackgroundInert(on) {
+      ['.chrome', '.tabs', '#content', '.statusbar', '#cmdk'].forEach((s) => {
+        const el = document.querySelector(s);
+        if (!el) return;
+        on ? el.setAttribute('inert', '') : el.removeAttribute('inert');
+      });
+    },
+
+    open() {
+      if (this.isOpen) return;
+      this.trigger = document.activeElement;
+      this.isOpen = true;
+      this._setBackgroundInert(true);
+      document.body.style.overflow = 'hidden';
+      window.Alpine.nextTick(() => {
+        const panel = document.getElementById('contact-modal-panel');
+        if (!panel) return;
+        (this._tabbable(panel)[0] || panel).focus();
+      });
+    },
+
+    close() {
+      if (!this.isOpen) return;
+      this.isOpen = false;
+      this._setBackgroundInert(false);
+      document.body.style.overflow = '';
+      const t = this.trigger;
+      this.trigger = null;
+      window.Alpine.nextTick(() => { if (t && typeof t.focus === 'function') t.focus(); });
+    },
+
+    toggle() { this.isOpen ? this.close() : this.open(); },
+
+    // Wrap Tab focus inside the panel.
+    trapFocus(e) {
+      const panel = document.getElementById('contact-modal-panel');
+      if (!panel) return;
+      const f = this._tabbable(panel);
+      if (!f.length) { e.preventDefault(); return; }
+      const first = f[0];
+      const last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    },
+  });
 });
 
 // Global ⌘K / Ctrl-K shortcut (Alpine is up by the time a key is pressed).

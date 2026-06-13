@@ -74,4 +74,28 @@ class HomePageTest extends TestCase
         $response->assertSee('steve@aguet.dev', false);
         $response->assertSee('/in/steveaguet', false);
     }
+
+    public function test_contact_modal_and_livewire_form_render(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        // Accessible dialog shell + visible title.
+        $response->assertSee('id="contact-modal"', false);
+        $response->assertSee('aria-labelledby="contact-modal-title"', false);
+        $response->assertSee('Écrire un message', false);
+        // The Livewire form mounted (its fields are present).
+        $response->assertSee('id="cf-subject"', false);
+        // Progressive enhancement: the no-JS mailto fallback survives on the CTA.
+        $response->assertSee('href="mailto:steve@aguet.dev"', false);
+        $response->assertSee('$store.contact.open()', false);
+    }
+
+    public function test_contact_modal_renders_in_english(): void
+    {
+        $this->get('/en')
+            ->assertOk()
+            ->assertSee('Send a message', false)
+            ->assertSee('id="contact-modal-title"', false);
+    }
 }

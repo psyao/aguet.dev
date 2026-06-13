@@ -1,0 +1,87 @@
+{{-- Terminal-prompt contact form. State lives in App\Livewire\ContactForm. --}}
+<div class="cf">
+    @if ($sent)
+        {{-- Success: announced to SR and focused when Livewire morphs it in. --}}
+        <div class="cf-success" role="status" tabindex="-1" data-cf-success
+             x-init="$nextTick(() => $el.focus())">
+            <p class="cf-success-line"><span class="prompt" aria-hidden="true">$</span> {{ __('site.contact.form.success') }}</p>
+            <button type="button" class="tui-btn" wire:click="resetForm">
+                <span>{{ __('site.contact.form.another') }}</span>
+            </button>
+        </div>
+    @else
+        <form wire:submit="submit" novalidate
+              x-data="{ len: $wire.message.length, max: {{ \App\Livewire\ContactForm::MAX_MESSAGE }} }">
+
+            {{-- General error (e.g. the DB write failed). --}}
+            @if ($generalError)
+                <p class="cf-alert" role="alert">{{ $generalError }}</p>
+            @endif
+
+            {{-- Rate-limited. --}}
+            @if ($throttled)
+                <p class="cf-alert" role="alert">{{ __('site.contact.form.throttled') }}</p>
+            @endif
+
+            {{-- Subject --}}
+            <div class="cf-field">
+                <label class="cf-label" for="cf-subject">
+                    <span class="prompt" aria-hidden="true">&gt;</span> {{ __('site.contact.form.subject_label') }}
+                </label>
+                <input id="cf-subject" type="text" class="cf-input" wire:model="subject"
+                       maxlength="150" autocomplete="off"
+                       placeholder="{{ __('site.contact.form.subject_placeholder') }}"
+                       @error('subject') aria-invalid="true" aria-describedby="cf-subject-error" @enderror>
+                @error('subject')
+                    <p class="cf-error" id="cf-subject-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Email --}}
+            <div class="cf-field">
+                <label class="cf-label" for="cf-email">
+                    <span class="prompt" aria-hidden="true">&gt;</span> {{ __('site.contact.form.email_label') }}
+                </label>
+                <input id="cf-email" type="email" class="cf-input" wire:model="email"
+                       maxlength="255" autocomplete="email" inputmode="email"
+                       placeholder="{{ __('site.contact.form.email_placeholder') }}"
+                       @error('email') aria-invalid="true" aria-describedby="cf-email-error" @enderror>
+                @error('email')
+                    <p class="cf-error" id="cf-email-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Message --}}
+            <div class="cf-field">
+                <label class="cf-label" for="cf-message">
+                    <span class="prompt" aria-hidden="true">&gt;</span> {{ __('site.contact.form.message_label') }}
+                </label>
+                <textarea id="cf-message" class="cf-input cf-textarea" wire:model="message"
+                          rows="5" maxlength="{{ \App\Livewire\ContactForm::MAX_MESSAGE }}"
+                          placeholder="{{ __('site.contact.form.message_placeholder') }}"
+                          x-on:input="len = $event.target.value.length"
+                          @error('message') aria-invalid="true" aria-describedby="cf-message-error" @enderror></textarea>
+                <div class="cf-meta">
+                    <span class="cf-counter" aria-hidden="true"><span x-text="len">0</span> / <span x-text="max"></span></span>
+                </div>
+                @error('message')
+                    <p class="cf-error" id="cf-message-error">{{ $message }}</p>
+                @enderror
+            </div>
+
+            {{-- Honeypot: off-screen, never focusable, never announced. --}}
+            <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
+                <label for="cf-website">Website</label>
+                <input id="cf-website" type="text" tabindex="-1" autocomplete="off" wire:model="website">
+            </div>
+
+            <div class="cf-actions">
+                <button type="submit" class="tui-btn primary" wire:loading.attr="aria-busy" data-cf-submit>
+                    <span wire:loading.remove wire:target="submit">{{ __('site.contact.form.send') }}</span>
+                    <span wire:loading wire:target="submit">{{ __('site.contact.form.sending') }}</span>
+                    <span class="arr" aria-hidden="true">↵</span>
+                </button>
+            </div>
+        </form>
+    @endif
+</div>

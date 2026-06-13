@@ -54,6 +54,37 @@ return [
         'copy' => 'copier',
         'copied' => 'copié',
         'cta' => 'Écrire un message',
+
+        // Terminal-prompt contact modal.
+        'form' => [
+            'title' => 'Écrire un message',
+            'intro' => 'Ça arrive direct dans ma boîte — je réponds vite.',
+            'subject_label' => 'Sujet',
+            'subject_placeholder' => 'Objet de ton message',
+            'email_label' => 'Ton email',
+            'email_placeholder' => 'toi@exemple.com',
+            'message_label' => 'Message',
+            'message_placeholder' => 'Dis-moi tout…',
+            'send' => 'envoyer',
+            'sending' => 'envoi…',
+            'success' => 'Message envoyé. Merci — je te réponds bientôt.',
+            'another' => 'Écrire un autre message',
+            'error' => 'Impossible d’enregistrer le message. Réessaie dans un instant.',
+            'throttled' => 'Trop de tentatives. Patiente une minute avant de réessayer.',
+            'close' => 'Fermer',
+
+            // Custom validation messages (Laravel ships no FR validation file).
+            'err' => [
+                'required' => ':attribute est requis.',
+                'email' => 'Entre une adresse email valide.',
+                'max' => ':attribute est trop long (:max caractères max).',
+            ],
+            'attr' => [
+                'subject' => 'Le sujet',
+                'email' => 'L’email',
+                'message' => 'Le message',
+            ],
+        ],
     ],
 
     'cmd' => [

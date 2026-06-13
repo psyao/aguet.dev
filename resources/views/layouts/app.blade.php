@@ -104,6 +104,7 @@
 
     @include('partials.statusbar')
     @include('partials.command-palette')
+    @include('partials.contact-modal')
 
     <script>window.__AGUET = @json($jsConfig);</script>
     @livewireScripts

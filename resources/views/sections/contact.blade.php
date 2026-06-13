@@ -26,6 +26,10 @@
             <div><span class="s">}</span></div>
         </div>
 
-        <a class="tui-btn primary cta" href="mailto:{{ $email }}"><span>{{ __('site.contact.cta') }}</span> <span class="arr">→</span></a>
+        {{-- Progressive enhancement: a plain mailto link without JS; with JS,
+             Alpine intercepts the click and opens the accessible contact modal. --}}
+        <a class="tui-btn primary cta" href="mailto:{{ $email }}"
+           @click.prevent="$store.contact.open()"
+           x-bind:aria-haspopup="'dialog'"><span>{{ __('site.contact.cta') }}</span> <span class="arr">→</span></a>
     </div>
 </section>

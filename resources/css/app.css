@@ -20,6 +20,7 @@
     --color-faint: #5f6e64;     /* decorative only */
     --color-accent: #3ecf8e;
     --color-accent-ink: #04130b;
+    --color-danger: #ff6b6b;    /* AA: ~6.8:1 on bg & panel — form errors */
 }
 
 /* Runtime font var (see @theme note above): --mono has no Tailwind default, so
@@ -229,6 +230,52 @@ main{padding:0 0 30px}
 .cmdk-empty{padding:24px;text-align:center;color:var(--color-dim)}
 .cmdk-foot{display:flex;gap:18px;padding:10px 16px;border-top:1px solid var(--color-line);font-size:11px;color:var(--color-dim)}
 .cmdk-foot b{color:var(--color-muted);font-weight:500}
+
+/* ───── CONTACT MODAL ───── */
+.contact-modal{position:fixed;inset:0;z-index:110;display:flex;align-items:flex-start;justify-content:center;padding:max(12vh,24px) 16px 24px;overflow-y:auto}
+.contact-modal-backdrop{position:fixed;inset:0;background:rgba(3,7,5,.66);backdrop-filter:blur(3px);opacity:0;transition:opacity .16s}
+.contact-modal.show .contact-modal-backdrop{opacity:1}
+.contact-modal-panel{position:relative;width:min(560px,94vw);background:var(--color-panel);border:1px solid var(--color-line);border-radius:11px;box-shadow:0 24px 70px -12px rgba(0,0,0,.7);padding:22px 24px 24px;transform:translateY(-8px) scale(.98);opacity:0;transition:transform .18s cubic-bezier(.2,.7,.2,1),opacity .18s}
+.contact-modal.show .contact-modal-panel{transform:none;opacity:1}
+.cm-head{position:relative;margin-bottom:18px;padding-right:38px}
+.cm-head .cmd{margin-bottom:8px}
+.cm-title{font-size:18px;font-weight:700;color:var(--color-fg);line-height:1.2}
+.cm-intro{color:var(--color-muted);font-size:13px;margin-top:5px}
+.cm-intro::before{content:"# ";color:var(--color-dim)}
+.cm-close{position:absolute;top:-4px;right:-6px;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;border:1px solid var(--color-line);color:var(--color-dim);font-family:var(--mono);font-size:13px;border-radius:6px;cursor:pointer;transition:.14s}
+.cm-close:hover{border-color:var(--color-accent);color:var(--color-accent)}
+
+/* contact form */
+.cf-field{margin-bottom:14px}
+.cf-label{display:block;color:var(--color-muted);font-size:13px;margin-bottom:5px}
+.cf-label .prompt{margin-right:4px}
+.cf-input{width:100%;background:var(--color-bg);border:1px solid var(--color-line);border-radius:6px;color:var(--color-fg);font-family:var(--mono);font-size:14px;padding:9px 11px;transition:border-color .14s}
+.cf-input::placeholder{color:var(--color-dim)}
+.cf-input:focus{outline:none;border-color:var(--color-accent)}
+.cf-textarea{resize:vertical;min-height:112px;line-height:1.6}
+.cf-input[aria-invalid="true"]{border-color:var(--color-danger)}
+.cf-meta{display:flex;justify-content:flex-end;margin-top:4px}
+.cf-counter{color:var(--color-dim);font-size:11.5px}
+.cf-error{color:var(--color-danger);font-size:12px;margin-top:5px}
+.cf-alert{color:var(--color-danger);font-size:13px;border:1px solid var(--color-danger);border-radius:6px;padding:9px 11px;margin-bottom:14px}
+.cf-actions{margin-top:18px}
+.cf-success{outline:none}
+.cf-success-line{color:var(--color-accent);font-size:14px;margin-bottom:16px}
+.cf-success-line .prompt{margin-right:6px}
+
+@media(max-width:520px){
+  .contact-modal{padding:0;align-items:stretch}
+  .contact-modal-panel{width:100%;min-height:100dvh;border-radius:0;border:0}
+  .cf-input{font-size:16px}                 /* ≥16px stops iOS zoom-on-focus */
+  .cf-actions .tui-btn{padding:13px 18px}   /* ≥44px touch target */
+  .cm-close{width:44px;height:44px}
+}
+
+/* Reduced motion: drop the slide/scale/fade on the panel (cmdk lacks this). */
+@media(prefers-reduced-motion:reduce){
+  .contact-modal-backdrop,.contact-modal-panel{transition:none}
+  .contact-modal-panel{transform:none}
+}
 
 @media(max-width:780px){
   .about-grid{grid-template-columns:1fr;gap:26px}
