@@ -31,7 +31,9 @@
             'url' => $p->url,
         ])->all(),
         'contact' => [
-            'email' => $content->contact_email,
+            // Base64 so the address isn't plaintext in the page source; app.js
+            // decodes it for the ⌘K palette's "Email" action.
+            'emailEnc' => base64_encode((string) $content->contact_email),
             'linkedin' => $content->contact_linkedin,
             'linkedinLabel' => $content->contact_linkedin_label,
             'github' => $content->contact_github,

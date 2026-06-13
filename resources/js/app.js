@@ -19,6 +19,18 @@ const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+// Decode a base64 string (used to keep the email out of the HTML source).
+const deob = (b64) => { try { return atob(b64); } catch (_) { return ''; } };
+// Copy text to the clipboard, with a hidden-textarea fallback for old browsers.
+async function writeClipboard(text) {
+  try { await navigator.clipboard.writeText(text); return; }
+  catch (_) { /* fall through */ }
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); } catch (__) {}
+  ta.remove();
+}
 
 /* ───────────────── BOOT / TYPING INTRO (imperative, one-shot) ───────────────── */
 async function typeInto(el, text, cps) {
@@ -103,14 +115,31 @@ document.addEventListener('alpine:init', () => {
     label: t('contact.copy', 'copy'),
     _t: null,
     async copyValue() {
-      try { await navigator.clipboard.writeText(this.value); }
-      catch (_) {
-        const ta = document.createElement('textarea');
-        ta.value = this.value; ta.style.position = 'fixed'; ta.style.opacity = '0';
-        document.body.appendChild(ta); ta.select();
-        try { document.execCommand('copy'); } catch (__) {}
-        ta.remove();
-      }
+      await writeClipboard(this.value);
+      this.copied = true;
+      this.label = t('contact.copied', 'copied');
+      clearTimeout(this._t);
+      this._t = setTimeout(() => { this.copied = false; this.label = t('contact.copy', 'copy'); }, 1500);
+    },
+  }));
+
+  // Email row: the address is base64-encoded in the markup and rebuilt here at
+  // runtime, so no plaintext "user@domain" ever sits in the HTML source for
+  // naive scrapers to harvest. Without JS the row stays hidden (x-cloak).
+  Alpine.data('email', (enc) => ({
+    value: '',
+    display: '',
+    mailto: '#',
+    copied: false,
+    label: t('contact.copy', 'copy'),
+    _t: null,
+    init() {
+      this.value = deob(enc);
+      this.display = '"' + this.value + '"';
+      this.mailto = 'mailto:' + this.value;
+    },
+    async copyValue() {
+      await writeClipboard(this.value);
       this.copied = true;
       this.label = t('contact.copied', 'copied');
       clearTimeout(this._t);
@@ -139,7 +168,8 @@ document.addEventListener('alpine:init', () => {
       (CFG.projects || []).forEach((p) => { if (p.url) out.push({ g: 'projects', label: p.label, hint: p.host, run: open(p.url) }); });
       out.push({ g: act, label: t('cmd.lang', 'Switch language'), hint: 'fr ↔ en', run: () => { window.location.href = CFG.altUrl; } });
       const c = CFG.contact || {};
-      if (c.email) out.push({ g: act, label: t('cmd.email', 'Email'), hint: c.email, run: () => { window.location.href = 'mailto:' + c.email; } });
+      const email = deob(c.emailEnc || '');
+      if (email) out.push({ g: act, label: t('cmd.email', 'Email'), hint: email, run: () => { window.location.href = 'mailto:' + email; } });
       if (c.linkedin) out.push({ g: act, label: t('cmd.linkedin', 'LinkedIn'), hint: c.linkedinLabel || '', run: open(c.linkedin) });
       if (c.github) out.push({ g: act, label: t('cmd.github', 'GitHub'), hint: c.githubLabel || '', run: open(c.github) });
       this.items = out;

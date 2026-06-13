@@ -71,8 +71,19 @@ class HomePageTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertSee('steve@aguet.dev', false);
-        $response->assertSee('/in/steveaguet', false);
+        $response->assertSee('/in/steveaguet', false);   // LinkedIn stays plaintext
+    }
+
+    public function test_email_is_not_exposed_as_plaintext(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+        // The address is never in the source as plaintext or a mailto: link;
+        // it ships base64-encoded and is rebuilt by JS at runtime.
+        $response->assertDontSee('steve@aguet.dev', false);
+        $response->assertDontSee('mailto:steve@aguet.dev', false);
+        $response->assertSee(base64_encode('steve@aguet.dev'), false);
     }
 
     public function test_contact_modal_and_livewire_form_render(): void
@@ -86,9 +97,10 @@ class HomePageTest extends TestCase
         $response->assertSee('Écrire un message', false);
         // The Livewire form mounted (its fields are present).
         $response->assertSee('id="cf-subject"', false);
-        // Progressive enhancement: the no-JS mailto fallback survives on the CTA.
-        $response->assertSee('href="mailto:steve@aguet.dev"', false);
+        // CTA opens the modal with JS; its no-JS fallback is LinkedIn, not a
+        // mailto: (keeps the email out of the source).
         $response->assertSee('$store.contact.open()', false);
+        $response->assertDontSee('href="mailto:', false);
     }
 
     public function test_contact_modal_renders_in_english(): void
