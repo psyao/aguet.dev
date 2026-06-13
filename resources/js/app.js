@@ -220,6 +220,8 @@ document.addEventListener('alpine:init', () => {
       this.isOpen = false;
       this._setBackgroundInert(false);
       document.body.style.overflow = '';
+      // Clear the form so a reopened modal is always blank (cancel/✕/ESC/backdrop).
+      if (window.Livewire) window.Livewire.dispatch('contact-modal-closed');
       const t = this.trigger;
       this.trigger = null;
       window.Alpine.nextTick(() => { if (t && typeof t.focus === 'function') t.focus(); });

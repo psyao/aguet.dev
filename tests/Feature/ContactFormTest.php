@@ -174,6 +174,19 @@ it('strips header-injection characters from the subject (F9)', function () {
     expect($subject)->not->toContain("\r")->not->toContain("\n");
 });
 
+// Closing the modal clears whatever was typed (the close event resets the form).
+it('clears the form when the modal closes', function () {
+    Livewire::test(ContactForm::class)
+        ->set('subject', 'half-typed')
+        ->set('email', 'wip@example.com')
+        ->set('message', 'unfinished thought')
+        ->dispatch('contact-modal-closed')
+        ->assertSet('subject', '')
+        ->assertSet('email', '')
+        ->assertSet('message', '')
+        ->assertSet('sent', false);
+});
+
 // F10 — long Unicode input round-trips through the DB intact.
 it('round-trips long Unicode input (F10)', function () {
     $emoji = '🚀';                 // 4-byte
