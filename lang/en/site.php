@@ -71,6 +71,7 @@ return [
             'error' => 'Couldn’t save your message. Please try again in a moment.',
             'throttled' => 'Too many attempts. Wait a minute before trying again.',
             'close' => 'Close',
+            'cancel' => 'cancel',
 
             // Custom validation messages (kept symmetric with the FR file).
             'err' => [

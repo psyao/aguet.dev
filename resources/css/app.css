@@ -260,7 +260,8 @@ main{padding:0 0 30px}
 .cf-counter{position:absolute;right:11px;bottom:6px;color:var(--color-dim);font-size:11.5px;pointer-events:none}
 .cf-error{color:var(--color-danger);font-size:12px;margin:-10px 2px 16px}
 .cf-alert{color:var(--color-danger);font-size:13px;border:1px solid var(--color-danger);border-radius:6px;padding:9px 11px;margin-bottom:14px}
-.cf-actions{margin-top:18px}
+.cf-actions{margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cf-cancel::before{content:"";margin:0}              /* no "$" glyph on the secondary action */
 .cf-success{outline:none}
 .cf-success-line{color:var(--color-accent);font-size:14px;margin-bottom:16px}
 .cf-success-line .prompt{margin-right:6px}

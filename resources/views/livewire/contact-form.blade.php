@@ -77,6 +77,9 @@
                     <span wire:loading wire:target="submit">{{ __('site.contact.form.sending') }}</span>
                     <span class="arr" aria-hidden="true">↵</span>
                 </button>
+                <button type="button" class="tui-btn cf-cancel" @click="$store.contact.close()">
+                    <span>{{ __('site.contact.form.cancel') }}</span>
+                </button>
             </div>
         </form>
     @endif

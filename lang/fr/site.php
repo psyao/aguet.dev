@@ -72,6 +72,7 @@ return [
             'error' => 'Impossible d’enregistrer le message. Réessaie dans un instant.',
             'throttled' => 'Trop de tentatives. Patiente une minute avant de réessayer.',
             'close' => 'Fermer',
+            'cancel' => 'annuler',
 
             // Custom validation messages (Laravel ships no FR validation file).
             'err' => [
