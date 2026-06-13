@@ -261,6 +261,9 @@ main{padding:0 0 30px}
 .cf-error{color:var(--color-danger);font-size:12px;margin:-10px 2px 16px}
 .cf-alert{color:var(--color-danger);font-size:13px;border:1px solid var(--color-danger);border-radius:6px;padding:9px 11px;margin-bottom:14px}
 .cf-actions{margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Secondary action: the panel-coloured .tui-btn would vanish on the panel, so
+   give it a lighter fill + a visible border (it sits beside the green primary). */
+.cf-cancel{background:var(--color-panel-2);border-color:var(--color-dim);color:var(--color-fg)}
 .cf-cancel::before{content:"";margin:0}              /* no "$" glyph on the secondary action */
 .cf-success{outline:none}
 .cf-success-line{color:var(--color-accent);font-size:14px;margin-bottom:16px}
