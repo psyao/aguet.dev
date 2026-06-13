@@ -18,6 +18,8 @@ class ContactMessageFactory extends Factory
             'message' => fake()->paragraph(),
             'notified_at' => null,
             'notify_attempts' => 0,
+            'kchat_notified_at' => null,
+            'kchat_notify_attempts' => 0,
         ];
     }
 
@@ -25,5 +27,11 @@ class ContactMessageFactory extends Factory
     public function notified(): static
     {
         return $this->state(fn () => ['notified_at' => now()]);
+    }
+
+    /** A message already delivered on the kChat rail. */
+    public function kchatNotified(): static
+    {
+        return $this->state(fn () => ['kchat_notified_at' => now()]);
     }
 }

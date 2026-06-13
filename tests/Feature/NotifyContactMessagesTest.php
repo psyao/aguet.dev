@@ -85,3 +85,16 @@ it('skips the run when no recipient is configured (F11)', function () {
     expect($row->notified_at)->toBeNull()
         ->and($row->notify_attempts)->toBe(0);
 });
+
+// CN-schema — the new kChat columns cast correctly.
+it('casts the kChat delivery columns', function () {
+    $row = ContactMessage::factory()->create([
+        'kchat_notified_at' => now(),
+        'kchat_notify_attempts' => 2,
+    ]);
+
+    $row->refresh();
+
+    expect($row->kchat_notified_at)->toBeInstanceOf(\Illuminate\Support\Carbon::class)
+        ->and($row->kchat_notify_attempts)->toBe(2);
+});

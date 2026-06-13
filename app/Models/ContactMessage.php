@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * A contact-form submission. Only the three visitor-supplied fields are
- * fillable; delivery bookkeeping (read_at / notified_at / notify_attempts) is
- * set explicitly by the inbox and the `contact:notify` sweep, never by
- * mass assignment.
+ * fillable; delivery bookkeeping (read_at / notified_at / notify_attempts and
+ * the parallel kchat_notified_at / kchat_notify_attempts) is set explicitly by
+ * the inbox and the `contact:notify` sweep, never by mass assignment.
  *
  * @method static ContactMessageFactory factory($count = null, $state = [])
  */
@@ -27,6 +27,8 @@ class ContactMessage extends Model
             'read_at' => 'datetime',
             'notified_at' => 'datetime',
             'notify_attempts' => 'integer',
+            'kchat_notified_at' => 'datetime',
+            'kchat_notify_attempts' => 'integer',
         ];
     }
 }
