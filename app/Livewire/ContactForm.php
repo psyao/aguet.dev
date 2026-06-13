@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\ContactMessage;
+use App\Services\ContactMessageNotifier;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
 use Livewire\Component;
@@ -10,10 +11,15 @@ use Livewire\Component;
 /**
  * The terminal-prompt contact form, mounted inside the Alpine modal shell.
  *
- * DB-first: a valid submission writes a {@see ContactMessage} row and returns
- * immediately — no SMTP touches the request path. The owner notification is
- * delivered out of band by the `contact:notify` scheduled sweep. So a slow or
- * dead mail server can never lose a lead or hang the request.
+ * DB-first: a valid submission writes a {@see ContactMessage} row before any
+ * notification leaves, so a slow or dead endpoint can never lose a lead or hang
+ * the request. The owner notification then fires on two rails (email + kChat)
+ * via {@see ContactMessageNotifier}, dispatched with `defer()` so it runs after
+ * this response is flushed, in the same PHP process — the host has no queue
+ * worker, and `proc_open` is disabled so the queue 'background' connection is
+ * unavailable. The `contact:notify` 15-min sweep is the durable backstop: if the
+ * deferred run is torn down (e.g. the visitor navigates away mid-request) or a
+ * rail fails, the sweep retries it.
  *
  * Spam is held off by three cheap gates, all inside the component (the route
  * `throttle` middleware does not apply — Livewire posts to /livewire/update):
@@ -114,7 +120,7 @@ class ContactForm extends Component
         $validated = $this->validate();
 
         try {
-            ContactMessage::create([
+            $message = ContactMessage::create([
                 'subject' => $this->sanitize($validated['subject']),
                 'email' => $validated['email'],
                 'message' => $validated['message'],
@@ -125,6 +131,11 @@ class ContactForm extends Component
 
             return;
         }
+
+        // Deliver the owner notification after this response is flushed (same
+        // process, no worker). The row is already saved, so the contact:notify
+        // sweep still delivers it if this deferred run never completes.
+        defer(fn () => app(ContactMessageNotifier::class)->deliver($message));
 
         $this->markSent();
     }

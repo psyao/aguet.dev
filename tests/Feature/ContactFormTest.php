@@ -1,8 +1,11 @@
 <?php
 
 use App\Livewire\ContactForm;
+use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
+use App\Models\SiteContent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Features\SupportTesting\Testable;
@@ -205,4 +208,22 @@ it('round-trips long Unicode input (F10)', function () {
         ->assertSet('sent', true);
 
     expect(ContactMessage::sole()->message)->toBe($body);
+});
+
+// F12 — the owner notification is dispatched via defer() after the response.
+// withoutDefer() runs the deferred callback inline so we can assert it; in
+// production it fires after fastcgi_finish_request, with the sweep as backstop.
+it('delivers the owner notification via deferred dispatch (F12)', function () {
+    $this->withoutDefer();
+    Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
+    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
+
+    validSubmit()->call('submit')->assertSet('sent', true);
+
+    $row = ContactMessage::sole();
+    Mail::assertSent(ContactMessageMail::class, fn ($mail) => $mail->contactMessage->is($row));
+    Http::assertSent(fn ($r) => $r->url() === 'https://kchat.test/hook');
+    expect($row->notified_at)->not->toBeNull()
+        ->and($row->kchat_notified_at)->not->toBeNull();
 });
