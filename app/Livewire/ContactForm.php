@@ -5,7 +5,6 @@ namespace App\Livewire;
 use App\Models\ContactMessage;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
-use Livewire\Attributes\On;
 use Livewire\Component;
 
 /**
@@ -139,10 +138,9 @@ class ContactForm extends Component
 
     /**
      * Start over: clears the form and re-arms the fill-time gate. Used by the
-     * "write another" button and fired whenever the modal closes (cancel, ✕,
-     * ESC, backdrop) so a reopened modal is always blank.
+     * "write another" button and the "annuler" (cancel) button. Dismissing the
+     * modal via ✕ / ESC / backdrop only hides it and preserves the draft.
      */
-    #[On('contact-modal-closed')]
     public function resetForm(): void
     {
         $this->reset(['subject', 'email', 'message', 'website', 'sent', 'throttled', 'generalError']);

@@ -174,13 +174,14 @@ it('strips header-injection characters from the subject (F9)', function () {
     expect($subject)->not->toContain("\r")->not->toContain("\n");
 });
 
-// Closing the modal clears whatever was typed (the close event resets the form).
-it('clears the form when the modal closes', function () {
+// The "annuler" (cancel) button clears the draft; ✕/ESC/backdrop only hide the
+// modal (handled client-side) and preserve what was typed.
+it('clears the form when cancelled', function () {
     Livewire::test(ContactForm::class)
         ->set('subject', 'half-typed')
         ->set('email', 'wip@example.com')
         ->set('message', 'unfinished thought')
-        ->dispatch('contact-modal-closed')
+        ->call('resetForm')
         ->assertSet('subject', '')
         ->assertSet('email', '')
         ->assertSet('message', '')

@@ -215,13 +215,13 @@ document.addEventListener('alpine:init', () => {
       });
     },
 
+    // Hide only — the draft is preserved (ESC, backdrop, ✕). Clearing the form
+    // is the explicit "annuler" button's job (wire:click="resetForm").
     close() {
       if (!this.isOpen) return;
       this.isOpen = false;
       this._setBackgroundInert(false);
       document.body.style.overflow = '';
-      // Clear the form so a reopened modal is always blank (cancel/✕/ESC/backdrop).
-      if (window.Livewire) window.Livewire.dispatch('contact-modal-closed');
       const t = this.trigger;
       this.trigger = null;
       window.Alpine.nextTick(() => { if (t && typeof t.focus === 'function') t.focus(); });
