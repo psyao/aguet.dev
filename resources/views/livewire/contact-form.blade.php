@@ -23,51 +23,47 @@
                 <p class="cf-alert" role="alert">{{ __('site.contact.form.throttled') }}</p>
             @endif
 
+            {{-- Each field is a bordered box with its label cut into the top
+                 border (Laravel Prompts style). The <label> stays a real,
+                 associated label for screen readers. --}}
+
             {{-- Subject --}}
-            <div class="cf-field">
-                <label class="cf-label" for="cf-subject">
-                    <span class="prompt" aria-hidden="true">&gt;</span> {{ __('site.contact.form.subject_label') }}
-                </label>
+            <div class="cf-field @error('subject') is-invalid @enderror">
+                <label class="cf-legend" for="cf-subject">{{ __('site.contact.form.subject_label') }}</label>
                 <input id="cf-subject" type="text" class="cf-input" wire:model="subject"
                        maxlength="150" autocomplete="off"
                        placeholder="{{ __('site.contact.form.subject_placeholder') }}"
                        @error('subject') aria-invalid="true" aria-describedby="cf-subject-error" @enderror>
-                @error('subject')
-                    <p class="cf-error" id="cf-subject-error">{{ $message }}</p>
-                @enderror
             </div>
+            @error('subject')
+                <p class="cf-error" id="cf-subject-error">{{ $message }}</p>
+            @enderror
 
             {{-- Email --}}
-            <div class="cf-field">
-                <label class="cf-label" for="cf-email">
-                    <span class="prompt" aria-hidden="true">&gt;</span> {{ __('site.contact.form.email_label') }}
-                </label>
+            <div class="cf-field @error('email') is-invalid @enderror">
+                <label class="cf-legend" for="cf-email">{{ __('site.contact.form.email_label') }}</label>
                 <input id="cf-email" type="email" class="cf-input" wire:model="email"
                        maxlength="255" autocomplete="email" inputmode="email"
                        placeholder="{{ __('site.contact.form.email_placeholder') }}"
                        @error('email') aria-invalid="true" aria-describedby="cf-email-error" @enderror>
-                @error('email')
-                    <p class="cf-error" id="cf-email-error">{{ $message }}</p>
-                @enderror
             </div>
+            @error('email')
+                <p class="cf-error" id="cf-email-error">{{ $message }}</p>
+            @enderror
 
             {{-- Message --}}
-            <div class="cf-field">
-                <label class="cf-label" for="cf-message">
-                    <span class="prompt" aria-hidden="true">&gt;</span> {{ __('site.contact.form.message_label') }}
-                </label>
+            <div class="cf-field cf-field--area @error('message') is-invalid @enderror">
+                <label class="cf-legend" for="cf-message">{{ __('site.contact.form.message_label') }}</label>
                 <textarea id="cf-message" class="cf-input cf-textarea" wire:model="message"
                           rows="5" maxlength="{{ \App\Livewire\ContactForm::MAX_MESSAGE }}"
                           placeholder="{{ __('site.contact.form.message_placeholder') }}"
                           x-on:input="len = $event.target.value.length"
                           @error('message') aria-invalid="true" aria-describedby="cf-message-error" @enderror></textarea>
-                <div class="cf-meta">
-                    <span class="cf-counter" aria-hidden="true"><span x-text="len">0</span> / <span x-text="max"></span></span>
-                </div>
-                @error('message')
-                    <p class="cf-error" id="cf-message-error">{{ $message }}</p>
-                @enderror
+                <span class="cf-counter" aria-hidden="true"><span x-text="len">0</span> / <span x-text="max"></span></span>
             </div>
+            @error('message')
+                <p class="cf-error" id="cf-message-error">{{ $message }}</p>
+            @enderror
 
             {{-- Honeypot: off-screen, never focusable, never announced. --}}
             <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">

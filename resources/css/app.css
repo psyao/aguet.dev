@@ -245,18 +245,20 @@ main{padding:0 0 30px}
 .cm-close{position:absolute;top:-4px;right:-6px;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:transparent;border:1px solid var(--color-line);color:var(--color-dim);font-family:var(--mono);font-size:13px;border-radius:6px;cursor:pointer;transition:.14s}
 .cm-close:hover{border-color:var(--color-accent);color:var(--color-accent)}
 
-/* contact form */
-.cf-field{margin-bottom:14px}
-.cf-label{display:block;color:var(--color-muted);font-size:13px;margin-bottom:5px}
-.cf-label .prompt{margin-right:4px}
-.cf-input{width:100%;background:var(--color-bg);border:1px solid var(--color-line);border-radius:6px;color:var(--color-fg);font-family:var(--mono);font-size:14px;padding:9px 11px;transition:border-color .14s}
+/* contact form — Laravel Prompts style: each field is a bordered box with its
+   label cut into the top border (same legend-on-border idiom as .pcard). */
+.cf-field{position:relative;border:1px solid var(--color-line);border-radius:6px;padding:13px 13px 11px;margin-bottom:16px;transition:border-color .14s}
+.cf-field:focus-within{border-color:var(--color-accent)}
+.cf-field.is-invalid{border-color:var(--color-danger)}
+.cf-legend{position:absolute;top:-8px;left:11px;background:var(--color-panel);padding:0 7px;color:var(--color-accent);font-size:12.5px;line-height:1}
+.cf-field.is-invalid .cf-legend{color:var(--color-danger)}
+.cf-input{display:block;width:100%;background:transparent;border:0;color:var(--color-fg);font-family:var(--mono);font-size:14px;padding:0;caret-color:var(--color-accent);caret-shape:block}
 .cf-input::placeholder{color:var(--color-dim)}
-.cf-input:focus{outline:none;border-color:var(--color-accent)}
-.cf-textarea{resize:vertical;min-height:112px;line-height:1.6}
-.cf-input[aria-invalid="true"]{border-color:var(--color-danger)}
-.cf-meta{display:flex;justify-content:flex-end;margin-top:4px}
-.cf-counter{color:var(--color-dim);font-size:11.5px}
-.cf-error{color:var(--color-danger);font-size:12px;margin-top:5px}
+.cf-input:focus{outline:none}
+.cf-field--area{padding-bottom:24px}      /* room for the in-box counter */
+.cf-textarea{resize:vertical;min-height:104px;line-height:1.6}
+.cf-counter{position:absolute;right:11px;bottom:6px;color:var(--color-dim);font-size:11.5px;pointer-events:none}
+.cf-error{color:var(--color-danger);font-size:12px;margin:-10px 2px 16px}
 .cf-alert{color:var(--color-danger);font-size:13px;border:1px solid var(--color-danger);border-radius:6px;padding:9px 11px;margin-bottom:14px}
 .cf-actions{margin-top:18px}
 .cf-success{outline:none}
