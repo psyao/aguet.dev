@@ -10,13 +10,12 @@ use Illuminate\Support\Facades\Hash;
  * the new pivot order end to end.
  *
  * Status: SKIPPED. The drag step depends on first logging into the Filament
- * admin, and the Livewire-driven login form does not authenticate through the
- * pest-plugin-browser driver in this harness: after filling the (correctly
- * populated) email/password fields and pressing "Sign in", the page stays on
- * /admin/login and never redirects to /admin, even with an explicit wait for
- * the async redirect. `assertSee` does not retry, and there is no `actingAs`
- * helper in the browser plugin to bypass the form. Driving SortableJS via
- * Playwright is separately known-fragile.
+ * admin, and the login can't authenticate in this harness: phpunit.browser.xml
+ * sets SESSION_DRIVER=array, so the CSRF token from the page-load GET is gone by
+ * the Livewire /livewire/update POST -> 419, and the form never submits (page
+ * stays on /admin/login). `assertSee` does not retry, and the browser plugin has
+ * no `actingAs` to bypass the form. Driving SortableJS via Playwright is
+ * separately known-fragile.
  *
  * Coverage without this test:
  *   - tests/Unit/TagsSelectTest.php asserts the select is reorderable (guards
