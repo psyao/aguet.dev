@@ -17,6 +17,7 @@ class TagsSelect
         return Select::make($name)
             ->relationship('tags', 'name')
             ->multiple()
+            ->reorderable()
             ->searchable()
             ->preload()
             ->createOptionForm([
