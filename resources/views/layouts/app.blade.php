@@ -100,6 +100,16 @@
 </head>
 <body data-density="comfortable" data-fx="subtle" x-data="terminal">
 
+    <!--
+       ~ you read the source. of course you do. here, some toys: ~
+
+         j / k         move between sections (gg = top, G = bottom)
+         :             open the command line     (then :q  :wq  :help)
+         ↑↑↓↓←→←→ B A   ...you know this one.
+
+       built with laravel + a bundled alpine. nice of you to drop by.
+    -->
+
     <a class="skip" href="#content">{{ __('site.skip') }}</a>
 
     @include('partials.chrome')
