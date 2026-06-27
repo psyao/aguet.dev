@@ -22,6 +22,8 @@ class SkillGroupResource extends Resource
 
     protected static ?string $navigationLabel = 'Compétences';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Taxonomies';
+
     protected static ?string $modelLabel = 'groupe de compétences';
 
     protected static ?string $pluralModelLabel = 'groupes de compétences';

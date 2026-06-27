@@ -24,6 +24,8 @@ class ManageSiteContent extends Page
 
     protected static ?string $navigationLabel = 'Contenu du site';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Contenu';
+
     protected static ?int $navigationSort = -1;
 
     protected static ?string $title = 'Contenu éditorial';

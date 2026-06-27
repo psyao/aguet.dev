@@ -22,6 +22,8 @@ class TagResource extends Resource
 
     protected static ?string $navigationLabel = 'Tags';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Taxonomies';
+
     protected static ?string $modelLabel = 'tag';
 
     protected static ?string $pluralModelLabel = 'tags';
