@@ -5,8 +5,13 @@ name: Deploy
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
+# Gated on CI: deploy only fires after the CI workflow completes on main, and the
+# build job below short-circuits unless that run went green. Keeps a red test
+# suite from shipping.
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [ main ]
 
 # Least privilege for GITHUB_TOKEN across every job.
@@ -26,6 +31,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Skip the whole pipeline when CI failed/cancelled — deploy and notify both
+    # need build, so they cascade off too.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@f808768d1510423e83855289c910610ca9b43176 # v2.17.0
@@ -39,7 +47,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event.workflow_run.head_sha }}
           persist-credentials: false   # don't leave GITHUB_TOKEN on disk for dep code
 
       - name: Setup environment & build assets
@@ -176,10 +184,10 @@ jobs:
         with:
           title: ${{ (needs.build.result == 'success' && needs.deploy.result == 'success') && '✅ Deploy successful' || '❌ Deploy failed' }}
           color: ${{ (needs.build.result == 'success' && needs.deploy.result == 'success') && '#36a64f' || '#e01e5a' }}
-          sha: ${{ github.sha }}
-          branch: ${{ github.ref_name }}
+          sha: ${{ github.event.workflow_run.head_sha }}
+          branch: ${{ github.event.workflow_run.head_branch }}
           repo: ${{ github.repository }}
           run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          commit_url: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+          commit_url: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha }}
           webhook_url: ${{ secrets.KCHAT_WEBHOOK_URL }}
           context: production
