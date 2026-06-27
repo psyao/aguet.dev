@@ -3,11 +3,15 @@
 namespace App\Filament\Pages;
 
 use App\Support\DatabaseDumper;
+use App\Support\DatabaseRestorer;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 class DatabaseBackup extends Page
 {
@@ -28,6 +32,23 @@ class DatabaseBackup extends Page
                 ->label('Télécharger le dump')
                 ->icon(Heroicon::ArrowDownTray)
                 ->action(fn (): StreamedResponse => $this->download()),
+
+            Action::make('restore')
+                ->label('Restaurer un dump')
+                ->icon(Heroicon::ArrowUpTray)
+                ->color('danger')
+                ->schema([
+                    FileUpload::make('dump')
+                        ->label('Fichier .sql')
+                        ->acceptedFileTypes(['application/sql', 'text/plain', 'application/octet-stream'])
+                        ->storeFiles(false)
+                        ->required(),
+                ])
+                ->requiresConfirmation()
+                ->modalHeading('Restaurer la base de données')
+                ->modalDescription('Écrase TOUTE la base actuelle. Ton compte admin est préservé. Action irréversible.')
+                ->modalSubmitActionLabel('Écraser et restaurer')
+                ->action(fn (array $data) => $this->restore($data)),
         ];
     }
 
@@ -37,8 +58,31 @@ class DatabaseBackup extends Page
         $name = config('database.connections.'.config('database.default').'.database')
             .'-'.now()->format('Y-m-d-Hi').'.sql';
 
-        return response()->streamDownload(fn () => print($sql), $name, [
+        return response()->streamDownload(fn () => print ($sql), $name, [
             'Content-Type' => 'application/sql',
         ]);
+    }
+
+    /** @param array{dump: mixed} $data */
+    private function restore(array $data): void
+    {
+        $upload = is_array($data['dump']) ? reset($data['dump']) : $data['dump'];
+
+        try {
+            app(DatabaseRestorer::class)->restore($upload->get(), auth()->user());
+        } catch (Throwable $e) {
+            Notification::make()
+                ->title('Échec de la restauration')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        Notification::make()
+            ->title('Base restaurée')
+            ->success()
+            ->send();
     }
 }
