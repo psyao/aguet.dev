@@ -105,7 +105,7 @@ main{padding:0 0 30px}
 .hero .who-out b{color:var(--color-accent)}
 .hero h1{font-weight:700;font-size:var(--hsize);line-height:1.08;letter-spacing:-.02em;color:var(--color-fg);margin:6px 0 0;max-width:18ch}
 .hero h1 em{font-style:normal;color:var(--color-accent)}
-.hero .sub{color:var(--color-muted);font-size:clamp(14px,1.6vw,17px);margin-top:20px;max-width:60ch}
+.hero .sub{color:var(--color-muted);font-size:clamp(15px,1.6vw,17px);margin-top:20px;max-width:60ch}
 .hero .sub::before{content:"# ";color:var(--color-dim)}
 .kv{margin-top:26px;display:grid;grid-template-columns:max-content 1fr;gap:5px 22px;font-size:13px;max-width:560px}
 .kv dt{color:var(--color-dim)}
