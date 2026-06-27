@@ -271,13 +271,71 @@ document.addEventListener('alpine:init', () => {
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     },
   });
+
+  // Statusbar: live vim-mode pill (palette trigger) + commit-popover toggle.
+  // The popover CONTENT is server-rendered Blade; this only flips visibility
+  // and reflects the current "mode".
+  Alpine.data('statusbar', () => ({
+    popover: false,
+    _sel: false,
+    _insert: false,
+    _onSel: null, _onFocusIn: null, _onFocusOut: null,
+
+    init() {
+      this._onSel = () => {
+        const s = window.getSelection();
+        const txt = s ? s.toString().trim() : '';
+        let inUI = false;
+        if (txt && s && s.anchorNode) {
+          const el = s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement;
+          if (el && el.closest('#cmdk, #contact-modal-panel')) inUI = true;
+        }
+        this._sel = !!txt && !inUI;
+      };
+      this._onFocusIn = (e) => {
+        this._insert = !!(e.target && e.target.closest && e.target.closest('input,textarea,select,[contenteditable]'));
+      };
+      this._onFocusOut = () => { this._insert = false; };
+      document.addEventListener('selectionchange', this._onSel);
+      document.addEventListener('focusin', this._onFocusIn);
+      document.addEventListener('focusout', this._onFocusOut);
+    },
+
+    destroy() {
+      document.removeEventListener('selectionchange', this._onSel);
+      document.removeEventListener('focusin', this._onFocusIn);
+      document.removeEventListener('focusout', this._onFocusOut);
+    },
+
+    get mode() {
+      const cmdk = window.Alpine && window.Alpine.store('cmdk');
+      if (cmdk && cmdk.isOpen) return 'COMMAND';
+      if (this._insert) return 'INSERT';
+      if (this._sel) return 'VISUAL';
+      return 'NORMAL';
+    },
+  }));
 });
 
-// Global ⌘K / Ctrl-K shortcut (Alpine is up by the time a key is pressed).
+// Global shortcuts: ⌘K / Ctrl-K toggles the palette; ':' opens it (vim reflex).
 document.addEventListener('keydown', (e) => {
+  const cmdk = window.Alpine && window.Alpine.store('cmdk');
+  if (!cmdk) return;
+
   if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
-    if (!window.Alpine || !window.Alpine.store('cmdk')) return;
     e.preventDefault();
-    window.Alpine.store('cmdk').toggle();
+    cmdk.toggle();
+    return;
+  }
+
+  // ':' is a bare keystroke — ignore while typing or when a layer is already open.
+  // shiftKey is allowed (':' needs Shift on many layouts); meta/ctrl/alt are not.
+  if (e.key === ':' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    const tgt = e.target;
+    if (tgt && tgt.closest && (tgt.matches('input,textarea,select') || tgt.closest('[contenteditable]'))) return;
+    const contact = window.Alpine.store('contact');
+    if (cmdk.isOpen || (contact && contact.isOpen)) return;
+    e.preventDefault();
+    cmdk.open();
   }
 });
