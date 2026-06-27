@@ -1,30 +1,31 @@
 <?php
 
-namespace Tests\Unit;
-
 use App\Support\Content;
-use PHPUnit\Framework\TestCase;
 
-class ContentTest extends TestCase
-{
-    public function test_hero_title_converts_bold_to_accent_and_newline_to_break(): void
-    {
-        $html = (string) Content::heroTitle("Développeur,\nà dominante **back-end**.");
+it('renders hero accent from markdown italic', function () {
+    expect((string) Content::heroTitle('*x*'))->toContain('<em>x</em>');
+});
 
-        $this->assertStringContainsString('<br', $html);
-        $this->assertStringContainsString('<em>back-end</em>', $html);
-    }
+it('renders hero bold from markdown bold', function () {
+    expect((string) Content::heroTitle('**x**'))->toContain('<strong>x</strong>');
+});
 
-    public function test_hero_title_escapes_html(): void
-    {
-        $html = (string) Content::heroTitle('<script>alert(1)</script>');
+it('converts hero newlines to br', function () {
+    expect((string) Content::heroTitle("a\nb"))->toContain('<br');
+});
 
-        $this->assertStringNotContainsString('<script>', $html);
-        $this->assertStringContainsString('&lt;script&gt;', $html);
-    }
+it('strips raw html in hero title', function () {
+    expect((string) Content::heroTitle('<script>alert(1)</script>'))
+        ->not->toContain('<script');
+});
 
-    public function test_hero_title_handles_null(): void
-    {
-        $this->assertSame('', (string) Content::heroTitle(null));
-    }
-}
+it('renders inline markdown without a paragraph wrapper', function () {
+    $html = (string) Content::md('*x*');
+    expect($html)->toContain('<em>x</em>')
+        ->and($html)->not->toContain('<p>');
+});
+
+it('handles null safely', function () {
+    expect((string) Content::md(null))->toBe('')
+        ->and((string) Content::heroTitle(null))->toBe('');
+});
