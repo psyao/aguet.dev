@@ -31,7 +31,7 @@
                     </template>
                 </div>
             </template>
-            <div class="cmdk-empty" x-show="$store.cmdk.filtered.length === 0">— {{ __('site.cmd.empty') }} —</div>
+            <div class="cmdk-empty" x-show="$store.cmdk.filtered.length === 0 && !$store.cmdk.commandMode">— {{ __('site.cmd.empty') }} —</div>
         </div>
         <div class="cmdk-foot">
             <span><b>↑↓</b> {{ __('site.cmd.hint_nav') }}</span>

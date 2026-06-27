@@ -175,9 +175,23 @@ document.addEventListener('alpine:init', () => {
       this.items = out;
     },
 
+    // A query starting with ':' is vim command-line mode, not fuzzy search.
+    get commandMode() { return this.query.trim().toLowerCase().startsWith(':'); },
+
+    // `:help` / `:h` lists the eggs as ordinary palette rows (reuses list UI).
+    get helpRows() {
+      const g = t('cmd.actions', 'Actions');
+      return ['help.motions', 'help.jumps', 'help.excmd', 'help.konami'].map((k, i) => ({
+        g, label: t(k, k), hint: '', run: () => this.close(), _i: i,
+      }));
+    },
+
     get filtered() {
-      const q = this.query.trim().toLowerCase();
-      const list = q ? this.items.filter((c) => (c.label + ' ' + c.hint + ' ' + c.g).toLowerCase().includes(q)) : this.items;
+      const raw = this.query.trim().toLowerCase();
+      if (raw.startsWith(':')) {
+        return (raw === ':help' || raw === ':h') ? this.helpRows : [];
+      }
+      const list = raw ? this.items.filter((c) => (c.label + ' ' + c.hint + ' ' + c.g).toLowerCase().includes(raw)) : this.items;
       return list.map((c, i) => ({ ...c, _i: i }));
     },
 
@@ -192,9 +206,9 @@ document.addEventListener('alpine:init', () => {
       return out;
     },
 
-    open() {
+    open(seed = '') {
       if (!this.items.length) this.build();
-      this.query = '';
+      this.query = seed;
       this.active = 0;
       this.isOpen = true;
       window.Alpine.nextTick(() => { const i = document.getElementById('cmdk-input'); if (i) i.focus(); });
@@ -206,7 +220,37 @@ document.addEventListener('alpine:init', () => {
       const n = this.filtered.length; if (!n) return;
       this.active = (this.active + d + n) % n;
     },
-    enter() { const f = this.filtered; if (f[this.active]) this.run(f[this.active]); },
+    enter() {
+      if (this.commandMode) {
+        // `:help`/`:h` populate `filtered` with selectable help rows — Enter runs
+        // the active one (its run = close), so arrow-select + Enter works. Every
+        // other ':' command has empty `filtered`, so fall through to execEx.
+        const f = this.filtered;
+        if (f.length) { this.run(f[this.active]); return; }
+        this.execEx(this.query.trim().toLowerCase());
+        return;
+      }
+      const f = this.filtered; if (f[this.active]) this.run(f[this.active]);
+    },
+
+    // Vim ex-commands. Always close the palette first so the statusbar echo
+    // (z-index 30) isn't hidden behind the palette/backdrop (z-index 100).
+    // Note: `:help`/`:h` never reach here — their non-empty `filtered` is handled
+    // by enter() above.
+    execEx(cmd) {
+      const vim = window.Alpine.store('vim');
+      const say = (m) => { this.close(); if (vim) vim.flash(m); };
+      switch (cmd) {
+        case ':q': case ':quit':
+          say(t('cmd.q', 'E37: No write since last change (add ! to override)')); break;
+        case ':q!':
+          this.close(); break;
+        case ':wq': case ':x': case ':w':
+          say(t('cmd.wq', '"aguet.dev" written — nothing to save')); break;
+        default:
+          say(t('cmd.e492', 'E492: Not an editor command: ') + cmd.slice(1)); break;
+      }
+    },
   });
 
   // Vim command-line echo: ex-commands flash a transient message here, shown
@@ -348,6 +392,6 @@ document.addEventListener('keydown', (e) => {
     const contact = window.Alpine.store('contact');
     if (cmdk.isOpen || (contact && contact.isOpen)) return;
     e.preventDefault();
-    cmdk.open();
+    cmdk.open(':');
   }
 });
