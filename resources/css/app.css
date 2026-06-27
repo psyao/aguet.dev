@@ -207,6 +207,8 @@ main{padding:0 0 30px}
 .statusbar .seg.grow{flex:1;min-width:8px}
 .statusbar .seg.r{background:color-mix(in srgb,var(--color-accent-ink) 12%,transparent)}
 .statusbar .seg b{font-weight:700}
+.statusbar a.seg{color:inherit;text-decoration:none;cursor:pointer}
+.statusbar a.seg:hover{background:color-mix(in srgb,var(--color-accent-ink) 22%,transparent)}
 
 /* ───── COMMAND PALETTE ───── */
 .cmdk{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:13vh}

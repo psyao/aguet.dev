@@ -103,6 +103,7 @@ return [
 
     'footer' => [
         'note' => 'Designed and built by Steve Aguet',
+        'switch' => 'View the site in French',
     ],
 
 ];

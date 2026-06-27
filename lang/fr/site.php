@@ -104,6 +104,7 @@ return [
 
     'footer' => [
         'note' => 'Conçu et développé par Steve Aguet',
+        'switch' => 'Voir le site en anglais',
     ],
 
 ];
