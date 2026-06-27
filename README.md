@@ -128,7 +128,7 @@ new one inline, and the order you pick them in is the order they display.
 The site is server-rendered Blade with a thin Alpine.js layer for the terminal feel. It is
 built as **progressive enhancement**: every section renders and every link works with
 JavaScript disabled — the script only adds the boot animation, the live clock,
-click-to-copy, and the ⌘K palette.
+click-to-copy, the ⌘K palette, and the status bar's live vim-mode indicator.
 
 ### Request flow
 
@@ -143,9 +143,10 @@ and ordered skill groups, each with their tags eager-loaded.
 
 `layouts/app.blade.php` is the shell: window chrome (traffic-light dots, terminal title, the
 ⌘K button, the FR/EN switch), the section `tabs`, the `main` content, a tmux-style
-`statusbar` (mode, branch, live clock, locale, year), and the command-palette markup. The
-current locale's UI strings and the palette data (projects, contact links) are injected once
-as `window.__AGUET`, so the script stays locale-agnostic.
+`statusbar` (a reactive vim-mode pill that also opens the palette, a branch label with a
+deployed-commit popover, a command-line echo, the live clock, locale, year), and the
+command-palette markup. The current locale's UI strings and the palette data (projects,
+contact links) are injected once as `window.__AGUET`, so the script stays locale-agnostic.
 
 ### Alpine, from Livewire
 
@@ -158,9 +159,20 @@ event against that shared instance (no `import`, no `Alpine.start()`). The compo
 - **`clock`** — the status-bar clock, `Europe/Zurich`, refreshed every 15 s.
 - **`copy`** — click-to-copy a contact value, with a transient « copied » state and an
   `execCommand` fallback when the clipboard API is unavailable.
+- **`statusbar`** — the tmux-style bottom bar. A reactive vim-mode pill reflects the current
+  state (NORMAL / INSERT / VISUAL / COMMAND, derived from palette, text-selection and focus)
+  and doubles as the palette trigger; the branch label opens a popover showing the deployed
+  commit (short SHA → GitHub, subject, relative date) read from the generated
+  `config/build_info.php` (written at deploy time, see [DEPLOY.md](DEPLOY.md)).
 - **`$store.cmdk`** — the ⌘K command palette: it builds a grouped item list (navigation,
-  projects, actions), fuzzy-filters it, and supports keyboard navigation. A global `⌘K` /
-  `Ctrl-K` listener toggles it.
+  projects, actions), fuzzy-filters it, and supports keyboard navigation. Typing `:` switches
+  it into a vim-style command line (`:q`, `:wq`, `:help`, …). A global `⌘K` / `Ctrl-K` listener
+  toggles it; a bare `:` opens it straight into command mode.
+- **`$store.vim`** — a transient command-line echo (vim-style messages) rendered in the
+  status bar.
+
+The page also rewards anyone who treats it like an actual editor — a few touches are left
+unlabelled for the curious to find. Reading the page source is a fair place to start.
 
 ### The boot intro
 
