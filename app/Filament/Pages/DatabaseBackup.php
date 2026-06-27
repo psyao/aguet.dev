@@ -40,7 +40,9 @@ class DatabaseBackup extends Page
                 ->schema([
                     FileUpload::make('dump')
                         ->label('Fichier .sql')
-                        ->acceptedFileTypes(['application/sql', 'text/plain', 'application/octet-stream'])
+                        // No MIME filter: .sql has no reliable MIME type (browsers
+                        // report it empty or application/x-sql), so FilePond would
+                        // grey out the file. Admin-only + confirmation is the guard.
                         ->storeFiles(false)
                         ->required(),
                 ])
