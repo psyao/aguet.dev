@@ -13,6 +13,8 @@
      the Blade layout for the current locale only.
    The page is fully functional without this script (progressive enhancement). */
 
+import { initEasterEggs } from './easter-eggs';
+
 const CFG = window.__AGUET || { locale: 'fr', altUrl: '/en', i18n: {}, projects: [], contact: {} };
 const t = (k, fallback) => (CFG.i18n && CFG.i18n[k] != null ? CFG.i18n[k] : (fallback || ''));
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -395,3 +397,6 @@ document.addEventListener('keydown', (e) => {
     cmdk.open(':');
   }
 });
+
+// Vim easter eggs: j/k section motions + konami matrix rain.
+initEasterEggs();
