@@ -26,6 +26,10 @@
             @unless($shot ?? false) @click="$store.cmdk.toggle()" x-text="mode" @endunless
             aria-label="{{ __('site.footer.palette') }}">NORMAL</button>
 
+    @unless($shot ?? false)
+    <span class="seg cmd-echo" x-show="$store.vim.msg" x-cloak x-text="$store.vim.msg"></span>
+    @endunless
+
     <span class="seg hide branch"
           @unless($shot ?? false) @click.outside="popover = false" @keydown.escape="popover = false" @endunless>
         <button type="button" class="branch-trigger"

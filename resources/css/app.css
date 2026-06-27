@@ -204,6 +204,7 @@ main{padding:0 0 30px}
 .statusbar{position:sticky;bottom:0;z-index:30;display:flex;align-items:stretch;background:var(--color-accent);color:var(--color-accent-ink);font-size:12px;font-weight:500;height:30px}
 .statusbar .seg{display:flex;align-items:center;gap:6px;padding:0 13px;white-space:nowrap}
 .statusbar .seg.mode{background:var(--color-accent-ink);color:var(--color-accent);font-weight:700;letter-spacing:.08em}
+.statusbar .seg.cmd-echo{max-width:min(60vw,440px);overflow:hidden;text-overflow:ellipsis;font-weight:600}
 .statusbar .seg.grow{flex:1;min-width:8px}
 .statusbar .seg.r{background:color-mix(in srgb,var(--color-accent-ink) 12%,transparent)}
 .statusbar .seg b{font-weight:700}

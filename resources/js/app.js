@@ -209,6 +209,18 @@ document.addEventListener('alpine:init', () => {
     enter() { const f = this.filtered; if (f[this.active]) this.run(f[this.active]); },
   });
 
+  // Vim command-line echo: ex-commands flash a transient message here, shown
+  // in the statusbar (the bottom line, like vim's command-line). Auto-clears.
+  Alpine.store('vim', {
+    msg: '',
+    _t: null,
+    flash(m) {
+      this.msg = m;
+      clearTimeout(this._t);
+      this._t = setTimeout(() => { this.msg = ''; }, 2500);
+    },
+  });
+
   // Contact modal: accessible dialog shell around the <livewire:contact-form>.
   // Mirrors cmdk but adds what cmdk lacks — a real focus trap, focus return to
   // the trigger, and an inert background — since Livewire's bundled Alpine has
