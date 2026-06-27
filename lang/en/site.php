@@ -104,6 +104,9 @@ return [
     'footer' => [
         'note' => 'Designed and built by Steve Aguet',
         'switch' => 'View the site in French',
+        'palette' => 'Open the command palette',
+        'commit' => 'Latest deployment',
+        'repo' => 'view repository',
     ],
 
 ];

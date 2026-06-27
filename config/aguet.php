@@ -24,4 +24,13 @@ return [
     'locales' => ['fr', 'en'],
     'default_locale' => 'fr',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Source repository
+    |--------------------------------------------------------------------------
+    | Trusted constant (never DB content) used to build the footer commit/repo
+    | links. Override per-environment with AGUET_REPO_URL if the repo moves.
+    */
+    'repo_url' => env('AGUET_REPO_URL', 'https://github.com/psyao/aguet.dev'),
+
 ];

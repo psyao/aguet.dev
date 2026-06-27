@@ -105,6 +105,9 @@ return [
     'footer' => [
         'note' => 'Conçu et développé par Steve Aguet',
         'switch' => 'Voir le site en anglais',
+        'palette' => 'Ouvrir la palette de commandes',
+        'commit' => 'Dernier déploiement',
+        'repo' => 'voir le dépôt',
     ],
 
 ];
