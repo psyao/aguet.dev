@@ -99,6 +99,14 @@ return [
         'hint_nav' => 'navigate',
         'hint_open' => 'open',
         'hint_close' => 'close',
+        'wq' => '"aguet.dev" written 💾 — static site, nothing to save',
+    ],
+
+    'help' => [
+        'motions' => 'j / k — move between sections',
+        'jumps' => 'gg / G — jump to top / bottom',
+        'excmd' => ':q  :wq  :help — ex-commands',
+        'konami' => '↑↑↓↓←→←→ B A — you know what to do',
     ],
 
     'footer' => [

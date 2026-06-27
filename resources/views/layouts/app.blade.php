@@ -24,6 +24,11 @@
             'nav.contact' => __('site.nav.contact'),
             'contact.copy' => __('site.contact.copy'),
             'contact.copied' => __('site.contact.copied'),
+            'cmd.wq' => __('site.cmd.wq'),
+            'help.motions' => __('site.help.motions'),
+            'help.jumps' => __('site.help.jumps'),
+            'help.excmd' => __('site.help.excmd'),
+            'help.konami' => __('site.help.konami'),
         ],
         'projects' => $projects->map(fn ($p) => [
             'label' => $p->name,

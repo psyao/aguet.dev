@@ -71,4 +71,38 @@ class StatusbarTest extends TestCase
             ->assertOk()
             ->assertDontSee('x-data="statusbar"', false);
     }
+
+    public function test_exposes_vim_easter_egg_i18n_keys(): void
+    {
+        foreach (['/', '/en'] as $url) {
+            $html = $this->get($url)->assertOk()->getContent();
+
+            // Extract the inline `window.__AGUET = {...};</script>` payload.
+            $this->assertSame(1, preg_match('#window\.__AGUET = (.*?);</script>#s', $html, $m));
+            $cfg = json_decode($m[1], true);
+
+            foreach (['cmd.wq', 'help.motions', 'help.jumps', 'help.excmd', 'help.konami'] as $key) {
+                $val = $cfg['i18n'][$key] ?? '';
+                $this->assertNotSame('', $val, "missing i18n key {$key} for {$url}");
+                // A missing lang entry makes __('site.x') return the literal
+                // 'site.x' — non-empty, so guard against that false pass too.
+                $this->assertNotSame("site.{$key}", $val, "untranslated i18n key {$key} for {$url}");
+            }
+        }
+    }
+
+    public function test_renders_vim_command_line_echo_segment(): void
+    {
+        $this->get('/')->assertOk()->assertSee('x-text="$store.vim.msg"', false);
+    }
+
+    public function test_screenshot_mode_omits_echo_segment(): void
+    {
+        $this->get('/?screenshot=1')->assertOk()->assertDontSee('x-text="$store.vim.msg"', false);
+    }
+
+    public function test_palette_empty_state_hidden_in_command_mode(): void
+    {
+        $this->get('/')->assertOk()->assertSee('!$store.cmdk.commandMode', false);
+    }
 }

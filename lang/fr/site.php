@@ -100,6 +100,14 @@ return [
         'hint_nav' => 'naviguer',
         'hint_open' => 'ouvrir',
         'hint_close' => 'fermer',
+        'wq' => '"aguet.dev" écrit 💾 — site statique, rien à sauvegarder',
+    ],
+
+    'help' => [
+        'motions' => 'j / k — naviguer entre les sections',
+        'jumps' => 'gg / G — aller en haut / en bas',
+        'excmd' => ':q  :wq  :help — commandes ex',
+        'konami' => '↑↑↓↓←→←→ B A — tu sais quoi faire',
     ],
 
     'footer' => [
