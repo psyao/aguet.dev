@@ -23,7 +23,7 @@ class SkillGroupTest extends TestCase
         $this->assertSame('Cœur Laravel', $groups->first()->getTranslation('title', 'fr'));
         $this->assertSame('Laravel core', $groups->first()->getTranslation('title', 'en'));
         $this->assertSame(
-            ['PHP', 'Laravel', 'Filament', 'Eloquent', 'Blade'],
+            ['PHP', 'Laravel', 'Filament', 'Eloquent', 'Blade', 'Livewire'],
             $groups->first()->tags->pluck('name')->all(),
         );
     }

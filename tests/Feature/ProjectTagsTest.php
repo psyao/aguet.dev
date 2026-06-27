@@ -56,18 +56,18 @@ class ProjectTagsTest extends TestCase
         $this->seed(ProjectSeeder::class);
         $this->seed(ProjectSeeder::class);
 
-        // Laravel, SSO Entra, Dataverse, a11y, API, XML, FTP
-        $this->assertSame(7, Tag::count());
+        // 15 distinct tags across the 7 seeded projects.
+        $this->assertSame(15, Tag::count());
 
         $cvci = Project::where('slug', 'cvci')->firstOrFail();
         $this->assertSame(
-            ['Laravel', 'SSO Entra', 'Dataverse', 'a11y'],
+            ['Laravel', 'MS Entra', 'MS Graph', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'],
             $cvci->tags->pluck('name')->all(),
         );
 
         $terreEtNature = Project::where('slug', 'terre-et-nature')->firstOrFail();
         $this->assertSame(
-            ['XML', 'FTP', 'Laravel'],
+            ['WordPress', 'XML', 'Digitization', 'Blade'],
             $terreEtNature->tags->pluck('name')->all(),
         );
     }

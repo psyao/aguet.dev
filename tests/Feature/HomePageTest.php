@@ -62,8 +62,8 @@ class HomePageTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        // cvci's tags, distinctive to that card, in seeded position order.
-        $response->assertSeeInOrder(['SSO Entra', 'Dataverse', 'a11y'], false);
+        // cvci's tags, in seeded position order.
+        $response->assertSeeInOrder(['Laravel', 'MS Entra', 'MS Graph', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'], false);
     }
 
     public function test_contact_links_render_from_database(): void
