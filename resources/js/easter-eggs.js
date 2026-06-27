@@ -83,6 +83,91 @@ function initMotions() {
   });
 }
 
+const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const KONAMI = ['arrowup', 'arrowup', 'arrowdown', 'arrowdown',
+  'arrowleft', 'arrowright', 'arrowleft', 'arrowright', 'b', 'a'];
+
+let rainStop = null; // non-null while running (also the double-trigger guard)
+
+function accent() {
+  const v = getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim();
+  return v || '#7aa46b';
+}
+
+function startRain() {
+  if (rainStop) return; // already running
+
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;z-index:150;pointer-events:none';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  let cols = [];
+  function size() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols = new Array(Math.ceil(canvas.width / 14)).fill(0);
+  }
+  size();
+  window.addEventListener('resize', size);
+
+  const glyphs = 'アイウエオカキクabcdef01{}[]<>/;:=+-$#'.split('');
+  const color = accent();
+  let raf = 0;
+  function draw() {
+    ctx.fillStyle = 'rgba(3,7,5,0.08)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = color;
+    ctx.font = '14px monospace';
+    cols.forEach((y, i) => {
+      const ch = glyphs[Math.floor((i * 7 + y) % glyphs.length)];
+      ctx.fillText(ch, i * 14, y * 14);
+      cols[i] = y * 14 > canvas.height && Math.abs((i * 13) % 7) > 4 ? 0 : y + 1;
+    });
+    raf = requestAnimationFrame(draw);
+  }
+  raf = requestAnimationFrame(draw);
+
+  let autoTimer = null;
+  function stop() {
+    if (!rainStop) return;
+    rainStop = null;
+    cancelAnimationFrame(raf);
+    window.removeEventListener('resize', size);
+    window.removeEventListener('keydown', onKey);
+    clearTimeout(autoTimer);
+    canvas.remove();
+  }
+  function onKey() { stop(); }
+
+  rainStop = stop;
+  // Attach the dismiss listener on the next tick so the keydown that COMPLETED
+  // the konami sequence doesn't immediately tear the canvas back down.
+  setTimeout(() => { window.addEventListener('keydown', onKey); }, 0);
+  autoTimer = setTimeout(stop, 8000); // safety dismiss for pointer-only users
+}
+
+function initKonami() {
+  let buf = [];
+  document.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) { buf = []; return; }
+    if (blocked(e)) { buf = []; return; }
+    buf.push(e.key.toLowerCase());
+    if (buf.length > KONAMI.length) buf.shift();
+    if (buf.length === KONAMI.length && KONAMI.every((k, i) => buf[i] === k)) {
+      buf = [];
+      if (reduce) {
+        const vim = window.Alpine && window.Alpine.store('vim');
+        if (vim) vim.flash('↑↑↓↓←→←→BA 🎉');
+        return;
+      }
+      startRain();
+    }
+  });
+}
+
 export function initEasterEggs() {
   initMotions();
+  initKonami();
 }
