@@ -14,7 +14,7 @@
             <span class="type arg" data-type="cat headline.txt">cat headline.txt</span>
         </p>
         <h1 class="boot-hide">{!! \App\Support\Content::heroTitle($content->hero_title) !!}</h1>
-        <p class="sub boot-hide">{{ $content->hero_subtitle }}</p>
+        <p class="sub boot-hide">{!! \App\Support\Content::md($content->hero_subtitle) !!}</p>
 
         <dl class="kv boot-hide">
             <dt>name</dt><dd>Steve Aguet</dd>

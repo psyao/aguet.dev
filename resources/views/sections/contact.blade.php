@@ -13,7 +13,7 @@
     <div class="wrap">
         <h2 class="visually-hidden">{{ __('site.sections.contact') }}</h2>
         <p class="cmd"><span class="prompt">steve@aguet ~ %</span> <span class="arg">cat contact.json</span></p>
-        <p class="lead">{{ $content->contact_lead }}</p>
+        <p class="lead">{!! \App\Support\Content::md($content->contact_lead) !!}</p>
 
         <div class="json">
             <div><span class="s">{</span></div>

@@ -8,7 +8,7 @@
         <div class="feat-grid">
             <div>
                 <div class="pname">{{ $project->name }}</div>
-                <p class="desc">{{ $project->summary }}</p>
+                <p class="desc">{!! \App\Support\Content::md($project->summary) !!}</p>
                 <div class="stack">
                     @foreach ($project->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
                 </div>
@@ -35,7 +35,7 @@
         <div class="stack">
             @foreach ($project->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
         </div>
-        <p class="desc">{{ $project->summary }}</p>
+        <p class="desc">{!! \App\Support\Content::md($project->summary) !!}</p>
         @if ($project->url)
             <a class="open" href="{{ $project->url }}" target="_blank" rel="noopener">
                 <span>{{ __('site.projects.visit') }}</span> <b>{{ $project->host() }}</b> <span class="arr">↗</span>
