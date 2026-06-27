@@ -70,7 +70,7 @@ class ManageSiteContent extends Page
                 Section::make('À propos')
                     ->schema([
                         MarkdownEditor::make('about_body')
-                            ->label('Texte (Markdown)')
+                            ->label('Texte')
                             ->disableToolbarButtons(['attachFiles'])
                             ->helperText('Markdown : laisser une ligne vide entre les paragraphes.')
                             ->translatable(),
