@@ -233,6 +233,25 @@ main{padding:0 0 30px}
 .cmdk-foot{display:flex;gap:18px;padding:10px 16px;border-top:1px solid var(--color-line);font-size:11px;color:var(--color-dim)}
 .cmdk-foot b{color:var(--color-muted);font-weight:500}
 
+/* ───── STATUSBAR INTERACTIONS ───── */
+/* pill is a button now; branch segment hosts the commit popover. */
+.statusbar button.seg.mode{border:0;font:inherit;cursor:pointer}
+.statusbar .seg.branch{position:relative;padding:0}
+.statusbar .branch-trigger{display:flex;align-items:center;gap:6px;height:100%;padding:0 13px;
+  border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.statusbar .branch-trigger:hover{background:color-mix(in srgb,var(--color-accent-ink) 14%,transparent)}
+.sb-pop{position:absolute;bottom:calc(100% + 8px);left:0;z-index:40;min-width:230px;
+  background:var(--color-panel);border:1px solid var(--color-line);border-radius:9px;
+  box-shadow:0 18px 50px -12px rgba(0,0,0,.7);padding:10px 12px;
+  display:flex;flex-direction:column;gap:6px;color:var(--color-fg);font-size:12.5px;cursor:default}
+.sb-pop-row{margin:0}
+.sb-pop-sha{font-family:var(--mono);color:var(--color-accent);text-decoration:none}
+.sb-pop-sha:hover{text-decoration:underline}
+.sb-pop-msg{color:var(--color-fg)}
+.sb-pop-date{color:var(--color-dim);font-size:11.5px}
+.sb-pop-repo{color:var(--color-muted);text-decoration:none;font-size:11.5px}
+.sb-pop-repo:hover{text-decoration:underline}
+
 /* ───── CONTACT MODAL ───── */
 .contact-modal{position:fixed;inset:0;z-index:110;display:flex;align-items:flex-start;justify-content:center;padding:max(12vh,24px) 16px 24px;overflow-y:auto}
 .contact-modal-backdrop{position:fixed;inset:0;background:rgba(3,7,5,.66);backdrop-filter:blur(3px);opacity:0;transition:opacity .16s}
