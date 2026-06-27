@@ -124,7 +124,7 @@ main{padding:0 0 30px}
 
 /* ───── ABOUT + FASTFETCH ───── */
 .about-grid{margin-top:8px;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:start}
-.about .body{max-width:60ch;color:var(--color-fg);font-size:15px;line-height:1.7}
+.about .body{color:var(--color-fg);font-size:15px;line-height:1.7}
 .about .body p+p{margin-top:1em}
 .neofetch{border:1px solid var(--color-line);border-radius:8px;background:var(--color-panel);padding:22px 24px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
 .neofetch .logo{font-family:var(--mono);font-size:11px;line-height:1;color:var(--color-accent);background:linear-gradient(180deg,var(--color-accent),color-mix(in srgb,var(--color-accent) 45%,#0a0a0a));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:pre;letter-spacing:.5px}
@@ -185,7 +185,7 @@ main{padding:0 0 30px}
 .pcard.full{grid-column:1 / -1}
 
 /* ───── CONTACT ───── */
-.contact .lead{color:var(--color-muted);font-size:15px;margin:6px 0 0;max-width:62ch}
+.contact .lead{color:var(--color-muted);font-size:15px;margin:6px 0 0}
 .contact .lead::before{content:"# ";color:var(--color-dim)}
 .contact .json{margin-top:16px;border:1px solid var(--color-line);border-radius:8px;background:var(--color-panel);padding:22px 26px;font-size:14px;max-width:640px;line-height:2}
 .contact .json .k{color:var(--color-accent)}
