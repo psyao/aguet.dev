@@ -5,14 +5,14 @@ runs:
   using: "composite"
   steps:
     - name: Setup PHP
-      uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1 # 2.36.0
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
       with:
         php-version: '8.5'
         extensions: intl, exif, imagick, bcmath, gd, zip
         tools: composer:v2
 
     - name: Cache Composer dependencies
-      uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: vendor
         key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -37,7 +37,7 @@ runs:
       run: composer audit --no-dev
 
     - name: Install pnpm
-      uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
       # No `version:` on purpose — it is read from the "packageManager" field in
       # package.json. Set e.g. "packageManager": "pnpm@11.x.y" so local and CI use
       # the identical pnpm. (Without that field, action-setup requires a version input.)
