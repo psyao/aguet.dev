@@ -4,7 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\SiteContent;
 use BackedEnum;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -44,14 +44,14 @@ class ManageSiteContent extends Page
             ->components([
                 Section::make('Hero')
                     ->schema([
-                        Textarea::make('hero_title')
+                        MarkdownEditor::make('hero_title')
                             ->label('Titre')
-                            ->rows(2)
-                            ->helperText('**mot** = accent vert · un retour à la ligne = saut de ligne.')
+                            ->toolbarButtons(['bold', 'italic', 'link'])
+                            ->helperText('*mot* = accent vert · **mot** = gras · un retour à la ligne = saut de ligne.')
                             ->translatable(),
-                        Textarea::make('hero_subtitle')
+                        MarkdownEditor::make('hero_subtitle')
                             ->label('Sous-titre')
-                            ->rows(2)
+                            ->toolbarButtons(['bold', 'italic', 'link'])
                             ->translatable(),
                         TextInput::make('hero_role')
                             ->label('Rôle (ligne « whoami »)')
@@ -69,18 +69,18 @@ class ManageSiteContent extends Page
 
                 Section::make('À propos')
                     ->schema([
-                        Textarea::make('about_body')
+                        MarkdownEditor::make('about_body')
                             ->label('Texte (Markdown)')
-                            ->rows(8)
+                            ->disableToolbarButtons(['attachFiles'])
                             ->helperText('Markdown : laisser une ligne vide entre les paragraphes.')
                             ->translatable(),
                     ]),
 
                 Section::make('Contact')
                     ->schema([
-                        Textarea::make('contact_lead')
+                        MarkdownEditor::make('contact_lead')
                             ->label('Accroche')
-                            ->rows(2)
+                            ->toolbarButtons(['bold', 'italic', 'link'])
                             ->translatable(),
                         TextInput::make('contact_email')
                             ->label('Email')

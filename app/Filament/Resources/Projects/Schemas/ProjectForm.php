@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\Projects\Schemas;
 
 use App\Filament\Forms\TagsSelect;
-use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -32,9 +32,9 @@ class ProjectForm
                             ->label('Rôle')
                             ->maxLength(255)
                             ->translatable(),
-                        Textarea::make('summary')
+                        MarkdownEditor::make('summary')
                             ->label('Résumé')
-                            ->rows(3)
+                            ->toolbarButtons(['bold', 'italic', 'link'])
                             ->maxLength(1000)
                             ->translatable(),
                     ]),

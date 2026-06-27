@@ -3,20 +3,30 @@
 namespace App\Support;
 
 use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 
 class Content
 {
+    private const MD_OPTIONS = [
+        'html_input' => 'strip',
+        'allow_unsafe_links' => false,
+    ];
+
     /**
-     * Render an editorial headline edited as plain text in Filament.
-     * Convention: **word** becomes an accent <em>, and newlines become <br>.
-     * The input is escaped first, so it is safe to echo as raw HTML.
+     * Render an editorial headline edited as Markdown in Filament.
+     * `*word*` becomes an accent <em>, `**word**` bold, newlines <br>.
+     * No <p> wrapper (inline), so it is valid inside <h1>.
      */
     public static function heroTitle(?string $text): HtmlString
     {
-        $html = e($text ?? '');
-        $html = preg_replace('/\*\*(.+?)\*\*/s', '<em>$1</em>', $html);
-        $html = nl2br($html, false);
+        $html = Str::inlineMarkdown($text ?? '', self::MD_OPTIONS);
 
-        return new HtmlString($html);
+        return new HtmlString(nl2br($html, false));
+    }
+
+    /** Render a one-line field as inline Markdown (no <p> wrapper). */
+    public static function md(?string $text): HtmlString
+    {
+        return new HtmlString(Str::inlineMarkdown($text ?? '', self::MD_OPTIONS));
     }
 }
