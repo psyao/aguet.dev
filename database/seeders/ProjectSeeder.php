@@ -9,7 +9,7 @@ use Illuminate\Database\Seeder;
 class ProjectSeeder extends Seeder
 {
     /**
-     * The four real projects (FR from the brief; EN translated).
+     * The real projects (FR authored; EN translated), snapshot of prod content.
      * CVCI is the flagship (featured). Order: featured first, then sort_order.
      */
     public function run(): void
@@ -23,14 +23,14 @@ class ProjectSeeder extends Seeder
                     'en' => 'Vaud Chamber of Commerce and Industry',
                 ],
                 'role' => [
-                    'fr' => 'Back-end · équipe de 3',
-                    'en' => 'Back-end · team of 3',
+                    'fr' => 'Full stack / Backend heavy',
+                    'en' => 'Full stack / Back-end heavy',
                 ],
                 'summary' => [
-                    'fr' => 'Portail institutionnel : SSO Microsoft Entra, synchronisation CRM Dataverse, forte exigence d’accessibilité.',
-                    'en' => 'Institutional portal: Microsoft Entra SSO, Dataverse CRM synchronization, strong accessibility requirements.',
+                    'fr' => 'Portail institutionnel, CMS et espace membres pour la CVCI, avec synchronisation bidirectionnelle au CRM Microsoft Dynamics.',
+                    'en' => 'Institutional portal, CMS and member area for the CVCI, with two-way Microsoft Dynamics CRM synchronisation.',
                 ],
-                'tags' => ['Laravel', 'SSO Entra', 'Dataverse', 'a11y'],
+                'tags' => ['Laravel', 'MS Entra', 'MS Graph', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'],
                 'url' => 'https://cvci.ch',
                 'featured' => true,
                 'sort_order' => 1,
@@ -39,55 +39,94 @@ class ProjectSeeder extends Seeder
             [
                 'slug' => 'animalia',
                 'name' => ['fr' => 'Animalia', 'en' => 'Animalia'],
-                'client' => ['fr' => 'Groupe Vaudoise', 'en' => 'Groupe Vaudoise'],
-                'role' => [
-                    'fr' => 'Seul dev back-end',
-                    'en' => 'Sole back-end dev',
-                ],
+                'client' => ['fr' => 'Vaudoise Assurance', 'en' => 'Vaudoise Assurance'],
+                'role' => ['fr' => 'Backend', 'en' => 'Backend'],
                 'summary' => [
-                    'fr' => 'Back-end de la première assurance santé animale suisse : logique métier, données, API.',
-                    'en' => 'Back-end of Switzerland’s first animal health insurance: business logic, data, API.',
+                    'fr' => 'Back-end de la première assurance santé animale suisse : devis, contrats, sinistres, exposés via API.',
+                    'en' => 'Back-end of Switzerland\'s first pet health insurance: quotes, contracts, claims, exposed through APIs.',
                 ],
-                'tags' => ['Laravel', 'API'],
+                'tags' => ['Laravel', 'API', 'AWS', 'Laravel Nova'],
                 'url' => 'https://animalia.ch',
                 'featured' => false,
                 'sort_order' => 2,
                 'is_published' => true,
             ],
             [
-                'slug' => 'vaud-rando',
-                'name' => ['fr' => 'Vaud Rando', 'en' => 'Vaud Rando'],
-                'client' => [
-                    'fr' => 'Association de randonnée · 2 400+ membres',
-                    'en' => 'Hiking association · 2,400+ members',
-                ],
-                'role' => ['fr' => 'Seul dev', 'en' => 'Sole dev'],
+                'slug' => 'atr-booking',
+                'name' => ['fr' => 'ATR Booking', 'en' => 'ATR Booking'],
+                'client' => ['fr' => 'After The Rain', 'en' => 'After The Rain'],
+                'role' => ['fr' => 'Backend', 'en' => 'Back-end'],
                 'summary' => [
-                    'fr' => 'Catalogue de randonnées, moteur de recherche, espace membre et back-office sur mesure.',
-                    'en' => 'Hike catalog, search engine, member area and a custom back-office.',
+                    'fr' => 'Système de réservation et de planification pour un centre de soins : agendas, prestations, salles, bons cadeaux et abonnements.',
+                    'en' => 'Booking and scheduling system for a care centre: calendars, services, rooms, gift vouchers and subscriptions.',
                 ],
-                'tags' => ['Laravel'],
-                'url' => 'https://vaud-rando.ch',
+                'tags' => ['Laravel', 'Filament', 'FullCalendar'],
                 'featured' => false,
                 'sort_order' => 3,
                 'is_published' => true,
             ],
             [
-                'slug' => 'terre-et-nature',
-                'name' => ['fr' => 'Terre & Nature', 'en' => 'Terre & Nature'],
-                'client' => ['fr' => 'Hebdomadaire', 'en' => 'Weekly newspaper'],
+                'slug' => 'cvci-125',
+                'name' => ['fr' => 'CVCI 125 ans', 'en' => 'CVCI 125 ans'],
+                'client' => [
+                    'fr' => 'Chambre vaudoise du commerce et de l\'industrie',
+                    'en' => 'Chambre vaudoise du commerce et de l\'industrie',
+                ],
                 'role' => [
-                    'fr' => 'Seul dev · intégration',
-                    'en' => 'Sole dev · integration',
+                    'fr' => 'Backend + Frontend',
+                    'en' => 'Back-end + Front-end',
                 ],
                 'summary' => [
-                    'fr' => 'Pipeline d’ingestion automatisé : flux XML + images via FTP → création d’articles.',
-                    'en' => 'Automated ingestion pipeline: XML feeds + images over FTP → article creation.',
+                    'fr' => 'Quiz interactif sur place pour les 125 ans de la CVCI : check-in par QR code, questions et lots.',
+                    'en' => 'On-site interactive quiz for the CVCI\'s 125th anniversary: QR-code check-in, questions and prizes.',
                 ],
-                'tags' => ['XML', 'FTP', 'Laravel'],
-                'url' => 'https://terrenature.ch',
+                'tags' => ['Laravel', 'Blade', 'Tailwind CSS', 'VueJS'],
                 'featured' => false,
                 'sort_order' => 4,
+                'is_published' => true,
+            ],
+            [
+                'slug' => 'montreux-noel-2023',
+                'name' => ['fr' => 'Montreux Noël 2023', 'en' => 'Montreux Noël 2023'],
+                'client' => ['fr' => 'Montreux Noël', 'en' => 'Montreux Noël'],
+                'role' => ['fr' => 'Fullstack', 'en' => 'Frontend + Backend'],
+                'summary' => [
+                    'fr' => 'Microsite jeu-concours du marché de Noël de Montreux 2023 : check-in par QR code, tirages au sort et lots des partenaires.',
+                    'en' => 'Prize-game microsite for the 2023 Montreux Christmas market: QR-code check-in, prize draws and partner prizes.',
+                ],
+                'tags' => ['Laravel', 'Filament', 'Livewire', 'Tailwind CSS'],
+                'featured' => false,
+                'sort_order' => 5,
+                'is_published' => true,
+            ],
+            [
+                'slug' => 'terre-et-nature',
+                'name' => ['fr' => 'Terre & Nature', 'en' => 'Terre & Nature'],
+                'client' => ['fr' => 'Terre & Nature', 'en' => 'Weekly newspaper'],
+                'role' => ['fr' => 'Frontend + Backend', 'en' => 'Frontend + Backend'],
+                'summary' => [
+                    'fr' => 'Digitalisation du magazine Terre & Nature avec import XML automatisé des contenus print.',
+                    'en' => 'Digitisation of the Terre & Nature magazine with automated XML import of print content.',
+                ],
+                'tags' => ['WordPress', 'XML', 'Digitization', 'Blade'],
+                'url' => 'https://terrenature.ch',
+                'featured' => false,
+                'sort_order' => 6,
+                'is_published' => true,
+            ],
+            [
+                'slug' => 'vaud-rando',
+                'name' => ['fr' => 'Vaud Rando', 'en' => 'Vaud Rando'],
+                'client' => ['fr' => 'Vaud Rando', 'en' => 'Vaud Rando'],
+                'role' => ['fr' => 'Frontend + Backend', 'en' => 'Frontend + Backend'],
+                'summary' => [
+                    'fr' => 'Plateforme associative pour Vaud Rando : catalogue de randonnées, inscriptions, espace membre et gestion des bénévoles (chefs de course et baliseurs).',
+                    'en' => 'Association platform for Vaud Rando: hiking catalogue, registrations, member area and volunteer management (hike leaders and trail markers).',
+                ],
+                'tags' => ['Laravel', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'],
+                'url' => 'https://vaud-rando.ch',
+                'featured' => false,
+                'sort_order' => 7,
                 'is_published' => true,
             ],
         ];

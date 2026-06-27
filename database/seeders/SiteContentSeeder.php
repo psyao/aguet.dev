@@ -9,7 +9,7 @@ class SiteContentSeeder extends Seeder
 {
     /**
      * Editorial singleton content (FR from the brief; EN translated).
-     * hero_title uses the **word** = accent emphasis and \n = line-break
+     * hero_title uses the *word* = accent emphasis and \n = line-break
      * convention rendered by the front end.
      */
     public function run(): void
@@ -18,8 +18,8 @@ class SiteContentSeeder extends Seeder
 
         $content->fill([
             'hero_title' => [
-                'fr' => "Développeur web full-stack,\nà dominante **back-end**.",
-                'en' => "Full-stack web developer,\nwith a **back-end** focus.",
+                'fr' => "Développeur web *PHP*,\nspécialiste *backend*.",
+                'en' => "*PHP* web developer,\n*backend* focus.",
             ],
             'hero_subtitle' => [
                 'fr' => 'Je conçois, développe et fais évoluer des plateformes Laravel sur mesure.',

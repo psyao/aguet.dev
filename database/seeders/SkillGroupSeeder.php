@@ -19,26 +19,26 @@ class SkillGroupSeeder extends Seeder
             [
                 'sort_order' => 1,
                 'title' => ['fr' => 'Cœur Laravel', 'en' => 'Laravel core'],
-                'tags' => ['PHP', 'Laravel', 'Filament', 'Eloquent', 'Blade'],
+                'tags' => ['PHP', 'Laravel', 'Filament', 'Eloquent', 'Blade', 'Livewire'],
                 'focus' => false,
             ],
             [
                 'sort_order' => 2,
-                'title' => ['fr' => 'Front-end', 'en' => 'Front-end'],
-                'tags' => ['HTML', 'Sass/CSS', 'JavaScript'],
-                'focus' => false,
-            ],
-            [
-                'sort_order' => 3,
                 'title' => ['fr' => 'Intégration & automatisation', 'en' => 'Integration & automation'],
-                'tags' => ['XML', 'FTP', 'CRM·Dataverse', 'SSO·Entra', 'PDF', 'jobs·cron'],
+                'tags' => ['XML', 'FTP', 'MS Graph', 'MS Entra'],
                 'focus' => true,
                 'note' => ['fr' => 'là où je fais la différence', 'en' => 'where I make the difference'],
             ],
             [
-                'sort_order' => 4,
+                'sort_order' => 3,
                 'title' => ['fr' => 'Bases de données', 'en' => 'Databases'],
                 'tags' => ['SQLite', 'MySQL', 'PostgreSQL'],
+                'focus' => false,
+            ],
+            [
+                'sort_order' => 4,
+                'title' => ['fr' => 'Frontend', 'en' => 'Front-end'],
+                'tags' => ['HTML', 'Sass/CSS', 'JavaScript'],
                 'focus' => false,
             ],
             [
