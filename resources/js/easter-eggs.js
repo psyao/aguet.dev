@@ -103,11 +103,14 @@ function startRain() {
   document.body.appendChild(canvas);
   const ctx = canvas.getContext('2d');
 
-  let cols = [];
+  const FONT = 14;
+  let drops = []; // row position per column; each falls and resets independently
   function size() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-    cols = new Array(Math.ceil(canvas.width / 14)).fill(0);
+    const n = Math.ceil(canvas.width / FONT);
+    // Stagger starts above the top so columns aren't all in lockstep.
+    drops = new Array(n).fill(0).map(() => Math.floor(Math.random() * -40));
   }
   size();
   window.addEventListener('resize', size);
@@ -116,15 +119,17 @@ function startRain() {
   const color = accent();
   let raf = 0;
   function draw() {
-    ctx.fillStyle = 'rgba(3,7,5,0.08)';
+    ctx.fillStyle = 'rgba(3,7,5,0.08)'; // fade trail
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = color;
-    ctx.font = '14px monospace';
-    cols.forEach((y, i) => {
-      const ch = glyphs[Math.floor((i * 7 + y) % glyphs.length)];
-      ctx.fillText(ch, i * 14, y * 14);
-      cols[i] = y * 14 > canvas.height && Math.abs((i * 13) % 7) > 4 ? 0 : y + 1;
-    });
+    ctx.font = FONT + 'px monospace';
+    for (let i = 0; i < drops.length; i++) {
+      const ch = glyphs[Math.floor(Math.random() * glyphs.length)];
+      ctx.fillText(ch, i * FONT, drops[i] * FONT);
+      // Past the bottom: reset to top at random so columns desync (no gaps).
+      if (drops[i] * FONT > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      else drops[i]++;
+    }
     raf = requestAnimationFrame(draw);
   }
   raf = requestAnimationFrame(draw);
