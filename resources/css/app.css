@@ -316,6 +316,7 @@ main{padding:0 0 30px}
   .chrome-bar{gap:10px}
   .chrome-right{margin-left:auto}
   .statusbar .seg.hide{display:none}
+  .statusbar .seg.branch{display:flex}
   .kbtn .klabel{display:none}
 }
 @media(max-width:520px){.tree .row{grid-template-columns:1fr}.kv{gap:4px 16px}}
