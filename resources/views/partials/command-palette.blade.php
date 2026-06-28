@@ -14,6 +14,8 @@
                    @keydown.down.prevent="$store.cmdk.move(1)"
                    @keydown.up.prevent="$store.cmdk.move(-1)"
                    @keydown.enter.prevent="$store.cmdk.enter()">
+            <button type="button" class="cmdk-x" @click="$store.cmdk.close()"
+                    aria-label="{{ $locale === 'fr' ? 'Fermer' : 'Close' }}">✕</button>
         </div>
         <div class="cmdk-list" id="cmdk-list">
             <template x-for="grp in $store.cmdk.groups" :key="grp.g">
