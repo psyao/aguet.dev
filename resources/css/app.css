@@ -4,6 +4,11 @@
 @source '../../storage/framework/views/*.php';
 @source '../views';
 
+/* Cross-document cross-fade on same-origin navigation — the only one on this
+   one-page site is the FR<->EN switch. No-op in browsers without support. */
+@view-transition { navigation: auto; }
+@media(prefers-reduced-motion:reduce){ @view-transition { navigation: none; } }
+
 /* aguet.dev terminal theme tokens. static = always emit (Tailwind v4 prunes
    theme vars no utility references; hand-written var(--color-*) does not count). */
 @theme static {
