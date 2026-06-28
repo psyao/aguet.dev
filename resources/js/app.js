@@ -375,6 +375,14 @@ document.addEventListener('alpine:init', () => {
   }));
 });
 
+// ⌘K is Mac-only; the binding accepts Ctrl too, so show "Ctrl K" off Mac.
+{
+  const plat = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '';
+  if (!/mac/i.test(plat)) {
+    document.querySelectorAll('kbd.kmod').forEach((k) => { k.textContent = 'Ctrl K'; });
+  }
+}
+
 // Global shortcuts: ⌘K / Ctrl-K toggles the palette; ':' opens it (vim reflex).
 document.addEventListener('keydown', (e) => {
   const cmdk = window.Alpine && window.Alpine.store('cmdk');

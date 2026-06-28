@@ -6,7 +6,7 @@
         <span class="chrome-right">
             <button class="kbtn" type="button" @click="$store.cmdk.open()"
                     aria-label="{{ __('site.chrome.commands') }}">
-                <span class="klabel">{{ __('site.chrome.commands') }}</span> <kbd aria-hidden="true">⌘K</kbd>
+                <span class="klabel">{{ __('site.chrome.commands') }}</span> <kbd class="kmod" aria-hidden="true">⌘K</kbd>
             </button>
             <span class="lang" role="group" aria-label="{{ $locale === 'fr' ? 'Langue' : 'Language' }}">
                 @foreach ($homeUrls as $l => $u)
