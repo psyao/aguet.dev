@@ -27,3 +27,12 @@
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
+
+# Vite build assets are content-hashed (filename changes when content changes),
+# so they can be cached forever. Scoped to /build/ to avoid touching mutable
+# root files (favicon, robots.txt, sitemap.xml).
+<IfModule mod_headers.c>
+    <If "%{REQUEST_URI} =~ m#^/build/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+</IfModule>
