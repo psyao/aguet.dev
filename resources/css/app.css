@@ -181,7 +181,8 @@ main{padding:0 0 30px}
 .pcard:hover .open .arr{transform:translate(3px,-3px)}
 .pcard.feat{grid-column:1 / -1;border-color:color-mix(in srgb,var(--color-accent) 42%,var(--color-line))}
 .pcard.feat .feat-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:28px}
-.pcard.feat .pname{font-size:clamp(24px,3vw,30px);font-weight:700;color:var(--color-fg);margin-bottom:12px;letter-spacing:-.01em}
+.pcard .pname{font-size:clamp(17px,2vw,20px);font-weight:700;color:var(--color-fg);margin-bottom:12px;letter-spacing:-.01em}
+.pcard.feat .pname{font-size:clamp(24px,3vw,30px)}
 .pcard.full{grid-column:1 / -1}
 
 /* ───── CONTACT ───── */

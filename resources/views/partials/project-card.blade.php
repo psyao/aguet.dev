@@ -28,6 +28,7 @@
     <article @class(['pcard', 'full' => $variant === 'full'])>
         <span class="legend"><span class="slash">~/projects/</span><b>{{ $project->slug }}</b></span>
         <span class="perms" aria-hidden="true">drwxr-xr-x</span>
+        <div class="pname">{{ $project->name }}</div>
         <dl>
             <dt>{{ __('site.projects.client') }}</dt><dd>{{ $project->client }}</dd>
             <dt>{{ __('site.projects.role') }}</dt><dd>{{ $project->role }}</dd>
