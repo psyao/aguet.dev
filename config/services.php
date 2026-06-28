@@ -41,4 +41,10 @@ return [
         'contact_webhook_url' => env('KCHAT_CONTACT_WEBHOOK_URL'),
     ],
 
+    // Cloudflare Web Analytics — cookieless, no consent banner needed.
+    // Beacon-only: site token from CF dashboard. Unset => no beacon emitted.
+    'cloudflare_analytics' => [
+        'token' => env('CLOUDFLARE_ANALYTICS_TOKEN'),
+    ],
+
 ];

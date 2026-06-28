@@ -97,6 +97,12 @@
 
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Cloudflare Web Analytics (cookieless, no consent banner). Beacon-only. --}}
+    @if ($cfToken = config('services.cloudflare_analytics.token'))
+        <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
+                data-cf-beacon='@json(['token' => $cfToken])'></script>
+    @endif
 </head>
 <body data-density="comfortable" data-fx="subtle" x-data="terminal">
 
