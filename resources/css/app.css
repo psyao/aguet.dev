@@ -17,7 +17,7 @@
     --color-fg: #e7efe9;        /* AA: body text */
     --color-muted: #a6b5ab;     /* AA: ~7:1 on bg */
     --color-dim: #869589;       /* AA: ~5.9:1 on bg */
-    --color-faint: #5f6e64;     /* decorative only */
+    --color-faint: #76857a;     /* decorative; AA ~5:1 on bg */
     --color-accent: #3ecf8e;
     --color-accent-ink: #04130b;
     --color-danger: #ff6b6b;    /* AA: ~6.8:1 on bg & panel — form errors */

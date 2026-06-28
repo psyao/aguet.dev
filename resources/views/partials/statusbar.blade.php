@@ -23,8 +23,7 @@
 @endphp
 <footer class="statusbar" @unless($shot ?? false) x-data="statusbar" @endunless>
     <button type="button" class="seg mode"
-            @unless($shot ?? false) @click="$store.cmdk.toggle()" x-text="mode" @endunless
-            aria-label="{{ __('site.footer.palette') }}">NORMAL</button>
+            @unless($shot ?? false) @click="$store.cmdk.toggle()" x-text="mode" :aria-label="mode + ' — {{ __('site.footer.palette') }}'" @else aria-label="{{ __('site.footer.palette') }}" @endunless>NORMAL</button>
 
     @unless($shot ?? false)
     <span class="seg cmd-echo" x-show="$store.vim.msg" x-cloak x-text="$store.vim.msg"></span>
@@ -60,7 +59,7 @@
     <span class="seg grow"></span>
     <span class="seg r hide">utf-8</span>
     @php($other = collect(config('aguet.locales'))->first(fn ($l) => $l !== $locale))
-    <a class="seg r" href="{{ $other === config('aguet.default_locale') ? route('home') : route('home.'.$other) }}" title="{{ __('site.footer.switch') }}" aria-label="{{ __('site.footer.switch') }}"><b>{{ strtoupper($locale) }}</b></a>
+    <a class="seg r" href="{{ $other === config('aguet.default_locale') ? route('home') : route('home.'.$other) }}" title="{{ __('site.footer.switch') }}" aria-label="{{ strtoupper($locale) }} — {{ __('site.footer.switch') }}"><b>{{ strtoupper($locale) }}</b></a>
     <span class="seg r" @unless($shot ?? false) x-data="clock" x-text="time" @endunless>{{ ($shot ?? false) ? '00:00' : '--:--' }}</span>
     <span class="seg r">© {{ ($shot ?? false) ? '2026' : date('Y') }}</span>
 </footer>
