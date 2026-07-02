@@ -97,7 +97,7 @@ class ContactForm extends Component
         // Per-IP rate limit. request()->ip() returns REMOTE_ADDR (the real
         // client): Infomaniak passes it directly and X-Forwarded-For is not
         // trusted, so the key cannot be spoofed to dodge the limit.
-        $key = 'contact-form:'.request()->ip();
+        $key = self::rateLimitKey(request()->ip());
 
         if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
             $this->throttled = true;
@@ -158,6 +158,23 @@ class ContactForm extends Component
         $this->reset(['subject', 'email', 'message', 'website', 'sent', 'throttled', 'generalError']);
         $this->resetValidation();
         $this->startedAt = now()->timestamp;
+    }
+
+    /**
+     * Rate-limit key for a client IP. IPv6 collapses to its /64 prefix (one ISP
+     * allocation) so a visitor can't rotate through addresses in their own block
+     * for fresh limits; IPv4 keys on the full address. inet_pton normalizes
+     * compressed forms (::) before slicing, which a naive explode(':') would not.
+     */
+    public static function rateLimitKey(?string $ip): string
+    {
+        $packed = $ip !== null ? @inet_pton($ip) : false;
+
+        if ($packed !== false && strlen($packed) === 16) {
+            return 'contact-form:'.bin2hex(substr($packed, 0, 8)).'::/64';
+        }
+
+        return 'contact-form:'.($ip ?? 'unknown');
     }
 
     /** Collapse control characters so they cannot poison the mail subject. */
