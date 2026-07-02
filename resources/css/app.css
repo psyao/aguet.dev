@@ -173,6 +173,10 @@ main{padding:0 0 30px}
 .tree-foot b{color:var(--color-accent);font-weight:500}
 
 /* ───── PROJECTS ───── */
+.attribution{font-size:12.5px;margin-top:-2px}
+.attribution a{color:var(--color-muted);border-bottom:1px solid var(--color-line);transition:.15s}
+.attribution a:hover{color:var(--color-accent);border-color:var(--color-accent)}
+.attribution .arr{color:var(--color-accent)}
 .proj-grid{margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .pcard{position:relative;border:1px solid var(--color-line);border-radius:8px;background:var(--color-panel);padding:24px 22px 20px;transition:transform .18s,border-color .18s,box-shadow .18s}
 .pcard:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--color-accent) 55%,var(--color-line));box-shadow:0 12px 30px -14px color-mix(in srgb,var(--color-accent) 38%,transparent)}

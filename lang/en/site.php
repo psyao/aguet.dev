@@ -47,6 +47,7 @@ return [
         'client' => 'Client',
         'role' => 'Role',
         'visit' => 'Visit',
+        'attribution' => 'delivered at',
     ],
 
     'contact' => [

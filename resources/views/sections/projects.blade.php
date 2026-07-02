@@ -9,6 +9,7 @@
     <div class="wrap">
         <h2 class="visually-hidden">{{ __('site.sections.projects') }}</h2>
         <p class="cmd"><span class="prompt">steve@aguet ~ %</span> <span class="arg">ls -l ~/projects</span></p>
+        <p class="cmt attribution"># {{ __('site.projects.attribution') }} <a href="https://marvelous.digital" target="_blank" rel="noopener">Marvelous Digital</a> · Vevey <span class="arr">↗</span></p>
 
         <div class="proj-grid">
             @foreach ($featured as $project)

@@ -48,6 +48,7 @@ return [
         'client' => 'Client',
         'role' => 'Rôle',
         'visit' => 'Visiter',
+        'attribution' => 'livrés chez',
     ],
 
     'contact' => [
