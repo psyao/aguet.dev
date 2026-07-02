@@ -166,7 +166,7 @@ event against that shared instance (no `import`, no `Alpine.start()`). The compo
   `config/build_info.php` (written at deploy time, see [DEPLOY.md](DEPLOY.md)).
 - **`$store.cmdk`** — the ⌘K command palette: it builds a grouped item list (navigation,
   projects, actions), fuzzy-filters it, and supports keyboard navigation. Typing `:` switches
-  it into a vim-style command line (`:q`, `:wq`, `:help`, …). A global `⌘K` / `Ctrl-K` listener
+  it into a vim-style command line (`:q`, `:wq`, `:help`, `:colorscheme`, …). A global `⌘K` / `Ctrl-K` listener
   toggles it; a bare `:` opens it straight into command mode.
 - **`$store.vim`** — a transient command-line echo (vim-style messages) rendered in the
   status bar.
@@ -188,9 +188,14 @@ The terminal palette lives in `resources/css/app.css` as Tailwind v4 `@theme sta
 (`--color-bg`, `--color-accent`, …). `static` matters: Tailwind v4 prunes theme vars that no
 utility class references, and these are consumed by hand-written `var(--color-*)` CSS, not
 utilities. The runtime font is a separate `--mono` var (it has no Tailwind default, so it
-always wins). Two `data-*` knobs on `<body>` tune the look: `data-density`
-(`comfortable` / `compact`) and `data-fx` (`off` / `subtle` / `full` — the glow and scanline
-intensity).
+always wins). Three `data-*` knobs on `<body>` tune the look: `data-density`
+(`comfortable` / `compact`), `data-fx` (`off` / `subtle` / `full` — the glow and scanline
+intensity), and `data-theme` — the colorscheme. `data-theme` overrides the whole
+`--color-*` block at runtime: the green phosphor base by default, plus curated `gruvbox`,
+`nord`, `crt`, and `light` (Solarized) palettes, each hand-checked for WCAG AA on its text
+tokens. It is set by the `:colorscheme <name>` command, persisted in `localStorage`, and
+re-applied before paint by an inline layout script so a saved theme never flashes the
+default first. The `crt` palette also drives `data-fx` (scanlines + glow).
 
 ### Screenshot mode
 
