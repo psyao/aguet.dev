@@ -4,8 +4,9 @@
      :class="{ show: $store.cmdk.isOpen }"
      @keydown.escape.window="$store.cmdk.close()">
     <div class="cmdk-backdrop" @click="$store.cmdk.close()"></div>
-    <div class="cmdk-panel" role="dialog" aria-modal="true"
-         aria-label="{{ $locale === 'fr' ? 'Palette de commandes' : 'Command palette' }}">
+    <div class="cmdk-panel" id="cmdk-panel" role="dialog" aria-modal="true"
+         aria-label="{{ $locale === 'fr' ? 'Palette de commandes' : 'Command palette' }}"
+         @keydown.tab="$store.cmdk.trapFocus($event)">
         <div class="cmdk-input">
             <span class="prompt" aria-hidden="true">›</span>
             <input id="cmdk-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"

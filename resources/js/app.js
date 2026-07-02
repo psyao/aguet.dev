@@ -34,6 +34,36 @@ async function writeClipboard(text) {
   ta.remove();
 }
 
+// Visible, tabbable elements inside a dialog root (excludes tabindex=-1 and
+// off-screen nodes). Shared by the contact modal + command palette focus traps.
+function tabbable(root) {
+  const sel = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]';
+  return Array.from(root.querySelectorAll(sel)).filter((el) => el.tabIndex >= 0 && el.offsetParent !== null);
+}
+
+// Mark the page shell behind an open dialog inert (unfocusable + hidden from
+// AT), so screen-reader/keyboard users can't wander behind it. `except` is the
+// sibling dialog to leave alone (each dialog inerts everything but itself).
+const DIALOG_SHELL = ['.chrome', '.tabs', '#content', '.statusbar'];
+function setBackgroundInert(on, except) {
+  [...DIALOG_SHELL, except].forEach((s) => {
+    const el = document.querySelector(s);
+    if (!el) return;
+    on ? el.setAttribute('inert', '') : el.removeAttribute('inert');
+  });
+}
+
+// Wrap Tab focus inside `root` (a dialog panel). Call from @keydown.tab.
+function trapTab(e, root) {
+  if (!root) return;
+  const f = tabbable(root);
+  if (!f.length) { e.preventDefault(); return; }
+  const first = f[0];
+  const last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
 /* ───────────────── BOOT / TYPING INTRO (imperative, one-shot) ───────────────── */
 async function typeInto(el, text, cps) {
   el.classList.add('typing');
@@ -155,6 +185,7 @@ document.addEventListener('alpine:init', () => {
     query: '',
     active: 0,
     items: [],
+    trigger: null,
 
     build() {
       const go = (id) => () => { this.close(); const s = document.getElementById(id); if (s) s.scrollIntoView({ behavior: 'smooth' }); };
@@ -212,11 +243,22 @@ document.addEventListener('alpine:init', () => {
       if (!this.items.length) this.build();
       this.query = seed;
       this.active = 0;
+      this.trigger = document.activeElement;
       this.isOpen = true;
+      setBackgroundInert(true, '#contact-modal');
+      document.body.style.overflow = 'hidden';
       window.Alpine.nextTick(() => { const i = document.getElementById('cmdk-input'); if (i) i.focus(); });
     },
-    close() { this.isOpen = false; },
+    close() {
+      this.isOpen = false;
+      setBackgroundInert(false, '#contact-modal');
+      document.body.style.overflow = '';
+      const t = this.trigger;
+      this.trigger = null;
+      window.Alpine.nextTick(() => { if (t && typeof t.focus === 'function') t.focus(); });
+    },
     toggle() { this.isOpen ? this.close() : this.open(); },
+    trapFocus(e) { trapTab(e, document.getElementById('cmdk-panel')); },
     run(item) { this.close(); item.run(); },
     move(d) {
       const n = this.filtered.length; if (!n) return;
@@ -297,27 +339,14 @@ document.addEventListener('alpine:init', () => {
   };
 
   // Contact modal: accessible dialog shell around the <livewire:contact-form>.
-  // Mirrors cmdk but adds what cmdk lacks — a real focus trap, focus return to
-  // the trigger, and an inert background — since Livewire's bundled Alpine has
-  // no @alpinejs/focus (x-trap) plugin.
+  // Like cmdk (both hand-roll a focus trap since Livewire's bundled Alpine has
+  // no @alpinejs/focus x-trap), but also returns focus to the trigger and marks
+  // the background inert.
   Alpine.store('contact', {
     isOpen: false,
     trigger: null,
 
-    // Tabbable elements inside the panel (visible, not tabindex=-1 → the
-    // off-screen honeypot input and the success region are excluded).
-    _tabbable(root) {
-      const sel = 'a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),[tabindex]';
-      return Array.from(root.querySelectorAll(sel)).filter((el) => el.tabIndex >= 0 && el.offsetParent !== null);
-    },
-
-    _setBackgroundInert(on) {
-      ['.chrome', '.tabs', '#content', '.statusbar', '#cmdk'].forEach((s) => {
-        const el = document.querySelector(s);
-        if (!el) return;
-        on ? el.setAttribute('inert', '') : el.removeAttribute('inert');
-      });
-    },
+    _setBackgroundInert(on) { setBackgroundInert(on, '#cmdk'); },
 
     open() {
       if (this.isOpen) return;
@@ -328,7 +357,7 @@ document.addEventListener('alpine:init', () => {
       window.Alpine.nextTick(() => {
         const panel = document.getElementById('contact-modal-panel');
         if (!panel) return;
-        (this._tabbable(panel)[0] || panel).focus();
+        (tabbable(panel)[0] || panel).focus();
       });
     },
 
@@ -347,16 +376,7 @@ document.addEventListener('alpine:init', () => {
     toggle() { this.isOpen ? this.close() : this.open(); },
 
     // Wrap Tab focus inside the panel.
-    trapFocus(e) {
-      const panel = document.getElementById('contact-modal-panel');
-      if (!panel) return;
-      const f = this._tabbable(panel);
-      if (!f.length) { e.preventDefault(); return; }
-      const first = f[0];
-      const last = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    },
+    trapFocus(e) { trapTab(e, document.getElementById('contact-modal-panel')); },
   });
 
   // Statusbar: live vim-mode pill (palette trigger) + commit-popover toggle.
@@ -419,6 +439,10 @@ document.addEventListener('keydown', (e) => {
 
   if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
     e.preventDefault();
+    // Don't stack the palette over an open contact modal — closing it would
+    // unlock scroll + un-inert the background the modal still needs held.
+    const contact = window.Alpine.store('contact');
+    if (contact && contact.isOpen) return;
     cmdk.toggle();
     return;
   }
