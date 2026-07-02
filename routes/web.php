@@ -16,3 +16,14 @@ Route::middleware(SetLocale::class)->group(function () {
         Route::get('/'.$locale, [HomeController::class, 'index'])->name('home.'.$locale);
     }
 });
+
+// TEMPORARY: diagnose what REMOTE_ADDR vs X-Forwarded-For look like behind
+// Infomaniak's proxy, to decide how to configure trustProxies. Remove after use.
+Route::get('/whoami-debug', function (Illuminate\Http\Request $r) {
+    return response()->json([
+        'REMOTE_ADDR' => $r->server('REMOTE_ADDR'),
+        'X-Forwarded-For' => $r->header('X-Forwarded-For'),
+        'X-Real-IP' => $r->header('X-Real-IP'),
+        'laravel_ip' => $r->ip(),
+    ]);
+});
