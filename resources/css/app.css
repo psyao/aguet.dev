@@ -194,7 +194,7 @@ main{padding:0 0 30px}
 .pcard .desc{color:var(--color-fg);font-size:13.5px;line-height:1.6;margin-bottom:16px}
 .pcard .desc::before{content:"> ";color:var(--color-accent)}
 .pcard .open{color:var(--color-muted);font-size:12.5px;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
-.pcard .open b{color:var(--color-fg);font-weight:400}
+.pcard .open b{color:var(--color-fg);font-weight:400;text-decoration:underline;text-underline-offset:2px}
 .pcard .open .arr{color:var(--color-accent);transition:transform .18s}
 .pcard:hover .open .arr{transform:translate(3px,-3px)}
 .pcard.feat{grid-column:1 / -1;border-color:color-mix(in srgb,var(--color-accent) 42%,var(--color-line))}

@@ -33,7 +33,7 @@
           @unless($shot ?? false) @click.outside="popover = false" @keydown.escape="popover = false" @endunless>
         <button type="button" class="branch-trigger"
                 @unless($shot ?? false) @click="popover = ! popover" :aria-expanded="popover" @endunless
-                aria-label="{{ __('site.footer.commit') }}">● <b>main</b></button>
+                aria-label="main — {{ __('site.footer.commit') }}"><span aria-hidden="true">●</span> <b>main</b></button>
         @unless($shot ?? false)
         <div class="sb-pop" x-show="popover" x-cloak x-transition.opacity
              role="dialog" aria-label="{{ __('site.footer.commit') }}">

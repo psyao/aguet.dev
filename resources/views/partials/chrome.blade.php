@@ -1,5 +1,5 @@
 {{-- Window chrome: traffic-light dots, terminal title, ⌘K, FR/EN switch (server-side links). --}}
-<div class="chrome">
+<div class="chrome" role="banner">
     <div class="chrome-bar">
         <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
         <span class="chrome-title"><b>steve@aguet</b> — ~/aguet.dev — zsh</span>
