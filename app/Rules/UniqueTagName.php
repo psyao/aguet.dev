@@ -5,6 +5,7 @@ namespace App\Rules;
 use App\Models\Tag;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Str;
 
 /**
  * Tag names must be unique ignoring case and surrounding whitespace —
@@ -16,7 +17,7 @@ class UniqueTagName implements ValidationRule
 
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        $name = trim(preg_replace('/\s+/u', ' ', (string) $value));
+        $name = Str::squish((string) $value);
 
         $exists = Tag::query()
             ->whereRaw('lower(name) = ?', [mb_strtolower($name)])

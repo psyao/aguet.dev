@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ContactMessages\Tables;
 
 use App\Models\ContactMessage;
+use App\Services\ContactMessageNotifier;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -44,7 +45,7 @@ class ContactMessagesTable
                     ->label('Tentatives')
                     ->badge()
                     ->color(fn (int $state): string => match (true) {
-                        $state >= 5 => 'danger',
+                        $state >= ContactMessageNotifier::MAX_ATTEMPTS => 'danger',
                         $state > 0 => 'warning',
                         default => 'gray',
                     })

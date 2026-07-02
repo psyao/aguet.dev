@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Support\Str;
 
 /**
  * A shared, non-translatable tech tag (« Laravel », « a11y », …), attached
@@ -28,7 +29,7 @@ class Tag extends Model
     protected function name(): Attribute
     {
         return Attribute::make(
-            set: fn (string $value) => trim(preg_replace('/\s+/u', ' ', $value)),
+            set: fn (string $value) => Str::squish($value),
         );
     }
 
@@ -50,7 +51,7 @@ class Tag extends Model
                 continue;
             }
 
-            $name = trim(preg_replace('/\s+/u', ' ', $value));
+            $name = Str::squish($value);
 
             if ($name === '' || isset($seen[mb_strtolower($name)])) {
                 continue;
