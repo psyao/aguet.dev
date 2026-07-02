@@ -337,6 +337,17 @@ main{padding:0 0 30px}
 }
 @media(max-width:520px){.tree .row{grid-template-columns:1fr}.kv{gap:4px 16px}}
 
+/* Touch devices: bump interactive elements to the 44px min tap target (WCAG
+   2.5.5) without loosening the dense terminal layout on hover/pointer devices.
+   .jrow gets vertical breathing room so its 44px copier buttons don't collide. */
+@media(hover:none){
+  .pcard .open{min-height:44px}
+  .contact .json .jrow{padding-block:8px}
+  .cp{min-height:44px;display:flex;align-items:center}
+  .lang a{min-height:44px;display:inline-flex;align-items:center}
+  .kbtn{min-height:44px}
+}
+
 /* ───── PRINT / PDF — flip to a clean, ink-friendly light layout ───── */
 @page{margin:14mm}
 @media print{
