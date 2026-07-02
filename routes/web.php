@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Middleware\SetLocale;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,7 +20,7 @@ Route::middleware(SetLocale::class)->group(function () {
 
 // TEMPORARY: diagnose what REMOTE_ADDR vs X-Forwarded-For look like behind
 // Infomaniak's proxy, to decide how to configure trustProxies. Remove after use.
-Route::get('/whoami-debug', function (Illuminate\Http\Request $r) {
+Route::get('/whoami-debug', function (Request $r) {
     return response()->json([
         'REMOTE_ADDR' => $r->server('REMOTE_ADDR'),
         'X-Forwarded-For' => $r->header('X-Forwarded-For'),
