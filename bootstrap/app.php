@@ -12,9 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Infomaniak serves the app behind a reverse proxy; trust it so the
-        // contact-form rate limiter keys on the real visitor IP, not the proxy.
-        $middleware->trustProxies(at: '*');
+        // No trustProxies: Infomaniak passes the real client IP in REMOTE_ADDR
+        // and never sets X-Forwarded-For. Trusting XFF would let any visitor
+        // spoof their IP (verified 2026-07-02) and bypass the contact-form
+        // per-IP rate limit. The empty body keeps Laravel's default middleware
+        // groups (web/api) registered.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

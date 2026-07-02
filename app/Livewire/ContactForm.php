@@ -94,8 +94,9 @@ class ContactForm extends Component
     {
         $this->reset(['throttled', 'generalError']);
 
-        // Per-IP rate limit. request()->ip() resolves the real client behind
-        // Infomaniak's proxy because trustProxies is configured (bootstrap/app.php).
+        // Per-IP rate limit. request()->ip() returns REMOTE_ADDR (the real
+        // client): Infomaniak passes it directly and X-Forwarded-For is not
+        // trusted, so the key cannot be spoofed to dodge the limit.
         $key = 'contact-form:'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($key, self::MAX_ATTEMPTS)) {
