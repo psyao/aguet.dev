@@ -21,7 +21,7 @@ clean light theme when printed to PDF.
 
 ## Stack
 
-- **Laravel 13** · PHP 8.4+
+- **Laravel 13** · PHP 8.5+
 - **Filament 5** — admin panel for editing content
 - **spatie/laravel-translatable** + **outerweb/filament-translatable-fields** — per-locale
   JSON translations, edited as FR/EN tabs in Filament
@@ -206,7 +206,7 @@ production. See [docs/visual-testing.md](docs/visual-testing.md).
 
 ## Local setup
 
-Requirements: PHP 8.4+, Composer, Node 24+, pnpm 11, a running MySQL server.
+Requirements: PHP 8.5+, Composer, Node 24+, pnpm 11, a running MySQL server.
 
 ```bash
 # 1. Install dependencies
