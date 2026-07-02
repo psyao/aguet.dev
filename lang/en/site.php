@@ -106,6 +106,7 @@ return [
         'motions' => 'j / k — move between sections',
         'jumps' => 'gg / G — jump to top / bottom',
         'excmd' => ':q  :wq  :help — ex-commands',
+        'colorscheme' => ':colorscheme — theme: default · gruvbox · nord · crt · light',
         'konami' => '↑↑↓↓←→←→ B A — you know what to do',
     ],
 

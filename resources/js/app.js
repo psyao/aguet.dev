@@ -183,7 +183,7 @@ document.addEventListener('alpine:init', () => {
     // `:help` / `:h` lists the eggs as ordinary palette rows (reuses list UI).
     get helpRows() {
       const g = t('cmd.actions', 'Actions');
-      return ['help.motions', 'help.jumps', 'help.excmd', 'help.konami'].map((k, i) => ({
+      return ['help.motions', 'help.jumps', 'help.excmd', 'help.colorscheme', 'help.konami'].map((k, i) => ({
         g, label: t(k, k), hint: '', run: () => this.close(), _i: i,
       }));
     },
@@ -242,6 +242,17 @@ document.addEventListener('alpine:init', () => {
     execEx(cmd) {
       const vim = window.Alpine.store('vim');
       const say = (m) => { this.close(); if (vim) vim.flash(m); };
+
+      // :colorscheme <name> (vim abbrev :colo). Bare form lists the options.
+      const cs = cmd.match(/^:colo(?:rscheme)?\b\s*(\S*)$/);
+      if (cs) {
+        const name = cs[1];
+        if (!name) { say('colorscheme: ' + THEMES.join(' ')); return; }
+        if (window.applyTheme(name)) say(':colorscheme ' + name);
+        else say(t('cmd.e185', 'E185: Cannot find color scheme ') + name);
+        return;
+      }
+
       switch (cmd) {
         case ':q': case ':quit':
           say(t('cmd.q', 'E37: No write since last change (add ! to override)')); break;
@@ -266,6 +277,24 @@ document.addEventListener('alpine:init', () => {
       this._t = setTimeout(() => { this.msg = ''; }, 2500);
     },
   });
+
+  // ── Colorscheme ──────────────────────────────────────────────────────
+  // :colorscheme <name> swaps the --color-* block via a body[data-theme]
+  // attribute (same mechanism as data-fx / data-density), persisted in
+  // localStorage and re-applied pre-paint by the inline script in the layout.
+  const THEMES = ['default', 'gruvbox', 'nord', 'crt', 'light'];
+
+  window.applyTheme = function (name) {
+    if (!THEMES.includes(name)) return false;
+    if (name === 'default') {
+      delete document.body.dataset.theme;
+      try { localStorage.removeItem('theme'); } catch (e) { /* private mode */ }
+    } else {
+      document.body.dataset.theme = name;
+      try { localStorage.setItem('theme', name); } catch (e) { /* private mode */ }
+    }
+    return true;
+  };
 
   // Contact modal: accessible dialog shell around the <livewire:contact-form>.
   // Mirrors cmdk but adds what cmdk lacks — a real focus trap, focus return to

@@ -28,6 +28,7 @@
             'help.motions' => __('site.help.motions'),
             'help.jumps' => __('site.help.jumps'),
             'help.excmd' => __('site.help.excmd'),
+            'help.colorscheme' => __('site.help.colorscheme'),
             'help.konami' => __('site.help.konami'),
         ],
         'projects' => $projects->map(fn ($p) => [
@@ -105,12 +106,18 @@
     @endif
 </head>
 <body data-density="comfortable" data-fx="subtle" x-data="terminal">
+    {{-- Re-apply the saved colorscheme before paint (app.js is deferred), so a
+         non-default theme doesn't flash the phosphor default first. --}}
+    @unless($shot)
+    <script>try{var t=localStorage.getItem('theme');if(t)document.body.dataset.theme=t;}catch(e){}</script>
+    @endunless
 
     <!--
        ~ you read the source. of course you do. here, some toys: ~
 
          j / k         move between sections (gg = top, G = bottom)
          :             open the command line     (then :q  :wq  :help)
+         :colorscheme   paint the site           (default · gruvbox · nord · crt · light)
          ↑↑↓↓←→←→ B A   ...you know this one.
 
        built with laravel + a bundled alpine. nice of you to drop by.

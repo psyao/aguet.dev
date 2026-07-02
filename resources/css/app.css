@@ -44,6 +44,15 @@ body[data-fx="off"]{--fx-glow:0;--fx-scan:0}
 body[data-fx="subtle"]{--fx-glow:.65;--fx-scan:0}
 body[data-fx="full"]{--fx-glow:1;--fx-scan:.45}
 
+/* Colorschemes: swap the --color-* block via body[data-theme] (same mechanism
+   as data-fx / data-density above). Set by :colorscheme <name>, persisted in
+   localStorage, applied pre-paint by the inline script in the layout. Every
+   palette is hand-checked for WCAG AA on its text tokens. */
+body[data-theme="gruvbox"]{--color-bg:#1d2021;--color-panel:#282828;--color-panel-2:#32302f;--color-line:#3c3836;--color-line-soft:#282828;--color-fg:#ebdbb2;--color-muted:#d5c4a1;--color-dim:#a89984;--color-faint:#928374;--color-accent:#b8bb26;--color-accent-ink:#1d2021;--color-danger:#fb4934}
+body[data-theme="nord"]{--color-bg:#242933;--color-panel:#2e3440;--color-panel-2:#343b4a;--color-line:#3b4252;--color-line-soft:#2e3440;--color-fg:#eceff4;--color-muted:#d8dee9;--color-dim:#949eb3;--color-faint:#6f7a90;--color-accent:#88c0d0;--color-accent-ink:#242933;--color-danger:#d57780}
+body[data-theme="crt"]{--color-bg:#100a00;--color-panel:#1a1200;--color-panel-2:#241900;--color-line:#3a2800;--color-line-soft:#241900;--color-fg:#ffb000;--color-muted:#cc8800;--color-dim:#b07a00;--color-faint:#7a5500;--color-accent:#ffcc33;--color-accent-ink:#100a00;--color-danger:#ff6b4a;--fx-glow:1;--fx-scan:.4}
+body[data-theme="light"]{--color-bg:#fdf6e3;--color-panel:#eee8d5;--color-panel-2:#e6dfca;--color-line:#ddd6c1;--color-line-soft:#e8e1cc;--color-fg:#002b36;--color-muted:#45575e;--color-dim:#586e75;--color-faint:#808f8b;--color-accent:#1c6fa8;--color-accent-ink:#fdf6e3;--color-danger:#c02a26;--fx-glow:.12}
+
 *{box-sizing:border-box;margin:0;padding:0}
 [x-cloak]{display:none!important}
 html{scroll-behavior:smooth}
