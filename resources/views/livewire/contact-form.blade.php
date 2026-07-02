@@ -10,7 +10,7 @@
             </button>
         </div>
     @else
-        <form wire:submit="submit" novalidate
+        <form wire:submit="submit" novalidate aria-label="{{ __('site.contact.form.title') }}"
               x-data="{ len: $wire.message.length, max: {{ \App\Livewire\ContactForm::MAX_MESSAGE }} }">
 
             {{-- General error (e.g. the DB write failed). --}}

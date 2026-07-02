@@ -7,9 +7,10 @@
     <div class="cmdk-panel" id="cmdk-panel" role="dialog" aria-modal="true"
          aria-label="{{ $locale === 'fr' ? 'Palette de commandes' : 'Command palette' }}"
          @keydown.tab="$store.cmdk.trapFocus($event)">
-        <div class="cmdk-input">
+        <div class="cmdk-input" role="search">
             <span class="prompt" aria-hidden="true">›</span>
             <input id="cmdk-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+                   aria-label="{{ __('site.cmd.placeholder') }}"
                    placeholder="{{ __('site.cmd.placeholder') }}"
                    x-model="$store.cmdk.query"
                    @keydown.down.prevent="$store.cmdk.move(1)"
@@ -18,7 +19,7 @@
             <button type="button" class="cmdk-x" @click="$store.cmdk.close()"
                     aria-label="{{ $locale === 'fr' ? 'Fermer' : 'Close' }}">✕</button>
         </div>
-        <div class="cmdk-list" id="cmdk-list">
+        <div class="cmdk-list" id="cmdk-list" role="region" aria-label="{{ $locale === 'fr' ? 'Résultats' : 'Results' }}">
             <template x-for="grp in $store.cmdk.groups" :key="grp.g">
                 <div>
                     <div class="cmdk-grp" x-text="grp.g"></div>
