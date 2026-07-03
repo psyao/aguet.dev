@@ -227,3 +227,64 @@ it('delivers the owner notification via deferred dispatch (F12)', function () {
     expect($row->notified_at)->not->toBeNull()
         ->and($row->kchat_notified_at)->not->toBeNull();
 });
+
+// F13 — a configured submit arms the progress bar: row id + pending rails.
+// defer() does not fire in the test (no app termination), so the flags stay
+// null and both rails read pending — exactly the state the bar starts from.
+it('arms the delivery progress bar with pending rails (F13)', function () {
+    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
+
+    $c = validSubmit()->call('submit')->assertSet('sent', true);
+
+    $c->assertSet('messageId', ContactMessage::sole()->id)
+        ->assertSet('rails', ['email' => 'pending', 'kchat' => 'pending'])
+        ->assertSet('deliveryDone', false);
+});
+
+// F14 — polling flips each rail to ok as its flag is set; done when none pend.
+it('marks rails delivered as their flags flip (F14)', function () {
+    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
+
+    $c = validSubmit()->call('submit');
+    $row = ContactMessage::sole();
+
+    $row->forceFill(['notified_at' => now()])->save();
+    $c->call('refreshDelivery')
+        ->assertSet('rails', ['email' => 'ok', 'kchat' => 'pending'])
+        ->assertSet('deliveryDone', false);
+
+    $row->forceFill(['kchat_notified_at' => now()])->save();
+    $c->call('refreshDelivery')
+        ->assertSet('rails', ['email' => 'ok', 'kchat' => 'ok'])
+        ->assertSet('deliveryDone', true);
+});
+
+// F15 — a rail that exhausts its attempts shows as failed and stops polling.
+it('marks a rail failed once it exhausts its attempts (F15)', function () {
+    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    config(['services.kchat.contact_webhook_url' => null]);
+
+    $c = validSubmit()->call('submit');
+    ContactMessage::sole()->forceFill(['notify_attempts' => 5])->save();
+
+    $c->call('refreshDelivery')
+        ->assertSet('rails', ['email' => 'fail'])
+        ->assertSet('deliveryDone', true);
+});
+
+// F16 — polling gives up after the cap, leaving a pending rail to the sweep.
+it('stops polling after the cap and leaves pending rails queued (F16)', function () {
+    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    config(['services.kchat.contact_webhook_url' => null]);
+
+    $c = validSubmit()->call('submit');
+
+    for ($i = 0; $i < 12; $i++) {
+        $c->call('refreshDelivery');
+    }
+
+    $c->assertSet('deliveryDone', true)
+        ->assertSet('rails', ['email' => 'pending']);
+});

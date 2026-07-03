@@ -312,6 +312,18 @@ main{padding:0 0 30px}
 .cf-success-line{color:var(--color-accent);font-size:14px;margin-bottom:16px}
 .cf-success-line .prompt{margin-right:6px}
 
+/* Live delivery progress: one terminal line per rail, colored by state. */
+.cf-progress{list-style:none;margin:0 0 16px;padding:0;font-size:14px}
+.cf-progress-line{color:var(--color-muted);padding:2px 0;display:flex;gap:6px;align-items:baseline}
+.cf-progress-line .prompt{margin-right:2px}
+.cf-progress-rail{color:var(--color-fg)}
+.cf-progress-state{opacity:.85}
+.cf-progress-line[data-status="ok"] .cf-progress-state{color:var(--color-accent)}
+.cf-progress-line[data-status="fail"] .cf-progress-state{color:var(--color-danger)}
+.cf-progress-line[data-status="pending"] .cf-progress-state{animation:cf-blink 1s step-start infinite}
+@keyframes cf-blink{50%{opacity:.35}}
+@media(prefers-reduced-motion:reduce){.cf-progress-line[data-status="pending"] .cf-progress-state{animation:none}}
+
 @media(max-width:520px){
   .contact-modal{padding:0;align-items:stretch}
   .contact-modal-panel{width:100%;min-height:100dvh;border-radius:0;border:0}

@@ -4,7 +4,30 @@
         {{-- Success: announced to SR and focused when Livewire morphs it in. --}}
         <div class="cf-success" role="status" tabindex="-1" data-cf-success
              x-init="$nextTick(() => $el.focus())">
-            <p class="cf-success-line"><span class="prompt" aria-hidden="true">$</span> {{ __('site.contact.form.success') }}</p>
+            {{-- Terminal order: the work (rail delivery) prints first, the human
+                 result line prints last. Polls the row's rail flags every second
+                 while any rail is pending; the wire:poll attribute is dropped once
+                 $deliveryDone flips, which stops the polling. A rail left pending
+                 at timeout shows "queued" — the contact:notify sweep delivers it. --}}
+            @if ($rails !== [])
+                <ul class="cf-progress" @unless ($deliveryDone) wire:poll.1s="refreshDelivery" @endunless>
+                    @foreach ($rails as $rail => $status)
+                        @php($state = $deliveryDone && $status === 'pending' ? 'queued' : $status)
+                        <li class="cf-progress-line" data-status="{{ $state }}">
+                            <span class="prompt" aria-hidden="true">$</span>
+                            <span class="cf-progress-rail">{{ __('site.contact.form.progress.'.$rail) }}</span>
+                            <span class="cf-progress-state">{{ __('site.contact.form.progress.state.'.$state) }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+
+            {{-- Final result. Shown once delivery settles, or immediately when
+                 there are no rails to run (honeypot / unconfigured). --}}
+            @if ($rails === [] || $deliveryDone)
+                <p class="cf-success-line"><span class="prompt" aria-hidden="true">$</span> {{ __('site.contact.form.success') }}</p>
+            @endif
+
             <button type="button" class="tui-btn" wire:click="resetForm">
                 <span>{{ __('site.contact.form.another') }}</span>
             </button>

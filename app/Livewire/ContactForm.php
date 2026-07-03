@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\ContactMessage;
+use App\Models\SiteContent;
 use App\Services\ContactMessageNotifier;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
@@ -47,6 +48,20 @@ class ContactForm extends Component
 
     public ?string $generalError = null;
 
+    /** Id of the just-created row, so the success view can poll its delivery flags. */
+    public ?int $messageId = null;
+
+    /**
+     * Delivery state per configured rail, driving the terminal progress bar.
+     *
+     * @var array<string, string> rail name => 'pending' | 'ok' | 'fail'
+     */
+    public array $rails = [];
+
+    public bool $deliveryDone = false;
+
+    public int $pollCount = 0;
+
     public const MAX_MESSAGE = 5000;
 
     private const MAX_ATTEMPTS = 5;
@@ -54,6 +69,9 @@ class ContactForm extends Component
     private const DECAY_SECONDS = 60;
 
     private const MIN_FILL_SECONDS = 2;
+
+    /** Poll the delivery flags at most this many times (~1s each) before deferring to the sweep. */
+    private const MAX_POLLS = 12;
 
     public function mount(): void
     {
@@ -138,7 +156,86 @@ class ContactForm extends Component
         // sweep still delivers it if this deferred run never completes.
         defer(fn () => app(ContactMessageNotifier::class)->deliver($message));
 
+        // Remember the row so the success view can poll its delivery flags and
+        // animate the terminal progress bar as each rail (email / kChat) flips.
+        $this->messageId = $message->id;
+        $this->rails = $this->expectedRails();
+
         $this->markSent();
+    }
+
+    /**
+     * Refresh the delivery state of the just-submitted row for the progress bar.
+     * Polled ~1s by the success view via wire:poll. Reads each rail's own flag
+     * (notified_at / kchat_notified_at) and gives up after MAX_POLLS, leaving any
+     * still-pending rail to the contact:notify sweep — the poll is cosmetic, the
+     * sweep is the delivery guarantee.
+     */
+    public function refreshDelivery(): void
+    {
+        if ($this->deliveryDone || $this->messageId === null || $this->rails === []) {
+            $this->deliveryDone = true;
+
+            return;
+        }
+
+        $this->pollCount++;
+
+        $message = ContactMessage::find($this->messageId);
+
+        if ($message === null) {
+            $this->deliveryDone = true;
+
+            return;
+        }
+
+        foreach (array_keys($this->rails) as $rail) {
+            $this->rails[$rail] = $this->railStatus($message, $rail);
+        }
+
+        if (! in_array('pending', $this->rails, true) || $this->pollCount >= self::MAX_POLLS) {
+            $this->deliveryDone = true;
+        }
+    }
+
+    /**
+     * Rails the owner notification will use, given current configuration. Mirrors
+     * the gates in {@see ContactMessageNotifier::deliver()} so the bar shows a
+     * line only for a rail that will actually be attempted.
+     *
+     * @return array<string, string>
+     */
+    private function expectedRails(): array
+    {
+        $rails = [];
+
+        if (filled(SiteContent::current()->contact_email)) {
+            $rails['email'] = 'pending';
+        }
+
+        if (filled(config('services.kchat.contact_webhook_url'))) {
+            $rails['kchat'] = 'pending';
+        }
+
+        return $rails;
+    }
+
+    /** 'ok' once the rail's flag is set, 'fail' once it maxes out, else 'pending'. */
+    private function railStatus(ContactMessage $message, string $rail): string
+    {
+        [$doneAt, $attempts] = $rail === 'email'
+            ? [$message->notified_at, $message->notify_attempts]
+            : [$message->kchat_notified_at, $message->kchat_notify_attempts];
+
+        if ($doneAt !== null) {
+            return 'ok';
+        }
+
+        if ($attempts >= ContactMessageNotifier::MAX_ATTEMPTS) {
+            return 'fail';
+        }
+
+        return 'pending';
     }
 
     /** Clear the form and flip to the success state. */
@@ -155,7 +252,7 @@ class ContactForm extends Component
      */
     public function resetForm(): void
     {
-        $this->reset(['subject', 'email', 'message', 'website', 'sent', 'throttled', 'generalError']);
+        $this->reset(['subject', 'email', 'message', 'website', 'sent', 'throttled', 'generalError', 'messageId', 'rails', 'deliveryDone', 'pollCount']);
         $this->resetValidation();
         $this->startedAt = now()->timestamp;
     }

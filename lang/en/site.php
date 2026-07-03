@@ -69,6 +69,18 @@ return [
             'sending' => 'sending…',
             'success' => 'Message sent. Thanks — I’ll get back to you soon.',
             'another' => 'Write another message',
+
+            // Live delivery progress bar (polls the row's rail flags).
+            'progress' => [
+                'email' => 'email',
+                'kchat' => 'kchat',
+                'state' => [
+                    'pending' => 'sending…',
+                    'ok' => 'delivered ✓',
+                    'fail' => 'failed ✗',
+                    'queued' => 'queued …',
+                ],
+            ],
             'error' => 'Couldn’t save your message. Please try again in a moment.',
             'throttled' => 'Too many attempts. Wait a minute before trying again.',
             'close' => 'Close',
