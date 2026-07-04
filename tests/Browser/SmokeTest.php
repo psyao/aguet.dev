@@ -7,6 +7,7 @@
 it('renders the seeded home page through a real browser request', function () {
     $page = visit('/');
 
-    $page->assertSee('cvci')      // seeded project legend (ProjectSeeder)
-        ->assertSee('Filament');  // seeded tag (a SkillGroup tag)
+    $page->assertSee('cvci')          // seeded project legend (ProjectSeeder)
+        ->assertSee('Filament')       // seeded tag (a SkillGroup tag)
+        ->assertNoJavaScriptErrors(); // a smoke test's core job: the page boots its JS clean
 });

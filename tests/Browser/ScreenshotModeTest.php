@@ -11,5 +11,6 @@ it('settles the page deterministically in screenshot mode', function () {
         // Clock is frozen: a live clock shows the real HH:MM and would essentially
         // never read a static "00:00", so this proves $shot reached the statusbar
         // include AND the Alpine clock was not wired.
-        ->assertSee('00:00');
+        ->assertSee('00:00')
+        ->assertNoJavaScriptErrors();
 });

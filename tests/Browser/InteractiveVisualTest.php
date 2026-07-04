@@ -16,6 +16,7 @@ it('matches the command palette open-state baseline', function () {
     // (x-show) when the palette is open.
     $page->assertSee('esc')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches();
 });
 

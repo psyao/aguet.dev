@@ -21,6 +21,7 @@ it('matches the contact modal open state (FR, desktop)', function () {
 
     $page->assertSee('./contact.sh')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
 });
 
@@ -34,6 +35,7 @@ it('matches the contact modal open state (EN, desktop)', function () {
 
     $page->assertSee('./contact.sh')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
 });
 
@@ -48,6 +50,7 @@ it('matches the contact modal open state (FR, mobile)', function () {
 
     $page->assertSee('./contact.sh')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
 });
 
@@ -62,5 +65,6 @@ it('matches the contact modal open state (EN, mobile)', function () {
 
     $page->assertSee('./contact.sh')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
 });

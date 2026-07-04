@@ -10,6 +10,7 @@ it('matches the French home baseline on desktop', function () {
         ->withTimezone('Europe/Zurich')
         ->withLocale('fr-CH')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches();
 });
 
@@ -18,6 +19,7 @@ it('matches the English home baseline on desktop', function () {
         ->withTimezone('Europe/Zurich')
         ->withLocale('en-GB')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches();
 });
 
@@ -27,6 +29,7 @@ it('matches the French home baseline on mobile', function () {
         ->withTimezone('Europe/Zurich')
         ->withLocale('fr-CH')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches();
 });
 
@@ -36,5 +39,6 @@ it('matches the English home baseline on mobile', function () {
         ->withTimezone('Europe/Zurich')
         ->withLocale('en-GB')
         ->wait(1)
+        ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches();
 });
