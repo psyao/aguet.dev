@@ -24,7 +24,12 @@ class StatusbarTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('class="seg mode"', false)
-            ->assertSee('$store.cmdk.toggle()', false);
+            ->assertSee('$store.cmdk.toggle()', false)
+            // WCAG 2.5.3: accessible name is content-derived (visible mode + sr-only
+            // description) so it always contains the visible text — no reordering aria-label.
+            ->assertSee('x-text="mode"', false)
+            ->assertSee('<span class="visually-hidden"> — '.__('site.footer.palette').'</span>', false)
+            ->assertDontSee(':aria-label="mode', false);
     }
 
     public function test_valid_sha_renders_commit_link(): void

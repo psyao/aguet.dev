@@ -23,7 +23,7 @@
 @endphp
 <footer class="statusbar" @unless($shot ?? false) x-data="statusbar" @endunless>
     <button type="button" class="seg mode"
-            @unless($shot ?? false) @click="$store.cmdk.toggle()" x-text="mode" :aria-label="mode + ' — {{ __('site.footer.palette') }}'" @else aria-label="{{ __('site.footer.palette') }}" @endunless>NORMAL</button>
+            @unless($shot ?? false) @click="$store.cmdk.toggle()" @endunless><span @unless($shot ?? false) x-text="mode" @endunless>NORMAL</span><span class="visually-hidden"> — {{ __('site.footer.palette') }}</span></button>
 
     @unless($shot ?? false)
     <span class="seg cmd-echo" x-show="$store.vim.msg" x-cloak x-text="$store.vim.msg"></span>
