@@ -5,11 +5,13 @@ namespace App\Models;
 use App\Models\Concerns\HasTags;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\Attributes\Translatable;
 use Spatie\Translatable\HasTranslations;
 
 /**
  * @method static Builder published()
  */
+#[Translatable('name', 'client', 'role', 'summary')]
 class Project extends Model
 {
     use HasTags;
@@ -32,18 +34,6 @@ class Project extends Model
         'featured' => false,
         'sort_order' => 0,
         'is_published' => true,
-    ];
-
-    /**
-     * Translatable fields (stored as JSON, one key per locale).
-     *
-     * @var array<int, string>
-     */
-    public array $translatable = [
-        'name',
-        'client',
-        'role',
-        'summary',
     ];
 
     protected function casts(): array

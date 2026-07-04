@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Concerns\HasTags;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Translatable\Attributes\Translatable;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -14,6 +15,7 @@ use Spatie\Translatable\HasTranslations;
  *
  * @method static Builder ordered()
  */
+#[Translatable('title', 'text', 'note')]
 class SkillGroup extends Model
 {
     use HasTags;
@@ -25,17 +27,6 @@ class SkillGroup extends Model
         'note',
         'focus',
         'sort_order',
-    ];
-
-    /**
-     * Translatable fields (stored as JSON, one key per locale).
-     *
-     * @var array<int, string>
-     */
-    public array $translatable = [
-        'title',
-        'text',
-        'note',
     ];
 
     protected function casts(): array
