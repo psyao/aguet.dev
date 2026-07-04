@@ -45,7 +45,7 @@ function go(secs, i) {
   const n = secs.length;
   if (!n) return;
   const clamped = Math.max(0, Math.min(n - 1, i));
-  secs[clamped].scrollIntoView({ behavior: 'smooth' });
+  secs[clamped].scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' });
 }
 
 function initMotions() {

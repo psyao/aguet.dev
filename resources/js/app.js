@@ -194,7 +194,7 @@ document.addEventListener('alpine:init', () => {
     trigger: null,
 
     build() {
-      const go = (id) => () => { this.close(); const s = document.getElementById(id); if (s) s.scrollIntoView({ behavior: 'smooth' }); };
+      const go = (id) => () => { this.close(); const s = document.getElementById(id); if (s) s.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }); };
       const open = (u) => () => window.open(u, '_blank', 'noopener');
       const nav = t('cmd.nav', 'Navigation');
       const act = t('cmd.actions', 'Actions');
