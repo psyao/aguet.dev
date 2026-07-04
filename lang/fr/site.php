@@ -31,6 +31,7 @@ return [
 
     'chrome' => [
         'commands' => 'commandes',
+        'lang' => 'Langue',
     ],
 
     'hero' => [
@@ -55,6 +56,9 @@ return [
         'copy' => 'copier',
         'copied' => 'copié',
         'cta' => 'Écrire un message',
+        'copy_email' => 'Copier l’email',
+        'copy_linkedin' => 'Copier le lien LinkedIn',
+        'copy_github' => 'Copier le lien GitHub',
 
         // Terminal-prompt contact modal.
         'form' => [
@@ -103,6 +107,9 @@ return [
 
     'cmd' => [
         'placeholder' => 'Tape une commande ou cherche…',
+        'palette' => 'Palette de commandes',
+        'close' => 'Fermer',
+        'results' => 'Résultats',
         'nav' => 'Navigation',
         'actions' => 'Actions',
         'lang' => 'Switch to English',

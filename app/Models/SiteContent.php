@@ -9,7 +9,21 @@ class SiteContent extends Model
 {
     use HasTranslations;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'hero_title',
+        'hero_subtitle',
+        'hero_role',
+        'hero_location',
+        'hero_exp',
+        'hero_focus',
+        'about_body',
+        'contact_lead',
+        'contact_email',
+        'contact_linkedin',
+        'contact_linkedin_label',
+        'contact_github',
+        'contact_github_label',
+    ];
 
     /**
      * Translatable editorial fields (stored as JSON, one key per locale).

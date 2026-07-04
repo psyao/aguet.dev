@@ -43,6 +43,7 @@ class DatabaseBackup extends Page
                         // No MIME filter: .sql has no reliable MIME type (browsers
                         // report it empty or application/x-sql), so FilePond would
                         // grey out the file. Admin-only + confirmation is the guard.
+                        ->maxSize(51200) // 50 MB ceiling — a dump larger than this is not a real backup.
                         ->storeFiles(false)
                         ->required(),
                 ])

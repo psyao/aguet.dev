@@ -29,6 +29,13 @@ class NotifyContactMessages extends Command
     /** Give up on a rail after this many failed sends so a dead endpoint is not hammered forever. */
     public const MAX_ATTEMPTS = ContactMessageNotifier::MAX_ATTEMPTS;
 
+    /**
+     * Rows processed per tick. Bounds one run's wall time so a large backlog
+     * can't exceed max_execution_time mid-send and re-deliver on the next tick;
+     * the sweep runs every 15 min, so the remainder drains across ticks.
+     */
+    public const MAX_PER_RUN = 50;
+
     public function handle(ContactMessageNotifier $notifier): int
     {
         $recipient = SiteContent::current()->contact_email;
@@ -47,6 +54,7 @@ class NotifyContactMessages extends Command
                 });
             })
             ->orderBy('id')
+            ->limit(self::MAX_PER_RUN)
             ->get();
 
         if ($pending->isEmpty()) {

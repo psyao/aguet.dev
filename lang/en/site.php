@@ -30,6 +30,7 @@ return [
 
     'chrome' => [
         'commands' => 'commands',
+        'lang' => 'Language',
     ],
 
     'hero' => [
@@ -54,6 +55,9 @@ return [
         'copy' => 'copy',
         'copied' => 'copied',
         'cta' => 'Send a message',
+        'copy_email' => 'Copy email',
+        'copy_linkedin' => 'Copy LinkedIn link',
+        'copy_github' => 'Copy GitHub link',
 
         // Terminal-prompt contact modal.
         'form' => [
@@ -102,6 +106,9 @@ return [
 
     'cmd' => [
         'placeholder' => 'Type a command or search…',
+        'palette' => 'Command palette',
+        'close' => 'Close',
+        'results' => 'Results',
         'nav' => 'Navigation',
         'actions' => 'Actions',
         'lang' => 'Passer en français',

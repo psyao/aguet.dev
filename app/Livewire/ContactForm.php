@@ -108,7 +108,7 @@ class ContactForm extends Component
         ];
     }
 
-    public function submit(): void
+    public function submit(ContactMessageNotifier $notifier): void
     {
         $this->reset(['throttled', 'generalError']);
 
@@ -154,7 +154,7 @@ class ContactForm extends Component
         // Deliver the owner notification after this response is flushed (same
         // process, no worker). The row is already saved, so the contact:notify
         // sweep still delivers it if this deferred run never completes.
-        defer(fn () => app(ContactMessageNotifier::class)->deliver($message));
+        defer(fn () => $notifier->deliver($message));
 
         // Remember the row so the success view can poll its delivery flags and
         // animate the terminal progress bar as each rail (email / kChat) flips.

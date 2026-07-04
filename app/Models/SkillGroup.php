@@ -19,7 +19,13 @@ class SkillGroup extends Model
     use HasTags;
     use HasTranslations;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'title',
+        'text',
+        'note',
+        'focus',
+        'sort_order',
+    ];
 
     /**
      * Translatable fields (stored as JSON, one key per locale).

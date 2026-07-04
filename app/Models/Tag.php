@@ -18,7 +18,7 @@ class Tag extends Model
     /** @use HasFactory<TagFactory> */
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = ['name'];
 
     public function projects(): MorphToMany
     {

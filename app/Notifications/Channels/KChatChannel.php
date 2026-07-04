@@ -33,6 +33,11 @@ class KChatChannel
         try {
             $response = Http::connectTimeout(3)
                 ->timeout(8)
+                // Recover from a transient blip (reset, brief 5xx) in-process so it
+                // doesn't burn one of the sweep's MAX_ATTEMPTS or wait ~15 min for
+                // the next tick. throw: false lets a persistent HTTP error fall
+                // through to the failed() check below with the URL still hidden.
+                ->retry([100, 500], throw: false)
                 ->asJson()
                 ->post($url, $message->toPayload());
         } catch (\Throwable $e) {

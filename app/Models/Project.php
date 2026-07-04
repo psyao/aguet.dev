@@ -15,7 +15,24 @@ class Project extends Model
     use HasTags;
     use HasTranslations;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'slug',
+        'name',
+        'client',
+        'role',
+        'summary',
+        'url',
+        'featured',
+        'sort_order',
+        'is_published',
+    ];
+
+    /** Mirror the migration's column defaults for unsaved instances. */
+    protected $attributes = [
+        'featured' => false,
+        'sort_order' => 0,
+        'is_published' => true,
+    ];
 
     /**
      * Translatable fields (stored as JSON, one key per locale).

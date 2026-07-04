@@ -20,11 +20,11 @@
 
             {{-- Email is assembled at runtime from a base64 blob; the row stays
                  hidden without JS (x-cloak) so no plaintext address is exposed. --}}
-            <div class="jrow" x-data="email('{{ $emailEnc }}')" x-cloak>&nbsp;&nbsp;<span class="k">"email"</span><span class="s">:</span> <a :href="mailto" x-text="display"></a><span class="s">,</span><button class="cp" type="button" :class="{ ok: copied }" @click="copyValue()" x-text="label" aria-label="{{ $locale === 'fr' ? 'Copier l’email' : 'Copy email' }}">{{ __('site.contact.copy') }}</button></div>
+            <div class="jrow" x-data="email('{{ $emailEnc }}')" x-cloak>&nbsp;&nbsp;<span class="k">"email"</span><span class="s">:</span> <a :href="mailto" x-text="display"></a><span class="s">,</span><button class="cp" type="button" :class="{ ok: copied }" @click="copyValue()" x-text="label" aria-label="{{ __('site.contact.copy_email') }}">{{ __('site.contact.copy') }}</button></div>
 
-            <div class="jrow" x-data="copy('{{ $linkedin }}')">&nbsp;&nbsp;<span class="k">"linkedin"</span><span class="s">:</span> <a href="{{ $linkedin }}" target="_blank" rel="noopener">"{{ $linkedinLabel }}"</a><span class="s">,</span><button class="cp" type="button" :class="{ ok: copied }" @click="copyValue()" x-text="label" aria-label="{{ $locale === 'fr' ? 'Copier le lien LinkedIn' : 'Copy LinkedIn link' }}">{{ __('site.contact.copy') }}</button></div>
+            <div class="jrow" x-data="copy('{{ $linkedin }}')">&nbsp;&nbsp;<span class="k">"linkedin"</span><span class="s">:</span> <a href="{{ $linkedin }}" target="_blank" rel="noopener">"{{ $linkedinLabel }}"</a><span class="s">,</span><button class="cp" type="button" :class="{ ok: copied }" @click="copyValue()" x-text="label" aria-label="{{ __('site.contact.copy_linkedin') }}">{{ __('site.contact.copy') }}</button></div>
 
-            <div class="jrow" x-data="copy('{{ $github }}')">&nbsp;&nbsp;<span class="k">"github"</span><span class="s">:</span> <a href="{{ $github }}" target="_blank" rel="noopener">"{{ $githubLabel }}"</a><span class="s">,</span><button class="cp" type="button" :class="{ ok: copied }" @click="copyValue()" x-text="label" aria-label="{{ $locale === 'fr' ? 'Copier le lien GitHub' : 'Copy GitHub link' }}">{{ __('site.contact.copy') }}</button></div>
+            <div class="jrow" x-data="copy('{{ $github }}')">&nbsp;&nbsp;<span class="k">"github"</span><span class="s">:</span> <a href="{{ $github }}" target="_blank" rel="noopener">"{{ $githubLabel }}"</a><span class="s">,</span><button class="cp" type="button" :class="{ ok: copied }" @click="copyValue()" x-text="label" aria-label="{{ __('site.contact.copy_github') }}">{{ __('site.contact.copy') }}</button></div>
 
             <div>&nbsp;&nbsp;<span class="k">"location"</span><span class="s">:</span> <span class="accent">"{{ $content->hero_location }}"</span></div>
 

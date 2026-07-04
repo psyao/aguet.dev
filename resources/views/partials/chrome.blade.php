@@ -8,7 +8,7 @@
                     aria-label="{{ __('site.chrome.commands') }}">
                 <span class="klabel">{{ __('site.chrome.commands') }}</span> <kbd class="kmod" aria-hidden="true">⌘K</kbd>
             </button>
-            <span class="lang" role="group" aria-label="{{ $locale === 'fr' ? 'Langue' : 'Language' }}">
+            <span class="lang" role="group" aria-label="{{ __('site.chrome.lang') }}">
                 @foreach ($homeUrls as $l => $u)
                     <a href="{{ $u }}" hreflang="{{ $l }}" lang="{{ $l }}"
                        @class(['is-active' => $l === $locale])

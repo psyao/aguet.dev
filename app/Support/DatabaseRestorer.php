@@ -24,7 +24,7 @@ class DatabaseRestorer
 
         // Write the stored hash raw (DB::table, not Eloquent) so the model's
         // 'hashed' cast doesn't re-hash an already-hashed value.
-        DB::table('users')->updateOrInsert(
+        DB::table((new User)->getTable())->updateOrInsert(
             ['email' => $admin->email],
             [
                 'name' => $admin->name,

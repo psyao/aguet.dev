@@ -5,7 +5,7 @@
      @keydown.escape.window="$store.cmdk.close()">
     <div class="cmdk-backdrop" @click="$store.cmdk.close()"></div>
     <div class="cmdk-panel" id="cmdk-panel" role="dialog" aria-modal="true"
-         aria-label="{{ $locale === 'fr' ? 'Palette de commandes' : 'Command palette' }}"
+         aria-label="{{ __('site.cmd.palette') }}"
          @keydown.tab="$store.cmdk.trapFocus($event)">
         <div class="cmdk-input" role="search">
             <span class="prompt" aria-hidden="true">›</span>
@@ -17,9 +17,9 @@
                    @keydown.up.prevent="$store.cmdk.move(-1)"
                    @keydown.enter.prevent="$store.cmdk.enter()">
             <button type="button" class="cmdk-x" @click="$store.cmdk.close()"
-                    aria-label="{{ $locale === 'fr' ? 'Fermer' : 'Close' }}">✕</button>
+                    aria-label="{{ __('site.cmd.close') }}">✕</button>
         </div>
-        <div class="cmdk-list" id="cmdk-list" role="region" aria-label="{{ $locale === 'fr' ? 'Résultats' : 'Results' }}">
+        <div class="cmdk-list" id="cmdk-list" role="region" aria-label="{{ __('site.cmd.results') }}">
             <template x-for="grp in $store.cmdk.groups" :key="grp.g">
                 <div>
                     <div class="cmdk-grp" x-text="grp.g"></div>
