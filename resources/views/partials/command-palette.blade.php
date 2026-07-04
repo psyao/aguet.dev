@@ -13,6 +13,7 @@
                    aria-label="{{ __('site.cmd.placeholder') }}"
                    placeholder="{{ __('site.cmd.placeholder') }}"
                    x-model="$store.cmdk.query"
+                   @input="$store.cmdk.active = 0"
                    @keydown.down.prevent="$store.cmdk.move(1)"
                    @keydown.up.prevent="$store.cmdk.move(-1)"
                    @keydown.enter.prevent="$store.cmdk.enter()">

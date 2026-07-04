@@ -42,11 +42,13 @@ function tabbable(root) {
 }
 
 // Mark the page shell behind an open dialog inert (unfocusable + hidden from
-// AT), so screen-reader/keyboard users can't wander behind it. `except` is the
-// sibling dialog to leave alone (each dialog inerts everything but itself).
+// AT), so screen-reader/keyboard users can't wander behind it. `alsoInert` is
+// the sibling dialog: it is always closed while this one is open, so inerting it
+// too is harmless. The open dialog's own root is never in this list, so it stays
+// live (that is how "inert everything but the open dialog" is achieved).
 const DIALOG_SHELL = ['.chrome', '.tabs', '#content', '.statusbar'];
-function setBackgroundInert(on, except) {
-  [...DIALOG_SHELL, except].forEach((s) => {
+function setBackgroundInert(on, alsoInert) {
+  [...DIALOG_SHELL, alsoInert].forEach((s) => {
     const el = document.querySelector(s);
     if (!el) return;
     on ? el.setAttribute('inert', '') : el.removeAttribute('inert');
@@ -132,7 +134,9 @@ document.addEventListener('alpine:init', () => {
   // Live clock (Europe/Zurich), tmux-style status bar segment.
   Alpine.data('clock', () => ({
     time: '--:--',
-    init() { this.tick(); setInterval(() => this.tick(), 15000); },
+    _iv: null,
+    init() { this.tick(); this._iv = setInterval(() => this.tick(), 15000); },
+    destroy() { clearInterval(this._iv); },
     tick() {
       this.time = new Date().toLocaleTimeString(CFG.locale === 'fr' ? 'fr-CH' : 'en-GB', {
         hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Zurich',
@@ -153,6 +157,7 @@ document.addEventListener('alpine:init', () => {
       clearTimeout(this._t);
       this._t = setTimeout(() => { this.copied = false; this.label = t('contact.copy', 'copy'); }, 1500);
     },
+    destroy() { clearTimeout(this._t); },
   }));
 
   // Email row: the address is base64-encoded in the markup and rebuilt here at
@@ -177,6 +182,7 @@ document.addEventListener('alpine:init', () => {
       clearTimeout(this._t);
       this._t = setTimeout(() => { this.copied = false; this.label = t('contact.copy', 'copy'); }, 1500);
     },
+    destroy() { clearTimeout(this._t); },
   }));
 
   // Command palette (⌘K): fuzzy filter, keyboard nav, grouped results.
@@ -263,6 +269,11 @@ document.addEventListener('alpine:init', () => {
     move(d) {
       const n = this.filtered.length; if (!n) return;
       this.active = (this.active + d + n) % n;
+      // Keep the highlighted row visible when nav runs past the viewport.
+      window.Alpine.nextTick(() => {
+        const el = document.querySelector('#cmdk-list .cmdk-item.on');
+        if (el) el.scrollIntoView({ block: 'nearest' });
+      });
     },
     enter() {
       if (this.commandMode) {
