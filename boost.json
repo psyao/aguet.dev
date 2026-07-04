@@ -1,0 +1,24 @@
+{
+    "agents": [
+        "junie",
+        "claude_code",
+        "codex",
+        "zed"
+    ],
+    "cloud": false,
+    "guidelines": true,
+    "mcp": true,
+    "nightwatch": false,
+    "packages": [
+        "filament/filament",
+        "spatie/laravel-translatable"
+    ],
+    "sail": false,
+    "skills": [
+        "laravel-best-practices",
+        "ai-sdk-development",
+        "pest-testing",
+        "tailwindcss-development",
+        "translatable-development"
+    ]
+}
