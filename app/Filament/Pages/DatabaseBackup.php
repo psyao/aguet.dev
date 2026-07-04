@@ -31,7 +31,7 @@ class DatabaseBackup extends Page
             Action::make('download')
                 ->label('Télécharger le dump')
                 ->icon(Heroicon::ArrowDownTray)
-                ->action(fn (): StreamedResponse => $this->download()),
+                ->action(fn (DatabaseDumper $dumper): StreamedResponse => $this->download($dumper)),
 
             Action::make('restore')
                 ->label('Restaurer un dump')
@@ -51,13 +51,13 @@ class DatabaseBackup extends Page
                 ->modalHeading('Restaurer la base de données')
                 ->modalDescription('Écrase TOUTE la base actuelle. Ton compte admin est préservé. Action irréversible.')
                 ->modalSubmitActionLabel('Écraser et restaurer')
-                ->action(fn (array $data) => $this->restore($data)),
+                ->action(fn (DatabaseRestorer $restorer, array $data) => $this->restore($restorer, $data)),
         ];
     }
 
-    private function download(): StreamedResponse
+    private function download(DatabaseDumper $dumper): StreamedResponse
     {
-        $sql = app(DatabaseDumper::class)->dump();
+        $sql = $dumper->dump();
         $name = config('database.connections.'.config('database.default').'.database')
             .'-'.now()->format('Y-m-d-Hi').'.sql';
 
@@ -67,12 +67,12 @@ class DatabaseBackup extends Page
     }
 
     /** @param array{dump: mixed} $data */
-    private function restore(array $data): void
+    private function restore(DatabaseRestorer $restorer, array $data): void
     {
         $upload = is_array($data['dump']) ? reset($data['dump']) : $data['dump'];
 
         try {
-            app(DatabaseRestorer::class)->restore($upload->get(), auth()->user());
+            $restorer->restore($upload->get(), auth()->user());
         } catch (Throwable $e) {
             Notification::make()
                 ->title('Échec de la restauration')
