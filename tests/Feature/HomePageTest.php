@@ -133,4 +133,59 @@ class HomePageTest extends TestCase
             ->assertSee('Send a message', false)
             ->assertSee('id="contact-modal-title"', false);
     }
+
+    public function test_homepage_includes_person_json_ld(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertSame(
+            1,
+            preg_match_all('#<script type="application/ld\+json">(.*?)</script>#s', $html, $matches),
+            'Expected exactly one JSON-LD script block on the homepage.',
+        );
+
+        $schema = json_decode($matches[1][0], true, flags: JSON_THROW_ON_ERROR);
+
+        $this->assertSame('https://schema.org', $schema['@context']);
+        $this->assertSame('Person', $schema['@type']);
+        $this->assertSame('Steve Aguet', $schema['name']);
+        $this->assertSame('Développeur web full-stack — région lémanique', $schema['jobTitle']);
+        $this->assertSame(url('/'), $schema['url']);
+        $this->assertIsList($schema['sameAs']);
+        $this->assertSame([
+            'https://www.linkedin.com/in/steveaguet',
+            'https://github.com/psyao',
+        ], $schema['sameAs']);
+
+        $this->assertArrayNotHasKey('email', $schema);
+        $this->assertArrayNotHasKey('image', $schema);
+        $this->assertArrayNotHasKey('address', $schema);
+
+        // JSON-LD addition must not leak the plaintext address the base64
+        // obfuscation elsewhere on the page was written to hide.
+        $response->assertDontSee('steve@aguet.dev', false);
+        $response->assertDontSee('mailto:steve@aguet.dev', false);
+    }
+
+    public function test_homepage_person_json_ld_resolves_current_locale(): void
+    {
+        $response = $this->get('/en');
+
+        $response->assertOk();
+
+        $html = $response->getContent();
+        $this->assertSame(
+            1,
+            preg_match_all('#<script type="application/ld\+json">(.*?)</script>#s', $html, $matches),
+            'Expected exactly one JSON-LD script block on the homepage.',
+        );
+
+        $schema = json_decode($matches[1][0], true, flags: JSON_THROW_ON_ERROR);
+
+        $this->assertSame('Full-stack web developer — Lake Geneva region', $schema['jobTitle']);
+        $this->assertSame(url('/en'), $schema['url']);
+    }
 }

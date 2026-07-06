@@ -99,6 +99,21 @@
     @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    @php
+        $personSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Person',
+            'name' => 'Steve Aguet',
+            'jobTitle' => strip_tags((string) $content->hero_role),
+            'url' => url()->current(),
+            'sameAs' => array_values(array_filter([
+                $content->contact_linkedin,
+                $content->contact_github,
+            ])),
+        ];
+    @endphp
+    <script type="application/ld+json">{!! json_encode($personSchema, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) !!}</script>
+
     {{-- Cloudflare Web Analytics (cookieless, no consent banner). Beacon-only. --}}
     @if ($cfToken = config('services.cloudflare_analytics.token'))
         <script defer src="https://static.cloudflareinsights.com/beacon.min.js"
