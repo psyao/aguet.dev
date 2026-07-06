@@ -3,7 +3,7 @@
     @if ($sent)
         {{-- Success: announced to SR and focused when Livewire morphs it in. --}}
         <div class="cf-success" role="status" tabindex="-1" data-cf-success
-             x-init="$nextTick(() => $el.focus())">
+             x-data="focusOnInit">
             {{-- Terminal order: the work (rail delivery) prints first, the human
                  result line prints last. Polls the row's rail flags every second
                  while any rail is pending; the wire:poll attribute is dropped once

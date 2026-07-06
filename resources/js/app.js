@@ -131,6 +131,14 @@ document.addEventListener('alpine:init', () => {
     init() { boot(); scrollspy(); },
   }));
 
+  // Focuses the element on init. Kept as a named component (rather than an
+  // inline x-init arrow function) so it still works under Livewire's
+  // csp_safe mode, whose restricted expression parser doesn't support
+  // arrow functions in HTML attributes.
+  Alpine.data('focusOnInit', () => ({
+    init() { this.$nextTick(() => this.$el.focus()); },
+  }));
+
   // Live clock (Europe/Zurich), tmux-style status bar segment.
   Alpine.data('clock', () => ({
     time: '--:--',
