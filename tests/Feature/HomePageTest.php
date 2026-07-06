@@ -38,6 +38,17 @@ class HomePageTest extends TestCase
         $response->assertSee('lang="en"', false);
     }
 
+    public function test_home_sends_a_content_security_policy(): void
+    {
+        $response = $this->get('/');
+
+        $csp = (string) $response->headers->get('Content-Security-Policy');
+
+        $this->assertStringContainsString("default-src 'self'", $csp);
+        $this->assertStringContainsString('static.cloudflareinsights.com', $csp);
+        $this->assertStringContainsString('cloudflareinsights.com', $csp);
+    }
+
     public function test_home_is_not_marked_no_store(): void
     {
         // The contact-form Livewire component otherwise makes Livewire stamp the
