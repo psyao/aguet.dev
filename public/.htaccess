@@ -35,4 +35,15 @@
     <If "%{REQUEST_URI} =~ m#^/build/#">
         Header set Cache-Control "public, max-age=31536000, immutable"
     </If>
+
+    # Infomaniak's edge already injects its own HSTS header (low max-age, no
+    # includeSubDomains) upstream of Apache; there's no panel setting for it.
+    # "set" (not "add") overrides Apache's own header table, but whether that
+    # wins over the edge's injection — vs. sending a duplicate header — is
+    # unverified until deployed; check with curl after deploy. No preload:
+    # that's a one-way door (removal takes browser vendors months to
+    # propagate), not worth committing to speculatively.
+    <If "%{HTTPS} == 'on'">
+        Header set Strict-Transport-Security "max-age=63072000; includeSubDomains"
+    </If>
 </IfModule>
