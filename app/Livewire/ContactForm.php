@@ -62,13 +62,13 @@ class ContactForm extends Component
 
     public int $pollCount = 0;
 
-    public const MAX_MESSAGE = 5000;
+    public const int MAX_MESSAGE = 5000;
 
-    private const MAX_ATTEMPTS = 5;
+    private const int MAX_ATTEMPTS = 5;
 
-    private const DECAY_SECONDS = 60;
+    private const int DECAY_SECONDS = 60;
 
-    private const MIN_FILL_SECONDS = 2;
+    private const int MIN_FILL_SECONDS = 2;
 
     /** Poll the delivery flags at most this many times (~1s each) before deferring to the sweep. */
     private const MAX_POLLS = 12;
@@ -76,6 +76,11 @@ class ContactForm extends Component
     public function mount(): void
     {
         $this->startedAt = now()->timestamp;
+
+        // The form carries no post-submit state worth protecting, so let the
+        // homepage stay in the browser's back-forward cache instead of letting
+        // Livewire stamp it "no-store" (which also blocks all caching).
+        $this->enableBackButtonCache();
     }
 
     /** @return array<string, array<int, string>> */

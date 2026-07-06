@@ -38,6 +38,18 @@ class HomePageTest extends TestCase
         $response->assertSee('lang="en"', false);
     }
 
+    public function test_home_is_not_marked_no_store(): void
+    {
+        // The contact-form Livewire component otherwise makes Livewire stamp the
+        // page "no-store", which disables the browser back-forward cache.
+        $response = $this->get('/');
+
+        $this->assertStringNotContainsString(
+            'no-store',
+            (string) $response->headers->get('Cache-Control'),
+        );
+    }
+
     public function test_unknown_prefix_falls_back_to_default_locale(): void
     {
         // The default locale (FR) is served at "/", so a stray path 404s
