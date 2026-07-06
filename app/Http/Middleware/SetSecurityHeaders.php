@@ -39,6 +39,11 @@ class SetSecurityHeaders
 
         $response->headers->set('Content-Security-Policy', $csp);
 
+        // Isolates this page from other origins' window references (e.g. a
+        // site that opens us in a popup can't reach in via window.opener).
+        // Safe here: every outbound window.open() already passes 'noopener'.
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+
         return $response;
     }
 }
