@@ -33,4 +33,15 @@ return [
     */
     'repo_url' => env('AGUET_REPO_URL', 'https://github.com/psyao/aguet.dev'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cron trigger token
+    |--------------------------------------------------------------------------
+    | Shared secret for the Infomaniak HTTP cron trigger (GET /cron/{token}).
+    | Generate with `php artisan cron:token --force`.
+    */
+    'cron' => [
+        'token' => env('CRON_TOKEN'),
+    ],
+
 ];
