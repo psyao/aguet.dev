@@ -49,6 +49,20 @@ it('renders the themed 503 page for artisan-down maintenance mode (distinct rend
     }
 });
 
+it('renders a 404 under an /en/ path in English, even though SetLocale never runs on unmatched routes', function () {
+    $response = test()->get('/en/this-route-does-not-exist');
+
+    $response->assertStatus(404);
+    $response->assertSee('404: route not found', false);
+});
+
+it('renders a 404 under the default path in French', function () {
+    $response = test()->get('/this-route-does-not-exist');
+
+    $response->assertStatus(404);
+    $response->assertSee('404 : route introuvable', false);
+});
+
 it('resolves error copy through the translation system in both locales', function () {
     app()->setLocale('fr');
     expect(__('site.errors.404.title'))->toBe('404 : route introuvable');

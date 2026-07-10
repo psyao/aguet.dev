@@ -4,7 +4,22 @@
     tokens inline, so 500/503 (and every other code) can render even with
     no build output and a broken DB. See design doc for why: 403/404/419/429
     are not actually guaranteed to fire on a "healthy" app either.
+
+    Locale is resolved here from the URL segment rather than via the
+    SetLocale middleware: that middleware is scoped to the "/" and "/en"
+    routes, so it never runs for an unmatched route (a 404) — without this,
+    visiting a typo'd /en/* URL would render the error page in French.
 --}}
+@php
+    $locales = config('aguet.locales', ['fr']);
+    $default = config('aguet.default_locale', 'fr');
+    $segment = request()->segment(1);
+    $locale = in_array($segment, $locales, true) ? $segment : $default;
+    app()->setLocale($locale);
+
+    $title = __("site.errors.{$code}.title");
+    $message = __("site.errors.{$code}.message");
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
