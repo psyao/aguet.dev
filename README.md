@@ -17,7 +17,11 @@ clean light theme when printed to PDF.
 - [Front-end architecture](#front-end-architecture) — Blade + Alpine, the terminal layer
 - [Local setup](#local-setup) · [Deployment](#deployment--infomaniak-shared-hosting)
 - Companion docs: [visual regression testing](docs/visual-testing.md) ·
-  [CI deploy pipeline](DEPLOY.md)
+  [CI deploy pipeline](DEPLOY.md) ·
+  [admin panel internals](docs/reference-admin-panel.md) ·
+  [contact message pipeline](docs/explanation-contact-pipeline.md) ·
+  [rotating the cron token](docs/howto-rotate-cron-token.md) ·
+  [themed error pages](docs/explanation-error-pages.md)
 
 ## Stack
 
