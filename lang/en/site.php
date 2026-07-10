@@ -138,4 +138,32 @@ return [
         'repo' => 'view repository',
     ],
 
+    'errors' => [
+        '403' => [
+            'title' => '403: permission denied',
+            'message' => "You don't have access to this page.",
+        ],
+        '404' => [
+            'title' => '404: route not found',
+            'message' => "That page doesn't exist. Check the URL, or head back home.",
+        ],
+        '419' => [
+            'title' => '419: session expired',
+            'message' => 'Your session timed out. Go back and try that again.',
+        ],
+        '429' => [
+            'title' => '429: too many requests',
+            'message' => "You've been rate-limited. Wait a moment and try again.",
+        ],
+        '500' => [
+            'title' => '500: something broke',
+            'message' => "That's on us, not you. Try again shortly.",
+        ],
+        '503' => [
+            'title' => '503: down for maintenance',
+            'message' => 'Back shortly.',
+        ],
+        'home' => 'go home',
+    ],
+
 ];
