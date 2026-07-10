@@ -139,4 +139,32 @@ return [
         'repo' => 'voir le dépôt',
     ],
 
+    'errors' => [
+        '403' => [
+            'title' => '403 : accès refusé',
+            'message' => "Vous n'avez pas accès à cette page.",
+        ],
+        '404' => [
+            'title' => '404 : route introuvable',
+            'message' => "Cette page n'existe pas. Vérifiez l'URL, ou retournez à l'accueil.",
+        ],
+        '419' => [
+            'title' => '419 : session expirée',
+            'message' => 'Votre session a expiré. Retournez en arrière et réessayez.',
+        ],
+        '429' => [
+            'title' => '429 : trop de requêtes',
+            'message' => 'Vous avez été limité. Patientez un instant et réessayez.',
+        ],
+        '500' => [
+            'title' => '500 : erreur serveur',
+            'message' => "C'est de notre côté, pas du vôtre. Réessayez sous peu.",
+        ],
+        '503' => [
+            'title' => '503 : maintenance en cours',
+            'message' => 'De retour bientôt.',
+        ],
+        'home' => "retour à l'accueil",
+    ],
+
 ];
