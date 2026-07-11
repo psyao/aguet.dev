@@ -1,0 +1,204 @@
+name: Deploy Template
+
+# Called by deploy-staging.yml and deploy-production.yml — not triggered directly.
+# Holds the build → deploy → summary logic that both environments share; only the
+# environment name and the SHA to deploy differ between callers.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment to deploy to (staging or production)
+        required: true
+        type: string
+      sha:
+        description: Full commit SHA to build and deploy
+        required: true
+        type: string
+    outputs:
+      build_result:
+        description: Result of the build job (success/failure/etc.)
+        value: ${{ jobs.summary.outputs.build_result }}
+      deploy_result:
+        description: Result of the deploy job (success/failure/etc.)
+        value: ${{ jobs.summary.outputs.deploy_result }}
+
+# Opt JS actions into Node 24 to avoid deprecation breakage on older action
+# runtimes. Revisit once all pinned actions ship native Node 24 support.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # BUILD — runs all untrusted third-party code (composer/pnpm deps, Vite build).
+  # Deliberately has no `environment:` key: it holds no secrets from either
+  # GitHub Environment, so a compromised build dependency cannot reach them.
+  # ───────────────────────────────────────────────────────────────────────────
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit      # review the baseline, then switch to block + allowed-endpoints
+          disable-sudo: false
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: ${{ inputs.sha }}
+          persist-credentials: false   # don't leave GITHUB_TOKEN on disk for dep code
+
+      - name: Setup environment & build assets
+        uses: ./.github/actions/setup-stack
+
+      - name: Generate build info
+        # Bake the deployed commit into config/build_info.php so the footer can
+        # show an honest "last deployed" popover. Only validated SHA / base64 /
+        # ISO-date values are written — never the raw commit subject (injection).
+        run: |
+          set -euo pipefail
+          SHA='${{ inputs.sha }}'
+          if ! printf '%s' "$SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::build-info SHA is not 40 hex chars: '$SHA'"; exit 1
+          fi
+          SUBJECT="$(git log -1 --format=%s "$SHA")"
+          if [ -z "$SUBJECT" ]; then
+            echo "::error::build-info commit subject is empty"; exit 1
+          fi
+          MSG_B64="$(printf '%s' "$SUBJECT" | base64 | tr -d '\n')"
+          DATE="$(git log -1 --format=%cI "$SHA")"
+          if ! printf '%s' "$DATE" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$'; then
+            echo "::error::build-info date is not ISO-8601: '$DATE'"; exit 1
+          fi
+          cat > config/build_info.php <<PHP
+          <?php
+
+          return [
+              'sha' => '${SHA}',
+              'message_b64' => '${MSG_B64}',
+              'date' => '${DATE}',
+          ];
+          PHP
+          php -l config/build_info.php
+
+      - name: Package release
+        # Ship only deployable paths. vendor/ and node_modules/ are deliberately
+        # excluded — vendor/ is rebuilt on the server by deploy.sh; .env is written
+        # in the deploy job from Doppler (it must never be in a build artifact).
+        run: |
+          tar -czf /tmp/release.tar.gz \
+            app bootstrap config database lang public resources routes scripts \
+            artisan composer.json composer.lock
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ inputs.environment }}
+          path: /tmp/release.tar.gz
+          retention-days: 1
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # DEPLOY — holds DOPPLER_TOKEN and DEPLOY_SSH_KEY for whichever GitHub
+  # Environment `inputs.environment` names. Runs NO third-party install or
+  # build code: it only unpacks the vetted artifact, writes .env, and ships it.
+  # ───────────────────────────────────────────────────────────────────────────
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    timeout-minutes: 10
+    env:
+      DEPLOY_ENV: ${{ inputs.environment }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
+      DEPLOY_PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || '/opt/php8.5/bin/php' }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Download release artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-${{ inputs.environment }}
+          path: /tmp/artifact
+
+      - name: Extract release
+        run: |
+          mkdir -p release
+          tar -xzf /tmp/artifact/release.tar.gz -C release
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@4819d808ab99e5cde19a0637a16536a4038fad73 # v4.0.1
+
+      - name: Generate .env
+        run: doppler secrets download --no-file --format env > release/.env
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          # Pinned host key from a secret — NOT a runtime ssh-keyscan (TOFU = MITM window).
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Sync files
+        run: |
+          rsync -rlzc --delete --no-perms --no-owner --no-group --chmod=D755,F644 \
+            --include='app/***' \
+            --include='bootstrap/***' \
+            --include='config/***' \
+            --include='database/***' \
+            --include='lang/***' \
+            --include='public/***' \
+            --include='resources/***' \
+            --include='routes/***' \
+            --include='scripts/***' \
+            --include='artisan' \
+            --include='composer.json' \
+            --include='composer.lock' \
+            --include='.env' \
+            --exclude='*' \
+            -e "ssh -p $DEPLOY_PORT -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes" \
+            release/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Post-deploy
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh -p "$DEPLOY_PORT" -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "bash '$DEPLOY_PATH/scripts/deploy.sh' '$DEPLOY_PHP_BIN' '$DEPLOY_ENV'"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # SUMMARY — turns needs.build.result / needs.deploy.result into explicit
+  # workflow_call outputs. A reusable workflow invoked as a job doesn't let the
+  # *caller* inspect needs.<inner-job>.result for jobs defined inside the
+  # callee, so this is the only way those statuses cross the boundary.
+  # ───────────────────────────────────────────────────────────────────────────
+  summary:
+    needs: [build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      build_result: ${{ steps.collect.outputs.build_result }}
+      deploy_result: ${{ steps.collect.outputs.deploy_result }}
+    steps:
+      - name: Collect job results
+        id: collect
+        run: |
+          echo "build_result=${{ needs.build.result }}" >> "$GITHUB_OUTPUT"
+          echo "deploy_result=${{ needs.deploy.result }}" >> "$GITHUB_OUTPUT"
