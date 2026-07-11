@@ -62,8 +62,14 @@ jobs:
           TARGET_SHA: ${{ steps.resolve.outputs.sha }}
         run: |
           set -euo pipefail
+          # The Checks API documents no ordering guarantee for check_runs[] —
+          # if this SHA ever has more than one run named "Lint, build & test"
+          # (a manual re-run, or ci.yml firing on both push and pull_request
+          # for the same commit), picking the first array entry could select
+          # a stale result in either direction. Explicitly take the most
+          # recently COMPLETED run by completed_at instead.
           CONCLUSION="$(gh api "repos/${{ github.repository }}/commits/$TARGET_SHA/check-runs" \
-            --jq '.check_runs[] | select(.name == "Lint, build & test") | .conclusion' | head -n1)"
+            --jq '[.check_runs[] | select(.name == "Lint, build & test" and .status == "completed")] | sort_by(.completed_at) | last | .conclusion // empty')"
           if [ "$CONCLUSION" != "success" ]; then
             echo "::error::No successful CI run ('Lint, build & test') found for $TARGET_SHA (found: '${CONCLUSION:-none}')"
             exit 1
