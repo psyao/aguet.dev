@@ -1,53 +1,59 @@
-name: Deploy
+name: Deploy Template
+
+# Called by deploy-staging.yml and deploy-production.yml — not triggered directly.
+# Holds the build → deploy → summary logic that both environments share; only the
+# environment name and the SHA to deploy differ between callers.
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: GitHub Environment to deploy to (staging or production)
+        required: true
+        type: string
+      sha:
+        description: Full commit SHA to build and deploy
+        required: true
+        type: string
+    outputs:
+      build_result:
+        description: Result of the build job (success/failure/etc.)
+        value: ${{ jobs.summary.outputs.build_result }}
+      deploy_result:
+        description: Result of the deploy job (success/failure/etc.)
+        value: ${{ jobs.summary.outputs.deploy_result }}
 
 # Opt JS actions into Node 24 to avoid deprecation breakage on older action
 # runtimes. Revisit once all pinned actions ship native Node 24 support.
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
-# Gated on CI: deploy only fires after the CI workflow completes on main, and the
-# build job below short-circuits unless that run went green. Keeps a red test
-# suite from shipping.
-on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [ main ]
-
-# Least privilege for GITHUB_TOKEN across every job.
 permissions:
   contents: read
 
 concurrency:
-  group: deploy
+  group: deploy-${{ inputs.environment }}
   cancel-in-progress: false
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
   # BUILD — runs all untrusted third-party code (composer/pnpm deps, Vite build).
-  # Holds no secrets: DOPPLER_TOKEN and DEPLOY_SSH_KEY do NOT exist in this job, so a
-  # compromised build dependency cannot reach them.
+  # Deliberately has no `environment:` key: it holds no secrets from either
+  # GitHub Environment, so a compromised build dependency cannot reach them.
   # ───────────────────────────────────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # Skip the whole pipeline when CI failed/cancelled — deploy and notify both
-    # need build, so they cascade off too.
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
           egress-policy: audit      # review the baseline, then switch to block + allowed-endpoints
-          # sudo stays enabled here: shivammathur/setup-php needs it to install PHP and
-          # system extensions (imagick et al.). Egress monitoring remains the primary
-          # guard against a compromised build dependency exfiltrating data.
           disable-sudo: false
 
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.sha }}
           persist-credentials: false   # don't leave GITHUB_TOKEN on disk for dep code
 
       - name: Setup environment & build assets
@@ -59,7 +65,7 @@ jobs:
         # ISO-date values are written — never the raw commit subject (injection).
         run: |
           set -euo pipefail
-          SHA='${{ github.event.workflow_run.head_sha }}'
+          SHA='${{ inputs.sha }}'
           if ! printf '%s' "$SHA" | grep -Eq '^[0-9a-f]{40}$'; then
             echo "::error::build-info SHA is not 40 hex chars: '$SHA'"; exit 1
           fi
@@ -67,8 +73,6 @@ jobs:
           if [ -z "$SUBJECT" ]; then
             echo "::error::build-info commit subject is empty"; exit 1
           fi
-          # printf '%s' avoids base64-encoding git's trailing newline (which would
-          # make an empty subject look non-empty and bake a trailing \n into the UI).
           MSG_B64="$(printf '%s' "$SUBJECT" | base64 | tr -d '\n')"
           DATE="$(git log -1 --format=%cI "$SHA")"
           if ! printf '%s' "$DATE" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}[+-][0-9]{2}:[0-9]{2}$'; then
@@ -97,43 +101,35 @@ jobs:
       - name: Upload release artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release
+          name: release-${{ inputs.environment }}
           path: /tmp/release.tar.gz
           retention-days: 1
 
   # ───────────────────────────────────────────────────────────────────────────
-  # DEPLOY — holds DOPPLER_TOKEN and DEPLOY_SSH_KEY. Runs NO third-party install
-  # or build code: it only unpacks the vetted artifact, writes .env, and ships it.
+  # DEPLOY — holds DOPPLER_TOKEN and DEPLOY_SSH_KEY for whichever GitHub
+  # Environment `inputs.environment` names. Runs NO third-party install or
+  # build code: it only unpacks the vetted artifact, writes .env, and ships it.
   # ───────────────────────────────────────────────────────────────────────────
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    environment: production
+    environment: ${{ inputs.environment }}
     timeout-minutes: 10
     env:
-      DEPLOY_ENV: production
+      DEPLOY_ENV: ${{ inputs.environment }}
       DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || '22' }}
       DEPLOY_PHP_BIN: ${{ vars.DEPLOY_PHP_BIN || '/opt/php8.5/bin/php' }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
         with:
-          # Once the baseline is confirmed, switch to block to make exfiltration of
-          # the SSH key / Doppler token impossible at the network layer:
-          #   egress-policy: block
-          #   allowed-endpoints: >
-          #     github.com:443
-          #     api.github.com:443
-          #     objects.githubusercontent.com:443
-          #     api.doppler.com:443
-          #     ${{ secrets.DEPLOY_HOST }}:${{ secrets.DEPLOY_PORT || '22' }}
           egress-policy: audit
           disable-sudo: true
 
       - name: Download release artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: release
+          name: release-${{ inputs.environment }}
           path: /tmp/artifact
 
       - name: Extract release
@@ -155,7 +151,6 @@ jobs:
           echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           # Pinned host key from a secret — NOT a runtime ssh-keyscan (TOFU = MITM window).
-          # Capture once locally: ssh-keyscan -p <port> <host>  → paste into DEPLOY_KNOWN_HOSTS.
           echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
@@ -185,38 +180,25 @@ jobs:
         run: |
           ssh -p "$DEPLOY_PORT" -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "bash '$DEPLOY_PATH/scripts/deploy.sh' '$DEPLOY_PHP_BIN'"
+            "bash '$DEPLOY_PATH/scripts/deploy.sh' '$DEPLOY_PHP_BIN' '$DEPLOY_ENV'"
 
   # ───────────────────────────────────────────────────────────────────────────
-  # NOTIFY — always runs. Reports overall outcome, including a build-stage failure
-  # that would skip the deploy job and otherwise send no notification.
+  # SUMMARY — turns needs.build.result / needs.deploy.result into explicit
+  # workflow_call outputs. A reusable workflow invoked as a job doesn't let the
+  # *caller* inspect needs.<inner-job>.result for jobs defined inside the
+  # callee, so this is the only way those statuses cross the boundary.
   # ───────────────────────────────────────────────────────────────────────────
-  notify:
+  summary:
     needs: [build, deploy]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 2
+    outputs:
+      build_result: ${{ steps.collect.outputs.build_result }}
+      deploy_result: ${{ steps.collect.outputs.deploy_result }}
     steps:
-      - name: Harden runner
-        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
-        with:
-          egress-policy: audit
-          disable-sudo: true
-
-      - name: Checkout
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Notify Kchat
-        uses: ./.github/actions/notify-kchat
-        with:
-          title: ${{ (needs.build.result == 'success' && needs.deploy.result == 'success') && '✅ Deploy successful' || '❌ Deploy failed' }}
-          color: ${{ (needs.build.result == 'success' && needs.deploy.result == 'success') && '#36a64f' || '#e01e5a' }}
-          sha: ${{ github.event.workflow_run.head_sha }}
-          branch: ${{ github.event.workflow_run.head_branch }}
-          repo: ${{ github.repository }}
-          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          commit_url: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.event.workflow_run.head_sha }}
-          webhook_url: ${{ secrets.KCHAT_WEBHOOK_URL }}
-          context: production
+      - name: Collect job results
+        id: collect
+        run: |
+          echo "build_result=${{ needs.build.result }}" >> "$GITHUB_OUTPUT"
+          echo "deploy_result=${{ needs.deploy.result }}" >> "$GITHUB_OUTPUT"

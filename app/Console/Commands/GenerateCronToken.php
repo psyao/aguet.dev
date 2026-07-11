@@ -9,10 +9,16 @@ use Illuminate\Console\Command;
  * (GET /cron/{token}). Plain run only prints the token; --force also
  * writes it into the environment file as CRON_TOKEN=, replacing any
  * existing line(s).
+ *
+ * --force is a local-dev/emergency convenience only. In staging and
+ * production, .env is regenerated from Doppler on every deploy, so an
+ * SSH-side --force write gets silently reverted by the next deploy — the
+ * token must be rotated in Doppler instead. See
+ * docs/howto-rotate-cron-token.md.
  */
 class GenerateCronToken extends Command
 {
-    protected $signature = 'cron:token {--force : Write the token into the .env file, replacing any existing CRON_TOKEN}';
+    protected $signature = 'cron:token {--force : Write the token into the .env file, replacing any existing CRON_TOKEN - local/emergency use only, see docs/howto-rotate-cron-token.md for staging/production rotation}';
 
     protected $description = 'Generate a token for the Infomaniak HTTP cron trigger';
 

@@ -38,7 +38,10 @@ return [
     | Cron trigger token
     |--------------------------------------------------------------------------
     | Shared secret for the Infomaniak HTTP cron trigger (GET /cron/{token}).
-    | Generate with `php artisan cron:token --force`.
+    | Staging and production each hold an independent value in Doppler — see
+    | docs/howto-rotate-cron-token.md to generate/rotate one. `--force` on
+    | `cron:token` is a local-dev-only convenience; it is not the production
+    | rotation path.
     */
     'cron' => [
         'token' => env('CRON_TOKEN'),
