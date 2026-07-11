@@ -88,7 +88,7 @@ These are the platform facts the pipeline is built around — useful to understa
 
 ## Adopting it in a project
 
-1. Copy the four files above into your repo, preserving paths.
+1. Copy the files above into your repo, preserving paths.
 2. Work through the [customization points](#customization-points).
 3. Configure [secrets & variables](#secrets--variables).
 4. Do the [first-deploy server setup](#first-deploy-one-time-server-setup).
@@ -197,7 +197,7 @@ The pipeline is built to limit the blast radius of a supply-chain compromise (a 
 
 ### Monitoring
 
-- **GitHub Actions** → the Deploy workflow, with per-job logs (build / deploy / notify).
+- **GitHub Actions** → the Deploy Staging / Deploy Production workflow, with per-job logs (resolve-sha / build / deploy / notify).
 - **Chat webhook** — notification on every run, success or failure.
 
 ### Recovery from a failed deploy
