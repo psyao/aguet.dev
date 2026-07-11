@@ -80,7 +80,7 @@ These are the platform facts the pipeline is built around — useful to understa
 
 - **No Node.js on shared hosting** → front-end assets must be built in CI and shipped; you cannot run `pnpm run build` on the server.
 - **Document root must point at `public/`** → set this when creating the site in the Infomaniak manager (the rsync ships `public/` into the app root, and the site folder targets `…/public`).
-- **The SSH/CLI PHP may differ from the per-site web PHP** → the server steps call an explicit binary via `DEPLOY_PHP_BIN` (default `/opt/php8.4/bin/php`) instead of bare `php`.
+- **The SSH/CLI PHP may differ from the per-site web PHP** → the server steps call an explicit binary via `DEPLOY_PHP_BIN` (default `/opt/php8.5/bin/php`) instead of bare `php`.
 - **`proc_open` / shell functions must be enabled** for Composer to run on the server (toggle in the site's PHP settings).
 - **`vendor/` is rebuilt server-side** by `deploy.sh` (with `--optimize-autoloader`), so it is excluded from the rsync.
 
@@ -223,6 +223,6 @@ Caveat the trap can't fix: if `php artisan migrate --force` failed partway, the 
 ## Server requirements (Infomaniak shared hosting)
 
 - SSH access enabled on the hosting plan.
-- PHP set per-site to your target version (template: **8.4**), with `proc_open` / shell functions enabled.
+- PHP set per-site to your target version (template: **8.5**), with `proc_open` / shell functions enabled.
 - The site's document root pointing at the app's `public/` directory.
 - Composer available on the server (the release script invokes `composer2.phar` next to the PHP binary — adjust the path in `deploy.sh` if your host differs).
