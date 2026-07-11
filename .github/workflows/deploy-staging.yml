@@ -1,0 +1,65 @@
+name: Deploy Staging
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-sha:
+    runs-on: ubuntu-latest
+    # No conclusion gate here on purpose: this job always runs and always
+    # outputs a SHA, even when CI failed, so `notify` below has something to
+    # report a failure against. The success gate lives on `deploy` instead.
+    timeout-minutes: 2
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - name: Resolve deployed SHA
+        id: resolve
+        run: echo "sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: resolve-sha
+    # Skip the actual deploy when CI failed/cancelled — but resolve-sha above
+    # still ran, so notify can report this as a failure with a real SHA.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    uses: ./.github/workflows/deploy-template.yml
+    with:
+      environment: staging
+      sha: ${{ needs.resolve-sha.outputs.sha }}
+    secrets: inherit
+
+  notify:
+    needs: [resolve-sha, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Notify Kchat
+        uses: ./.github/actions/notify-kchat
+        with:
+          title: ${{ (needs.deploy.outputs.build_result == 'success' && needs.deploy.outputs.deploy_result == 'success') && '✅ Deploy successful' || '❌ Deploy failed' }}
+          color: ${{ (needs.deploy.outputs.build_result == 'success' && needs.deploy.outputs.deploy_result == 'success') && '#36a64f' || '#e01e5a' }}
+          sha: ${{ needs.resolve-sha.outputs.sha }}
+          branch: ${{ github.event.workflow_run.head_branch }}
+          repo: ${{ github.repository }}
+          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          commit_url: ${{ github.server_url }}/${{ github.repository }}/commit/${{ needs.resolve-sha.outputs.sha }}
+          webhook_url: ${{ secrets.KCHAT_WEBHOOK_URL }}
+          context: staging
