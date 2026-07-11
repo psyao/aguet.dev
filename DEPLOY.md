@@ -31,6 +31,42 @@ A push to `main` runs the deploy workflow as **three jobs** in sequence:
 
 ---
 
+## Environments
+
+There are two deploy targets, each a GitHub Environment (`Settings → Environments`)
+with its own scoped secrets and its own Doppler config:
+
+| Environment | Trigger | Workflow | Deploys |
+|---|---|---|---|
+| `staging` | Automatic — every CI-green push to `main` | `deploy-staging.yml` | Whatever CI just validated |
+| `production` | Manual only — Actions tab or `gh workflow run deploy-production.yml` | `deploy-production.yml` | `main`'s current tip at trigger time (re-verified against a green CI run for that exact SHA) |
+
+Both call the same `deploy-template.yml` reusable workflow (`workflow_call`,
+inputs: `environment`, `sha`) — the build/deploy/summary logic lives once;
+only the trigger and the target environment differ. `notify` deliberately
+stays in each trigger workflow, not the template, since it needs the
+`workflow_run`/`workflow_dispatch` event context the template doesn't have.
+`deploy-production.yml` cannot
+be dispatched from a branch other than `main` (hard failure, not a silent
+skip) and re-checks that the resolved SHA has a successful `CI` run before
+deploying, since it doesn't get that gate for free the way `workflow_run`
+gives staging.
+
+**Environment-mismatch guard:** `scripts/deploy.sh` takes an optional second
+argument (the expected `APP_ENV`) and refuses to proceed — before touching
+`composer install`, maintenance mode, or the database — if the `.env` that
+just landed doesn't match it. This guards against a swapped or typo'd
+`DEPLOY_PATH` secret shipping one environment's code and `.env` over the
+other.
+
+**Known gap:** there is no dedicated rollback mechanism yet. The only
+recovery path today is re-running `deploy-production.yml` once `main` is
+fixed forward, or manually SSHing in per the
+[Recovery from a failed deploy](#recovery-from-a-failed-deploy) section
+below.
+
+---
+
 ## Why this shape (Infomaniak constraints)
 
 These are the platform facts the pipeline is built around — useful to understand before adapting it:
@@ -69,17 +105,27 @@ These are the platform facts the pipeline is built around — useful to understa
 
 ### Secrets & variables
 
-**Environment secrets** — `Settings → Environments → production → Environment secrets`:
+**Environment secrets** — set once per GitHub Environment
+(`Settings → Environments → staging` and `Settings → Environments → production`,
+each with its own values):
 
 | Name | Required | Description |
 |---|---|---|
-| `DEPLOY_HOST` | Yes | SSH hostname of the Infomaniak server |
-| `DEPLOY_USER` | Yes | SSH username |
-| `DEPLOY_PATH` | Yes | Absolute path to the app root on the server |
-| `DEPLOY_SSH_KEY` | Yes | Private SSH key — see [first-deploy setup](#first-deploy-one-time-server-setup) |
+| `DEPLOY_HOST` | Yes | SSH hostname of the Infomaniak server for this environment |
+| `DEPLOY_USER` | Yes | SSH username for this environment |
+| `DEPLOY_PATH` | Yes | Absolute path to this environment's app root on the server |
+| `DEPLOY_SSH_KEY` | Yes | Private SSH key for this environment — see [first-deploy setup](#first-deploy-one-time-server-setup) |
 | `DEPLOY_KNOWN_HOSTS` | Yes | Pinned server host key for strict host-key checking |
-| `DEPLOY_PORT` | No | SSH port — defaults to `22` |
-| `DOPPLER_TOKEN` | If using Doppler | Service token for the production config |
+| `DEPLOY_PORT` | No | SSH port for this environment — defaults to `22` |
+| `DOPPLER_TOKEN` | If using Doppler | Service token scoped to this environment's Doppler config |
+
+**Environment variables** — also set per GitHub Environment (`Settings →
+Environments → <name> → Environment variables`, not secrets — it isn't
+sensitive):
+
+| Name | Required | Description |
+|---|---|---|
+| `DEPLOY_PHP_BIN` | No | Absolute PHP binary path on this environment's server — defaults to `/opt/php8.5/bin/php` |
 
 **Repository secrets** — `Settings → Secrets and variables → Actions → Secrets`:
 
@@ -87,12 +133,6 @@ These are the platform facts the pipeline is built around — useful to understa
 |---|---|---|
 | `KCHAT_WEBHOOK_URL` | If using notifications | Chat incoming webhook URL |
 | `COMPOSER_AUTH_USER` / `COMPOSER_AUTH_PASS` | If using a private Composer registry | Login for your satis/private repo (named `FILACHECK_*` in the template) |
-
-**Repository variables** — `Settings → Secrets and variables → Actions → Variables`:
-
-| Name | Required | Description |
-|---|---|---|
-| `DEPLOY_PHP_BIN` | No | Absolute PHP binary path on the server — defaults to `/opt/php8.4/bin/php` |
 
 ### First-deploy one-time server setup
 
