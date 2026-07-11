@@ -1,0 +1,114 @@
+name: Deploy Production
+
+# Manual only — no automatic trigger. Always deploys main's current tip; the
+# ref/branch is never operator-selectable (see the guard job below), so this
+# can't accidentally deploy a feature branch from the Actions UI dropdown.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Require dispatch from main
+        # A job-level `if:` would only SKIP this job on a false condition, not
+        # fail the run — that's not a hard stop. This explicit check is.
+        run: |
+          if [ "${{ github.ref_name }}" != "main" ]; then
+            echo "::error::workflow_dispatch must be run from main (got: ${{ github.ref_name }})"
+            exit 1
+          fi
+
+  resolve-sha:
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read   # GET commits/{sha}/check-runs is the Checks API, not Actions
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Resolve current tip SHA
+        # git rev-parse HEAD after an explicit `ref: main` checkout — not
+        # origin/main, which isn't guaranteed present/current post-checkout.
+        id: resolve
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Require a green CI run for this exact SHA
+        # Staging gets its CI-success gate for free via workflow_run. A manual
+        # production deploy needs it re-asserted explicitly — a direct push to
+        # main (if branch protection ever lapses) would otherwise deploy
+        # ungated code. Query directly against the commit's check-runs rather
+        # than paging through recent workflow runs — the latter can miss the
+        # right run in a busy repo even at a high --limit.
+        #
+        # Name-coupled to ci.yml's job name ("Lint, build & test", ci.yml:16
+        # `name:` field) — if that job is ever renamed, update the match
+        # below in the same PR, or this check starts failing every deploy.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TARGET_SHA: ${{ steps.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+          CONCLUSION="$(gh api "repos/${{ github.repository }}/commits/$TARGET_SHA/check-runs" \
+            --jq '.check_runs[] | select(.name == "Lint, build & test") | .conclusion' | head -n1)"
+          if [ "$CONCLUSION" != "success" ]; then
+            echo "::error::No successful CI run ('Lint, build & test') found for $TARGET_SHA (found: '${CONCLUSION:-none}')"
+            exit 1
+          fi
+
+  deploy:
+    needs: resolve-sha
+    uses: ./.github/workflows/deploy-template.yml
+    with:
+      environment: production
+      sha: ${{ needs.resolve-sha.outputs.sha }}
+    secrets: inherit
+
+  notify:
+    needs: [resolve-sha, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
+        with:
+          egress-policy: audit
+          disable-sudo: true
+
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Notify Kchat
+        # needs.resolve-sha.outputs.sha is empty if `guard` failed (resolve-sha
+        # never ran) or if resolve-sha itself failed before its output step —
+        # fall back to github.sha (the ref tip at dispatch time) so the
+        # notification always carries a real commit, not a blank link.
+        env:
+          NOTIFY_SHA: ${{ needs.resolve-sha.outputs.sha || github.sha }}
+        uses: ./.github/actions/notify-kchat
+        with:
+          title: ${{ (needs.deploy.outputs.build_result == 'success' && needs.deploy.outputs.deploy_result == 'success') && '✅ Deploy successful' || '❌ Deploy failed' }}
+          color: ${{ (needs.deploy.outputs.build_result == 'success' && needs.deploy.outputs.deploy_result == 'success') && '#36a64f' || '#e01e5a' }}
+          sha: ${{ env.NOTIFY_SHA }}
+          branch: main
+          repo: ${{ github.repository }}
+          run_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          commit_url: ${{ github.server_url }}/${{ github.repository }}/commit/${{ env.NOTIFY_SHA }}
+          webhook_url: ${{ secrets.KCHAT_WEBHOOK_URL }}
+          context: production
