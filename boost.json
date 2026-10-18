@@ -15,10 +15,11 @@
     ],
     "sail": false,
     "skills": [
+        "infer-conventions",
         "laravel-best-practices",
-        "ai-sdk-development",
-        "pest-testing",
+        "testing-best-practices",
         "tailwindcss-development",
+        "filament-development",
         "translatable-development"
     ]
 }
