@@ -8,6 +8,7 @@ The friction log of moving this Site onto [Velox](https://github.com/psyao/velox
 | --- | --- | --- |
 | 1 | Update aguet's PHP and JS dependencies to Velox's floors (psyao/velox#310) | Laravel 13.19 → 13.37, Filament 5.7.0-beta2 → 5.10.2 (stable, `minimum-stability` back to `stable`), Pest 4 → 5, PHPUnit 12 → 13, Guzzle 7 → 8 (through Laravel), Boost 2.4 → 2.10 and its skills reinstalled; Vite 8.3, Tailwind 4.3.3, laravel-vite-plugin 3.2; Node 26 in `.nvmrc` and `.node-version` (CI reads the latter). 149 tests pass; the visual suite fails as on `main` (friction 1) |
 | 2 | Regenerate aguet's visual baselines on today's macOS and Chromium (psyao/velox#319) | Playwright 1.61.1 → 1.64.1 (Chromium v1248); the 9 failing baselines regenerated on macOS 26.6 after eyeballing every diff: text anti-aliasing only, plus the EN mobile contact modal no longer captured with the viewport scrolled 11px sideways. 11 of 13 pass, 2 skipped (print), stable over two runs |
+| 3 | Add a French 404 visual baseline on aguet's main (psyao/velox#335) | `ErrorPageVisualTest` captures `/this-route-does-not-exist` in French (desktop) on macOS 26.6, Playwright 1.64.1, Chromium v1248; the 10 baselines pass, 12 of 14 tests (2 skipped, print), stable over two runs; no friction |
 
 ## Friction log
 
