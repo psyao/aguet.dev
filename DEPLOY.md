@@ -59,7 +59,7 @@ These are the platform facts the pipeline is built around — useful to understa
 | **PHP version** | `setup-stack/action.yml`, `deploy.sh`, `DEPLOY_PHP_BIN` var | Match your target PHP (template uses 8.4). Keep all three in sync. |
 | **rsync include list** | `deploy.yml` → *Sync files* | The `--include=` list is the standard Laravel tree. Add/remove top-level paths your app ships. The trailing `--exclude='*'` is what protects server-side `vendor/` and `storage/` from `--delete` — keep it. |
 | **`.env` source** | `deploy.yml` → *Generate .env* | Template uses **Doppler** (`doppler secrets download`). If you don't use Doppler, replace this step — e.g. compose `.env` from GitHub secrets, or decrypt a committed `.env` via `php artisan env:decrypt`. The `.env` must end up in `release/.env` before the rsync. |
-| **Private Composer registry** | `setup-stack/action.yml` → *Add credentials* + `deploy.sh` | Template configures one private satis repo via `composer config http-basic …`. If your app has no private packages, delete that step (and its inputs), and drop the matching server-side `composer config` from first-deploy setup. |
+| **Private Composer packages** | `COMPOSER_AUTH` secret (CI and build job) + server-side `composer config` | The app installs `psyao/velox` from its private GitHub repository: CI reads a read-only GitHub token from the `COMPOSER_AUTH` secret, and the server's `composer install` (in `deploy.sh`) reads the one stored once with `composer config --global` (first-deploy setup). |
 | **Notifications** | `deploy.yml` → `notify` job + `notify-kchat` | Template posts to **Kchat** (Infomaniak chat). Swap the composite for Slack/Discord/etc., or remove the `notify` job entirely. |
 | **pnpm version** | `package.json` `packageManager` field | Set e.g. `"packageManager": "pnpm@11.x.y"`. `setup-stack` reads it (no `version:` is hardcoded). |
 | **Node version** | `setup-stack/action.yml` | Template uses Node 24. |
@@ -86,7 +86,7 @@ These are the platform facts the pipeline is built around — useful to understa
 | Name | Required | Description |
 |---|---|---|
 | `KCHAT_WEBHOOK_URL` | If using notifications | Chat incoming webhook URL |
-| `COMPOSER_AUTH_USER` / `COMPOSER_AUTH_PASS` | If using a private Composer registry | Login for your satis/private repo (named `FILACHECK_*` in the template) |
+| `COMPOSER_AUTH` | Once the app requires `psyao/velox` | `{"github-oauth":{"github.com":"<token>"}}`, a fine-grained GitHub token with read-only Contents on `psyao/velox` |
 
 **Repository variables** — `Settings → Secrets and variables → Actions → Variables`:
 
@@ -96,12 +96,12 @@ These are the platform facts the pipeline is built around — useful to understa
 
 ### First-deploy one-time server setup
 
-**1. Private Composer credentials (only if you use a private registry)**
+**1. Private Composer credentials**
 
-`composer install` runs on the server (in `deploy.sh`) and needs credentials for any private repo:
+`composer install` runs on the server (in `deploy.sh`) and needs the same read-only GitHub token as the `COMPOSER_AUTH` secret, stored once:
 
 ```bash
-composer config --global http-basic.YOUR_SATIS_HOST USERNAME PASSWORD
+/opt/php8.5/bin/php /opt/php8.5/bin/composer2.phar config --global --auth github-oauth.github.com <token>
 ```
 
 **2. SSH deploy key**

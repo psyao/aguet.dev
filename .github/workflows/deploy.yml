@@ -34,6 +34,10 @@ jobs:
     # Skip the whole pipeline when CI failed/cancelled — deploy and notify both
     # need build, so they cascade off too.
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    env:
+      # Read-only GitHub token for private Composer packages (psyao/velox), as
+      # {"github-oauth":{"github.com":"<token>"}}. Empty until the secret exists.
+      COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -161,7 +165,12 @@ jobs:
 
       - name: Sync files
         run: |
+          # The P(rotect) filters keep what the server makes itself out of --delete:
+          # the storage:link symlink, and the assets filament:upgrade publishes.
           rsync -rlzc --delete --no-perms --no-owner --no-group --chmod=D755,F644 \
+            --filter='P public/storage' \
+            --filter='P public/css/***' \
+            --filter='P public/js/***' \
             --include='app/***' \
             --include='bootstrap/***' \
             --include='config/***' \
