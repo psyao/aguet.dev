@@ -7,11 +7,6 @@ use Illuminate\Support\Facades\Route;
 // An unknown path now reaches Velox's catch-all, which looks the path up among the Entries.
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    // Velox's catch-all, registered at boot, would otherwise answer before the routes these tests add.
-    Route::getRoutes()->getByName('velox.entry')->fallback();
-});
-
 function assertThemedErrorPage(int $status, string $codeText): void
 {
     Route::get('/__test-throw-'.$status, fn () => abort($status));

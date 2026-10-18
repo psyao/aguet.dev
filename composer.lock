@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "afef3e9a06b443288b128ce020e60395",
+    "content-hash": "64fc36265876ebedb5bf1c77ce802649",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -5140,11 +5140,11 @@
         },
         {
             "name": "psyao/velox",
-            "version": "0.23.0",
+            "version": "0.24.0",
             "dist": {
                 "type": "path",
                 "url": "/Users/steve/Code/velox",
-                "reference": "952e99d25af0f8af6eb49895e88a99add29fe44c"
+                "reference": "396de802d264fdcc1025b7714a82989527d3ac44"
             },
             "require": {
                 "ext-fileinfo": "*",

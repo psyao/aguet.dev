@@ -11,7 +11,7 @@
         "laravel/framework": "^13.37",
         "laravel/tinker": "^3.0",
         "outerweb/filament-translatable-fields": "^4",
-        "psyao/velox": "^0.23",
+        "psyao/velox": "^0.24",
         "spatie/laravel-translatable": "^6"
     },
     "require-dev": {
@@ -107,7 +107,7 @@
         "options": {
             "symlink": true,
             "versions": {
-                "psyao/velox": "0.23.0"
+                "psyao/velox": "0.24.0"
             }
         }
     }]
