@@ -19,6 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Outerweb\FilamentTranslatableFields\TranslatableFieldsPlugin;
+use Velox\Cms\VeloxPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -34,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Emerald,
             ])
             ->plugins([
+                VeloxPlugin::make(),
                 TranslatableFieldsPlugin::make()
                     ->supportedLocales([
                         'fr' => 'Français',
