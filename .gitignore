@@ -22,6 +22,10 @@
 # Filament's published assets — regenerate on deploy: php artisan filament:assets:publish
 /public/css/filament
 /public/js/filament
+/public/css/app
+/public/js/app
+/public/css/solution-forest
+/public/js/solution-forest
 /storage/*.key
 /storage/pail
 /vendor

@@ -28,9 +28,7 @@ trap '$PHP_BIN artisan up || true' EXIT
 
 $PHP_BIN artisan storage:link --force
 $PHP_BIN artisan migrate --force
-$PHP_BIN artisan config:cache
-$PHP_BIN artisan route:cache
-$PHP_BIN artisan view:cache
+$PHP_BIN artisan optimize   # config, routes, views and events, plus filament:optimize
 $PHP_BIN artisan queue:restart
 
 # The EXIT trap runs `artisan up` here.
