@@ -40,6 +40,12 @@ This rewrites the snapshots. Review the new images in `git diff`, then commit.
 Add `--diff` (without `--update-snapshots`) to open a visual diff of what moved.
 Never update baselines to "make it pass" without eyeballing the change.
 
+Pest compares the bytes; on a mismatch it asks Playwright for a tolerant diff.
+A diff view with a blank "missing image" diff means Playwright found the change
+within its anti-aliasing tolerance. An "Expect failed" with no diff view (the EN
+pages) means Playwright's own capture came out at another height: compare the
+images yourself.
+
 A baseline is a base64-encoded PNG. To view one:
 
     base64 -d -i tests/.pest/snapshots/Browser/HomeVisualTest/<name>.snap -o /tmp/x.png && open /tmp/x.png
@@ -56,9 +62,9 @@ light print theme — none of which a screenshot could assert anyway.
 
 Baselines were generated on:
 
-- OS: macOS 15.7.5 (Darwin 24.6.0)
-- Playwright: 1.60.0
-- Chromium: Chrome for Testing 148.0.7778.96 (playwright chromium v1223)
+- OS: macOS 26.6.2 (Darwin 25.6.0)
+- Playwright: 1.64.1
+- Chromium: Chrome for Testing 156.0.8078.4 (playwright chromium v1248)
 
 A different browser build re-renders text/anti-aliasing differently and will fail
 the diffs. The suite runs in one fixed local environment (not CI). Regenerate
