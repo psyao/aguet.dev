@@ -1,14 +1,11 @@
-{{-- About: prose (Markdown) + an ASCII fastfetch profile card. --}}
+{{-- About: prose (rich text) + an ASCII fastfetch profile card. --}}
 <section id="about" class="about section">
     <div class="wrap">
         <h2 class="visually-hidden">{{ __('site.sections.about') }}</h2>
         <p class="cmd"><span class="prompt">steve@aguet ~ %</span> <span class="arg">cat about.md &amp;&amp; fastfetch</span></p>
 
         <div class="about-grid">
-            <div class="body">{!! \Illuminate\Support\Str::markdown($content->about_body ?? '', [
-                'html_input' => 'strip',
-                'allow_unsafe_links' => false,
-            ]) !!}</div>
+            <div class="body">{{ $content->about_body }}</div>
 
             <div class="neofetch">
                 <pre class="logo" aria-hidden="true">    ◆

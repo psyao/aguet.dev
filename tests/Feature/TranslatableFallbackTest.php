@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Project;
-use App\Models\SiteContent;
 use App\Models\SkillGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -13,9 +12,7 @@ it('registers translatable fields from the #[Translatable] attribute', function 
     expect((new Project)->getTranslatableAttributes())
         ->toContain('name', 'client', 'role', 'summary')
         ->and((new SkillGroup)->getTranslatableAttributes())
-        ->toContain('title', 'text', 'note')
-        ->and((new SiteContent)->getTranslatableAttributes())
-        ->toContain('hero_title', 'about_body', 'contact_lead');
+        ->toContain('title', 'text', 'note');
 });
 
 // The EN page renders FR for any field left blank in EN. This relies on spatie's

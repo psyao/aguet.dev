@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\ContactMessage;
-use App\Models\SiteContent;
 use App\Services\ContactMessageNotifier;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -38,7 +37,7 @@ class NotifyContactMessages extends Command
 
     public function handle(ContactMessageNotifier $notifier): int
     {
-        $recipient = SiteContent::current()->contact_email;
+        $recipient = ContactMessageNotifier::recipient();
         $webhook = config('services.kchat.contact_webhook_url');
         $kchatConfigured = filled($webhook);
 
@@ -66,10 +65,10 @@ class NotifyContactMessages extends Command
         // A missing recipient is a misconfiguration of the email rail only — it no
         // longer aborts the run, so the kChat rail can still deliver.
         if (blank($recipient)) {
-            Log::warning('contact:notify — SiteContent.contact_email is not set; email rail skipped.', [
+            Log::warning('contact:notify — the Home Page has no contact_email; email rail skipped.', [
                 'pending' => $pending->count(),
             ]);
-            $this->warn('No recipient configured (SiteContent.contact_email); email rail skipped.');
+            $this->warn('No recipient configured (the Home Page\'s contact_email); email rail skipped.');
         }
 
         $emailed = 0;

@@ -43,15 +43,8 @@ on the model.
 
 ## Pages (non-resource)
 
-- **`ManageSiteContent`** (nav group Contenu, sort `-1` — pinned to the top) — a
-  singleton editor for the `SiteContent` model. `mount()` fills form state from
-  `SiteContent::current()->attributesToArray()`; `save()` writes it straight back with
-  `SiteContent::current()->update($this->form->getState())`. There is exactly one
-  `SiteContent` row (`current()` is `firstOrCreate([])`), so this page has no list/create
-  — just one form. Layout: `Section`s for Hero / À propos / Contact, `MarkdownEditor`
-  fields (`.translatable()` for the editorial ones) plus plain `TextInput`s for
-  language-neutral contact fields (`contact_email`, `contact_linkedin(_label)`,
-  `contact_github(_label)`).
+- The Home Page's texts are no longer a page of the panel: they are the Home Page's
+  Entry, edited in Velox's **Accueil** Entry Resource (`App\ContentTypes\Home`).
 - **`DatabaseBackup`** (nav group Système, "Sauvegarde DB") — two header actions:
   `download` streams a SQL dump via `App\Support\DatabaseDumper`; `restore` (danger
   color, confirmation required, 50MB `FileUpload` limit) rehydrates via

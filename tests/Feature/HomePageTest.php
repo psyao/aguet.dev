@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\HomeSeeder;
 use Database\Seeders\ProjectSeeder;
-use Database\Seeders\SiteContentSeeder;
 use Database\Seeders\SkillGroupSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -16,7 +16,7 @@ class HomePageTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed([SiteContentSeeder::class, ProjectSeeder::class, SkillGroupSeeder::class]);
+        $this->seed([HomeSeeder::class, ProjectSeeder::class, SkillGroupSeeder::class]);
     }
 
     public function test_french_home_renders(): void
@@ -27,6 +27,37 @@ class HomePageTest extends TestCase
         $response->assertSee('Développeur web full-stack', false);
         $response->assertSee('cvci', false);                 // project legend
         $response->assertSee('href="'.url('/en').'"', false); // language switch
+    }
+
+    public function test_french_home_renders_the_home_entry_texts(): void
+    {
+        $this->get('/')
+            ->assertOk()
+            ->assertSee('Développeur web <em>PHP</em>,<br>', false)
+            ->assertSee('Je conçois, développe et fais évoluer des plateformes Laravel sur mesure.', false)
+            ->assertSee('<p>Je développe pour le web depuis plus de quinze ans.', false)
+            ->assertSee('Un projet Laravel, une plateforme à reprendre ou à faire évoluer ?', false)
+            ->assertSee('Région lémanique · Suisse', false);
+    }
+
+    public function test_english_home_renders_the_home_translation_texts(): void
+    {
+        $this->get('/en')
+            ->assertOk()
+            ->assertSee('<em>PHP</em> web developer,<br>', false)
+            ->assertSee('<p>I’ve been building for the web for over fifteen years.', false)
+            ->assertSee('A Laravel project, a platform to take over or to grow?', false)
+            ->assertSee('/in/steveaguet', false)                     // untranslated, read from the Origin
+            ->assertSee(base64_encode('steve@aguet.dev'), false);
+    }
+
+    public function test_language_switch_goes_between_both_homes(): void
+    {
+        $this->get('/en')
+            ->assertSee('href="'.url('/').'" hreflang="fr"', false)  // chrome switch
+            ->assertSee('<a class="seg r" href="'.url('/').'"', false); // statusbar switch
+
+        $this->get('/')->assertSee('<a class="seg r" href="'.url('/en').'"', false);
     }
 
     public function test_english_home_renders(): void

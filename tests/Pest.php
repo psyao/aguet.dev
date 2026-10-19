@@ -1,7 +1,9 @@
 <?php
 
+use Database\Seeders\HomeSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
+use Velox\Cms\Models\Entry;
 
 uses(TestCase::class)->in('Feature', 'Unit');
 
@@ -20,3 +22,14 @@ uses(TestCase::class)
         Artisan::call('migrate:fresh', ['--seed' => true, '--force' => true]);
     })
     ->in('Browser');
+
+/** Set the owner address the contact pipeline delivers to: the Home Page's contact_email, seeded first if need be. */
+function setRecipient(?string $email = 'owner@example.com'): void
+{
+    if (Entry::homePage() === null) {
+        (new HomeSeeder)->run();
+    }
+
+    $home = Entry::homePage();
+    $home->update(['data' => [...$home->data, 'contact_email' => $email]]);
+}

@@ -1,12 +1,16 @@
 <?php
 
+use App\ContentTypes\Home;
+
 return [
 
     /*
      * The Content Types of this Site: Content Type classes, each extending
      * Velox\Cms\ContentType. `php artisan velox:make:content-type` scaffolds one.
      */
-    'content_types' => [],
+    'content_types' => [
+        Home::class,
+    ],
 
     /*
      * The Menus of this Site, the slots of its layout that Writers fill in the

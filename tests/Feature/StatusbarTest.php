@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\HomeSeeder;
 use Database\Seeders\ProjectSeeder;
-use Database\Seeders\SiteContentSeeder;
 use Database\Seeders\SkillGroupSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,7 +15,7 @@ class StatusbarTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seed([SiteContentSeeder::class, ProjectSeeder::class, SkillGroupSeeder::class]);
+        $this->seed([HomeSeeder::class, ProjectSeeder::class, SkillGroupSeeder::class]);
         config(['aguet.repo_url' => 'https://github.com/psyao/aguet.dev']);
     }
 

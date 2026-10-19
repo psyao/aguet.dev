@@ -3,7 +3,6 @@
 use App\Console\Commands\NotifyContactMessages;
 use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
-use App\Models\SiteContent;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -16,12 +15,6 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     config(['services.kchat.contact_webhook_url' => null]);
 });
-
-/** Set the owner address the sweep delivers to. */
-function setRecipient(string $email = 'owner@example.com'): void
-{
-    SiteContent::current()->update(['contact_email' => $email]);
-}
 
 /** Point the kChat rail at a fake webhook (null = unconfigured). */
 function setKchatWebhook(?string $url = 'https://kchat.test/hook'): void

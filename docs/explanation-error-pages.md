@@ -32,17 +32,15 @@ This means the page renders identically whether the Vite manifest exists, whethe
 (the 503 case `scripts/deploy.sh` triggers is the exact moment this page is *most*
 likely to be seen).
 
-### Locale resolved independently of `SetLocale`
+### Locale resolved independently of Velox
 
-`SetLocale` (the middleware that normally sets the app locale from the URL) is
-attached only to the routes in `routes/web.php` — the matched `/` and `/{locale}`
-routes. A request that doesn't match any route (the definition of a 404) never enters
-that middleware group at all, so relying on it here would render every 404 in the
-fallback locale regardless of what the visitor typed. `_shell.blade.php` re-derives
-the locale itself, straight from `request()->segment(1)` against the same
-`config('aguet.locales')` / `default_locale` values `SetLocale` uses — duplicated
-logic, not shared, because the whole point is that it must work in the cases where
-the shared code path didn't run.
+Velox sets the app locale from the URL on its own pages only. An error raised
+elsewhere (a 500 deep in a request, a 419 from Livewire) renders before or outside
+that, so relying on it here would render those pages in the default locale
+regardless of what the visitor typed. `_shell.blade.php` re-derives the locale
+itself, straight from `request()->segment(1)` against the Locales declared in
+`config('velox.locales')` — duplicated logic, not shared, because the whole point is
+that it must work in the cases where the shared code path didn't run.
 
 ### Title and message derive from the error code alone
 
@@ -58,7 +56,7 @@ the whole shell.
   change to `app.css` has to be manually mirrored into `_shell.blade.php`'s `<style>`
   block, or the two will drift. Accepted because the alternative — depending on the
   Vite-built stylesheet — is exactly the dependency this page exists to avoid.
-- **Locale detection logic is duplicated, not shared, with `SetLocale`.** Two places
+- **Locale detection logic is duplicated, not shared, with Velox.** Two places
   now need to agree on how a locale is derived from a URL segment. Accepted for the
   same reason: sharing code would mean sharing the code path, and the code path is
   what's unavailable when this page needs to render.

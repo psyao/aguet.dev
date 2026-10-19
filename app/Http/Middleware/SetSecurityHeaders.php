@@ -22,6 +22,12 @@ class SetSecurityHeaders
     {
         $response = $next($request);
 
+        // Appended to the `web` group, so it also sees the Admin (Filament), whose
+        // asset origins are unaudited: only the Site's own pages get the policy.
+        if (! $request->routeIs('velox.entry')) {
+            return $response;
+        }
+
         $csp = implode('; ', [
             "default-src 'self'",
             // 'unsafe-eval' is required by Alpine: every x-data/x-on expression

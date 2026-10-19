@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CronController;
+use App\Http\Middleware\SetSecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: SetSecurityHeaders::class);
+
         // No trustProxies: Infomaniak passes the real client IP in REMOTE_ADDR
         // and never sets X-Forwarded-For. Trusting XFF would let any visitor
         // spoof their IP (verified 2026-07-02) and bypass the contact-form

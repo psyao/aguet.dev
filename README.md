@@ -40,9 +40,9 @@ clean light theme when printed to PDF.
 
 ### Bilingual
 
-- French is served at `/`, English at `/en`. The `SetLocale` middleware reads the locale
-  from the URL and shares the alternate URL with views (used by the FR/EN switch and the
-  `hreflang` tags). Adding a locale is just a `config/aguet.php` change.
+- French is served at `/`, English at `/en`, both by Velox: the Home Page and its English
+  Translation. Velox sets the locale from the URL; the Locales are declared in
+  `config/velox.php`.
 - **UI chrome** strings (nav, buttons, labels) live in `lang/fr/site.php` + `lang/en/site.php`.
 - **Editorial content** (hero, about, projects, contact) lives in the database, is
   translatable, and is edited in Filament — never in Git.
@@ -52,13 +52,14 @@ clean light theme when printed to PDF.
 Four tables back the editorial content. Translatable fields are stored as JSON, one key per
 locale (spatie/laravel-translatable); everything else is shared across languages.
 
-- **`SiteContent`** — the editorial singleton, fetched with `SiteContent::current()` (the
-  one row, created on demand). Translatable: `hero_title`, `hero_subtitle`, `hero_role`,
-  `hero_location`, `hero_exp`, `hero_focus`, `about_body` (Markdown), `contact_lead`.
-  Language-neutral: `contact_email`, `contact_linkedin`, `contact_linkedin_label`,
-  `contact_github`, `contact_github_label`. `hero_title` uses a small convention rendered by
-  `App\Support\Content::heroTitle()`: `**word**` becomes a green accent emphasis, a newline
-  becomes a line break.
+- **The Home Page** — the one Entry of Velox's `Home` Content Type (`App\ContentTypes\Home`),
+  fetched with `Entry::homePage()`: its French Origin and English Translation. Per language:
+  `hero_title`, `hero_subtitle`, `hero_role`, `hero_location`, `hero_exp`, `hero_focus`,
+  `about_body` (rich text), `contact_lead`. Shared, on the Origin: `contact_email`,
+  `contact_linkedin`, `contact_linkedin_label`, `contact_github`, `contact_github_label`.
+  `hero_title`, `hero_subtitle` and `contact_lead` keep inline Markdown, rendered by
+  `App\Support\Content`: `*word*` becomes a green accent emphasis, a newline in the title
+  a line break.
 - **`Project`** — the projects collection. Translatable: `name`, `client`, `role`,
   `summary`. Shared: `slug` (unique), `url`, `featured`, `sort_order`, `is_published`.
   `Project::published()` returns published rows ordered featured-first then `sort_order`;
@@ -92,15 +93,14 @@ Open **`/admin`** and sign in. The admin user is seeded by `AdminUserSeeder` fro
 with `php artisan make:filament-user`. Translatable fields show **FR / EN** tabs (one per
 locale) — fill both.
 
-### Site content (« Contenu du site »)
+### Home Page
 
-The first nav item edits the `SiteContent` singleton, in three sections:
-
-- **Hero** — `Titre`, `Sous-titre`, `Rôle`, `Localisation`, `Expérience`, `Focus`. In the
-  title, `**mot**` renders the word as a green accent and a line break becomes a `<br>`.
-- **À propos** — `Texte`, written in Markdown (leave a blank line between paragraphs).
-- **Contact** — the lead line plus the email, LinkedIn and GitHub URLs and their displayed
-  labels (e.g. `/in/steveaguet`). These feed the contact section and the ⌘K palette.
+Velox's **Accueil** item lists the Home Page: edit the French texts on it, the English ones on
+its Translation (the Translations panel), and **Preview** it before saving. In the title,
+`*mot*` renders the word as a green accent and a line break becomes a `<br>`; the about
+text is edited as rich text. The email, LinkedIn and GitHub URLs and their displayed labels
+(e.g. `/in/steveaguet`) are entered once, on the French Origin; they feed the contact
+section and the ⌘K palette, and the email receives the contact form's messages.
 
 ### Projects
 
@@ -136,12 +136,12 @@ click-to-copy, the ⌘K palette, and the status bar's live vim-mode indicator.
 
 ### Request flow
 
-`routes/web.php` serves the one page through `HomeController`, behind the `SetLocale`
-middleware. `SetLocale` reads the locale from the first URL segment (default `fr` at `/`,
-others under their own prefix, e.g. `/en`), calls `app()->setLocale()`, and shares `locale`,
-`altUrl`, and the per-locale `homeUrls` with every view (used by the FR/EN switch and the
-`hreflang` tags). The controller loads the `SiteContent` singleton plus published projects
-and ordered skill groups, each with their tags eager-loaded.
+Velox serves the one page: the Home Page at `/`, its Translation at `/en`, setting the
+locale from the URL. `App\ContentTypes\Home::render()` renders the `home` view with the
+Entry as `content`, published projects and ordered skill groups (tags eager-loaded), and
+`locale`, `altUrl` and the per-locale `homeUrls` built from `Velox::locales()` (used by the
+FR/EN switch and the `hreflang` tags). `SetSecurityHeaders`, appended to the `web` group,
+sets the CSP on Velox's public route only.
 
 ### Layout and chrome
 

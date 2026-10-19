@@ -6,11 +6,11 @@ use App\Console\Commands\NotifyContactMessages;
 use App\Livewire\ContactForm;
 use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
-use App\Models\SiteContent;
 use App\Notifications\ContactMessageReceived;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
+use Velox\Cms\Models\Entry;
 
 /**
  * Delivers the owner notification for a contact-form submission on two
@@ -39,16 +39,24 @@ class ContactMessageNotifier
      */
     public function deliver(ContactMessage $message): void
     {
-        $recipient = SiteContent::current()->contact_email;
+        $recipient = self::recipient();
         $webhook = config('services.kchat.contact_webhook_url');
 
-        if (filled($recipient) && $this->emailPending($message)) {
+        if (blank($recipient)) {
+            Log::warning('Contact message not emailed: the Home Page has no contact_email.', ['id' => $message->id]);
+        } elseif ($this->emailPending($message)) {
             $this->deliverEmail($message, $recipient);
         }
 
         if (filled($webhook) && $this->kchatPending($message)) {
             $this->deliverKChat($message, $webhook);
         }
+    }
+
+    /** The owner's address: the Home Page's contact_email, entered once for every Locale. */
+    public static function recipient(): ?string
+    {
+        return Entry::homePage()?->contact_email;
     }
 
     public function emailPending(ContactMessage $message): bool

@@ -17,15 +17,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Supported locales
-    |--------------------------------------------------------------------------
-    | The default locale lives at "/", the others under their own URL prefix.
-    */
-    'locales' => ['fr', 'en'],
-    'default_locale' => 'fr',
-
-    /*
-    |--------------------------------------------------------------------------
     | Source repository
     |--------------------------------------------------------------------------
     | Trusted constant (never DB content) used to build the footer commit/repo

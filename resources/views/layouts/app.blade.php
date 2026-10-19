@@ -5,7 +5,6 @@
     // are deterministic. Inert in production.
     $shot = app()->environment('testing') && request()->boolean('screenshot');
     $ogLocales = ['fr' => 'fr_CH', 'en' => 'en_GB'];
-    $defaultLocale = config('aguet.default_locale', 'fr');
     $jsConfig = [
         'locale' => $locale,
         'altUrl' => $altUrl,
@@ -84,7 +83,7 @@
     @foreach ($homeUrls as $l => $u)
         <link rel="alternate" hreflang="{{ $l }}" href="{{ $u }}">
     @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ $homeUrls[$defaultLocale] ?? url('/') }}">
+    <link rel="alternate" hreflang="x-default" href="{{ $homeUrls[array_key_first($homeUrls)] ?? url('/') }}">
 
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="aguet.dev">
