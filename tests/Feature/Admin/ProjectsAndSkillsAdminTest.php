@@ -86,3 +86,10 @@ it('offers no Translate action on Tags', function () {
         ->assertCanSeeTableRecords([$laravel])
         ->assertTableActionHidden('translate', $laravel);
 });
+
+it('shows no raw Filament translation key, a string French lacks falling back to English', function () {
+    $this->get('/admin/entries/project/create')
+        ->assertOk()
+        ->assertSee('Skip to content')
+        ->assertDontSee('filament-panels::');
+});
