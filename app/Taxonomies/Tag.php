@@ -4,33 +4,19 @@ namespace App\Taxonomies;
 
 use Velox\Cms\Taxonomy;
 
+/**
+ * Shared tech tags (« Laravel », « a11y »…) of Projects and SkillGroups: one
+ * name in every Locale, never translated, with no Archive.
+ */
 class Tag extends Taxonomy
 {
-    public function prefix(): string
-    {
-        return 'tag';
-    }
-
-    public function hierarchical(): bool
+    public function translatable(): bool
     {
         return false;
     }
 
-    /** At most one Term per Entry. */
-    public function single(): bool
-    {
-        return false;
-    }
-
-    /** At least one Term per Entry. */
-    public function required(): bool
-    {
-        return false;
-    }
-
-    /** Whether each Term has an Archive page. */
     public function public(): bool
     {
-        return true;
+        return false;
     }
 }

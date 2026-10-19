@@ -1,13 +1,16 @@
 {{-- $project: App\Models\Project · $variant: 'feat' | 'full' | 'normal' --}}
-@php $variant ??= 'normal'; @endphp
+@php
+    $variant ??= 'normal';
+    $slug = ($project->origin ?? $project)->slug; // one legend in every Locale
+@endphp
 
 @if ($variant === 'feat')
     <article class="pcard feat">
-        <span class="legend"><span class="slash">~/projects/</span><b>{{ $project->slug }}</b></span>
+        <span class="legend"><span class="slash">~/projects/</span><b>{{ $slug }}</b></span>
         <span class="star">★ {{ __('site.projects.featured') }}</span>
         <div class="feat-grid">
             <div>
-                <div class="pname">{{ $project->name }}</div>
+                <div class="pname">{{ $project->title }}</div>
                 <p class="desc">{!! \App\Support\Content::md($project->summary) !!}</p>
                 <div class="stack">
                     @foreach ($project->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
@@ -26,9 +29,9 @@
     </article>
 @else
     <article @class(['pcard', 'full' => $variant === 'full'])>
-        <span class="legend"><span class="slash">~/projects/</span><b>{{ $project->slug }}</b></span>
+        <span class="legend"><span class="slash">~/projects/</span><b>{{ $slug }}</b></span>
         <span class="perms" aria-hidden="true">drwxr-xr-x</span>
-        <div class="pname">{{ $project->name }}</div>
+        <div class="pname">{{ $project->title }}</div>
         <dl>
             <dt>{{ __('site.projects.client') }}</dt><dd>{{ $project->client }}</dd>
             <dt>{{ __('site.projects.role') }}</dt><dd>{{ $project->role }}</dd>

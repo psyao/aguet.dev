@@ -21,12 +21,12 @@ it('renders the dashboard with its widgets', function () {
 it('shows unread message and project counts on the stats widget', function () {
     ContactMessage::factory()->count(2)->create(['read_at' => null]);
     ContactMessage::factory()->create(['read_at' => now()]);
-    Project::create(['slug' => 'published', 'name' => ['fr' => 'Publié', 'en' => 'Published'], 'is_published' => true]);
-    Project::create(['slug' => 'draft', 'name' => ['fr' => 'Brouillon', 'en' => 'Draft'], 'is_published' => false]);
+    Project::create(['title' => 'Publié', 'status' => 'published', 'published_at' => now()])
+        ->translate('en', ['title' => 'Published', 'status' => 'published', 'published_at' => now()]);
+    Project::create(['title' => 'Brouillon'])->translate('en', ['title' => 'Draft']);
 
     Livewire::test(StatsOverview::class)
-        ->assertSee('2')
-        ->assertSee('1 draft');
+        ->assertSeeInOrder(['Unread messages', '2', 'Published projects', '1', '1 draft']);
 });
 
 it('lists only unread messages on the latest messages widget', function () {

@@ -33,13 +33,10 @@ static methods on the resource class itself).
 | Resource | Nav group | CRUD | Notes |
 |---|---|---|---|
 | `ContactMessageResource` | — | Read-only | `canCreate()` returns `false`, no edit page — only `Pages/ListContactMessages`. Uses an **infolist** (`Schemas/ContactMessageInfolist`) instead of a form, since messages aren't editable. Table: `Tables/ContactMessagesTable`. `getNavigationBadge()` returns the unread count. |
-| `ProjectResource` | Contenu | Full (List/Create/Edit) | Form: `Schemas/ProjectForm`. Table: `Tables/ProjectsTable`. |
-| `SkillGroupResource` | Taxonomies | Full (List/Create/Edit) | French labels ("Compétences"). Form: `Schemas/SkillGroupForm`. |
-| `TagResource` | Taxonomies | Full (List/Create/Edit) | Backs the `tags()` relation shared by `Project` and `SkillGroup` via the `HasTags` trait. |
 
-`Project` and `SkillGroup` forms use `.translatable()` fields (rendered as FR/EN tabs
-by the plugin above) for the columns marked with the `#[Translatable(...)]` attribute
-on the model.
+Projects, skill groups and Tags have no Resource of aguet's own: Velox's generic Entry
+Resources serve the `Project` and `SkillGroup` Content Types (Projets, Compétences, ordered
+by drag) and its Term Resource the `Tag` Taxonomy.
 
 ## Pages (non-resource)
 
@@ -57,18 +54,11 @@ Both are auto-discovered (not explicitly registered — see Discovery above).
 
 - **`StatsOverview`** (`StatsOverviewWidget`) — three stats: unread message count
   (`ContactMessage::whereNull('read_at')->count()`), published vs. draft project
-  counts, and featured project count.
+  counts, and featured project count, each Project counted once, on its Origin.
 - **`LatestMessages`** (`TableWidget`) — unread `ContactMessage` rows, newest first,
   not paginated. Each row has a "Voir" action linking to
   `ContactMessageResource::getUrl('index')`. Empty state when there are no unread
   messages.
-
-## Reusable form helper
-
-`app/Filament/Forms/TagsSelect.php` builds the ordered multi-select used by both
-`ProjectForm` and `SkillGroupForm` for the `tags()` relation: supports inline tag
-creation (validated by the `UniqueTagName` rule) and persists the selected order into
-the `taggable` pivot's `position` column via `saveRelationshipsUsing`.
 
 ## Related
 

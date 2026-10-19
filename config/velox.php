@@ -1,6 +1,8 @@
 <?php
 
 use App\ContentTypes\Home;
+use App\ContentTypes\Project;
+use App\ContentTypes\SkillGroup;
 
 return [
 
@@ -10,6 +12,8 @@ return [
      */
     'content_types' => [
         Home::class,
+        Project::class,
+        SkillGroup::class,
     ],
 
     /*

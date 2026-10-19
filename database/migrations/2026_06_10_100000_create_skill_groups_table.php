@@ -1,6 +1,5 @@
 <?php
 
-use Database\Seeders\SkillGroupSeeder;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -9,10 +8,9 @@ return new class extends Migration
 {
     /**
      * Skill groups for the « tree ~/stack » section. Translatable fields are
-     * JSON (spatie/laravel-translatable). The seeder call backfills
-     * production, where deploy only runs `migrate --force` — safe because
-     * the table is brand new. Database\Seeders is in the main composer
-     * autoload, so this also works on a --no-dev install.
+     * JSON (spatie/laravel-translatable). It once ran SkillGroupSeeder to
+     * backfill production, long done; that seeder now writes Velox
+     * Entries, whose tables don't exist yet here.
      */
     public function up(): void
     {
@@ -26,8 +24,6 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
-
-        (new SkillGroupSeeder)->run();
     }
 
     public function down(): void

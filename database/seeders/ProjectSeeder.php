@@ -3,17 +3,24 @@
 namespace Database\Seeders;
 
 use App\Models\Project;
-use App\Models\Tag;
+use App\Taxonomies\Tag;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Arr;
+use Velox\Cms\Models\Term;
 
 class ProjectSeeder extends Seeder
 {
     /**
-     * The real projects (FR authored; EN translated), snapshot of prod content.
-     * CVCI is the flagship (featured). Order: featured first, then sort_order.
+     * The real projects (FR authored; EN translated), snapshot of prod content,
+     * each a French Origin with its English Translation, in hand order.
+     * CVCI is the flagship (featured). Skipped once Projects exist.
      */
     public function run(): void
     {
+        if (Project::query()->exists()) {
+            return;
+        }
+
         $projects = [
             [
                 'slug' => 'cvci',
@@ -33,8 +40,6 @@ class ProjectSeeder extends Seeder
                 'tags' => ['Laravel', 'MS Entra', 'MS Graph', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'],
                 'url' => 'https://cvci.ch',
                 'featured' => true,
-                'sort_order' => 1,
-                'is_published' => true,
             ],
             [
                 'slug' => 'animalia',
@@ -48,8 +53,6 @@ class ProjectSeeder extends Seeder
                 'tags' => ['Laravel', 'API', 'AWS', 'Laravel Nova'],
                 'url' => 'https://animalia.ch',
                 'featured' => false,
-                'sort_order' => 2,
-                'is_published' => true,
             ],
             [
                 'slug' => 'atr-booking',
@@ -62,8 +65,6 @@ class ProjectSeeder extends Seeder
                 ],
                 'tags' => ['Laravel', 'Filament', 'FullCalendar'],
                 'featured' => false,
-                'sort_order' => 3,
-                'is_published' => true,
             ],
             [
                 'slug' => 'cvci-125',
@@ -82,8 +83,6 @@ class ProjectSeeder extends Seeder
                 ],
                 'tags' => ['Laravel', 'Blade', 'Tailwind CSS', 'VueJS'],
                 'featured' => false,
-                'sort_order' => 4,
-                'is_published' => true,
             ],
             [
                 'slug' => 'montreux-noel-2023',
@@ -96,8 +95,6 @@ class ProjectSeeder extends Seeder
                 ],
                 'tags' => ['Laravel', 'Filament', 'Livewire', 'Tailwind CSS'],
                 'featured' => false,
-                'sort_order' => 5,
-                'is_published' => true,
             ],
             [
                 'slug' => 'terre-et-nature',
@@ -111,8 +108,6 @@ class ProjectSeeder extends Seeder
                 'tags' => ['WordPress', 'XML', 'Digitization', 'Blade'],
                 'url' => 'https://terrenature.ch',
                 'featured' => false,
-                'sort_order' => 6,
-                'is_published' => true,
             ],
             [
                 'slug' => 'vaud-rando',
@@ -126,26 +121,35 @@ class ProjectSeeder extends Seeder
                 'tags' => ['Laravel', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'],
                 'url' => 'https://vaud-rando.ch',
                 'featured' => false,
-                'sort_order' => 7,
-                'is_published' => true,
             ],
         ];
 
         foreach ($projects as $data) {
-            $tags = $data['tags'];
-            unset($data['tags']);
+            $translated = Arr::only($data, ['client', 'role', 'summary']);
 
-            $project = Project::updateOrCreate(['slug' => $data['slug']], $data);
+            $project = Project::create([
+                'title' => $data['name']['fr'],
+                'slug' => $data['slug'],
+                'status' => 'published',
+                'published_at' => now(),
+                'data' => [
+                    ...array_map(fn (array $value) => $value['fr'], $translated),
+                    'url' => $data['url'] ?? null,
+                    'featured' => $data['featured'],
+                ],
+            ]);
 
-            // sync (not attach) keeps re-seeding idempotent.
-            $project->tags()->sync(
-                collect($tags)
-                    ->values()
-                    ->mapWithKeys(fn (string $name, int $index) => [
-                        Tag::firstOrCreate(['name' => $name])->id => ['position' => $index],
-                    ])
-                    ->all(),
-            );
+            $project->translate('en', [
+                'title' => $data['name']['en'],
+                'status' => 'published',
+                'published_at' => now(),
+                'data' => array_map(fn (array $value) => $value['en'], $translated),
+            ]);
+
+            $project->classify(Tag::class, array_map(
+                fn (string $name) => Term::firstOrCreate(['taxonomy' => (new Tag)->handle(), 'name' => $name]),
+                $data['tags'],
+            ));
         }
     }
 }

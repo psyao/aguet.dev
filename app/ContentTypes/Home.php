@@ -2,10 +2,10 @@
 
 namespace App\ContentTypes;
 
-use App\Models\Project;
-use App\Models\SkillGroup;
+use App\Taxonomies\Tag;
 use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
 use Symfony\Component\HttpFoundation\Response;
 use Velox\Cms\ContentType;
 use Velox\Cms\Facades\Velox;
@@ -22,7 +22,7 @@ use Velox\Cms\Models\Entry;
  */
 class Home extends ContentType
 {
-    private const string INLINE_MARKDOWN = '*mot* = accent vert · **mot** = gras.';
+    public const string INLINE_MARKDOWN = '*mot* = accent vert · **mot** = gras.';
 
     public function singularLabel(): string
     {
@@ -70,11 +70,23 @@ class Home extends ContentType
 
         return view('home', [
             'content' => $entry,
-            'projects' => Project::published()->with('tags')->get(),
-            'skills' => SkillGroup::ordered()->with('tags')->get(),
+            'projects' => $this->listed(new Project),
+            'skills' => $this->listed(new SkillGroup),
             'locale' => app()->getLocale(),
             'altUrl' => $alternate?->url ?? url('/'),
             'homeUrls' => $links->mapWithKeys(fn (LocaleLink $link) => [$link->code => $link->url])->all(),
         ]);
+    }
+
+    /**
+     * A type's visible Entries in the Locale, in hand order, each with its Tags
+     * set as its `tags` relation, which the views read.
+     *
+     * @return Collection<int, Entry>
+     */
+    private function listed(ContentType $type): Collection
+    {
+        return Entry::ofType($type)->visible()->ordered()->with('allTerms', 'origin.allTerms')->get()
+            ->each(fn (Entry $entry) => $entry->setRelation('tags', $entry->terms(Tag::class)));
     }
 }

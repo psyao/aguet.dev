@@ -31,7 +31,7 @@
             'help.konami' => __('site.help.konami'),
         ],
         'projects' => $projects->map(fn ($p) => [
-            'label' => $p->name,
+            'label' => $p->title,
             'host' => $p->host(),
             'url' => $p->url,
         ])->all(),
