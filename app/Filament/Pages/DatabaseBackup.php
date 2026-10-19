@@ -10,8 +10,12 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
+use UnitEnum;
+use Velox\Cms\Capability;
+use Velox\Cms\Filament\NavigationGroup;
 
 class DatabaseBackup extends Page
 {
@@ -21,9 +25,14 @@ class DatabaseBackup extends Page
 
     protected static ?string $navigationLabel = 'Sauvegarde DB';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Système';
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Settings;
 
     protected static ?string $title = 'Sauvegarde de la base de données';
+
+    public static function canAccess(): bool
+    {
+        return Gate::allows(Capability::ManageSettings);
+    }
 
     protected function getHeaderActions(): array
     {

@@ -5,6 +5,7 @@ use App\Filament\Widgets\StatsOverview;
 use App\Models\ContactMessage;
 use App\Models\Project;
 use App\Models\User;
+use Filament\Pages\Dashboard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -14,8 +15,11 @@ beforeEach(function () {
     $this->actingAs(User::factory()->create());
 });
 
-it('renders the dashboard with its widgets', function () {
+it('renders the dashboard with its widgets, not Filament\'s account and info ones', function () {
     $this->get('/admin')->assertOk();
+
+    expect(array_values(Livewire::test(Dashboard::class)->instance()->getWidgets()))
+        ->toEqualCanonicalizing([LatestMessages::class, StatsOverview::class]);
 });
 
 it('shows unread message and project counts on the stats widget', function () {
