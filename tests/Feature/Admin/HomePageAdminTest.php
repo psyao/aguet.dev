@@ -50,3 +50,15 @@ it('previews an unsaved Home Page text, leaving the page as saved', function () 
     $this->get($url)->assertOk()->assertSee('Montreux · Suisse');
     $this->get('/')->assertDontSee('Montreux · Suisse');
 });
+
+it('sends the Public page\'s Content-Security-Policy with a Preview', function () {
+    $page = Livewire::test(EditEntry::class, ['record' => Entry::homePage('fr')->getRouteKey()])
+        ->callAction('preview')
+        ->assertHasNoErrors();
+
+    $url = collect($page->effects['xjs'] ?? [])->pluck('params')->flatten()->sole();
+
+    expect($this->get($url)->headers->get('Content-Security-Policy'))
+        ->toBe($this->get('/')->headers->get('Content-Security-Policy'))
+        ->toContain("default-src 'self'");
+});

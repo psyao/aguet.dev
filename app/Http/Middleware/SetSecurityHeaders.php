@@ -23,8 +23,9 @@ class SetSecurityHeaders
         $response = $next($request);
 
         // Appended to the `web` group, so it also sees the Admin (Filament), whose
-        // asset origins are unaudited: only the Site's own pages get the policy.
-        if (! $request->routeIs('velox.entry')) {
+        // asset origins are unaudited: only the Public pages get the policy, and
+        // their Preview, which shows them as Visitors see them.
+        if (! $request->routeIs('velox.entry', 'velox.preview')) {
             return $response;
         }
 
