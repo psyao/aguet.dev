@@ -94,11 +94,92 @@ class HomePageTest extends TestCase
         );
     }
 
-    public function test_unknown_prefix_falls_back_to_default_locale(): void
+    public function test_an_unknown_path_answers_aguets_404_page(): void
     {
         // The default locale (FR) is served at "/", so a stray path 404s
         // rather than silently switching locale.
-        $this->get('/nope')->assertNotFound();
+        $this->get('/nope')->assertNotFound()->assertSee('404 : route introuvable');
+    }
+
+    public function test_head_carries_the_home_pages_seo_in_each_language(): void
+    {
+        $heads = [
+            '/' => [
+                'title' => 'Steve Aguet — Développeur web full-stack Laravel',
+                'description' => 'Steve Aguet, développeur web full-stack à dominante back-end, spécialisé Laravel — région lémanique. Intégration &amp; automatisation, plateformes sur mesure.',
+                'url' => url('/'),
+                'locale' => 'fr_CH',
+                'alternate' => 'en_GB',
+            ],
+            '/en' => [
+                'title' => 'Steve Aguet — Full-stack Laravel web developer',
+                'description' => 'Steve Aguet, full-stack web developer with a back-end focus, Laravel specialist — Lake Geneva region. Integration &amp; automation, custom platforms.',
+                'url' => url('/en'),
+                'locale' => 'en_GB',
+                'alternate' => 'fr_CH',
+            ],
+        ];
+
+        foreach ($heads as $path => $head) {
+            $html = $this->get($path)->assertOk()->getContent();
+
+            foreach ([
+                '<title>'.$head['title'].'</title>',
+                '<meta name="description" content="'.$head['description'].'">',
+                '<link rel="canonical" href="'.$head['url'].'">',
+                '<link rel="alternate" hreflang="fr" href="'.url('/').'">',
+                '<link rel="alternate" hreflang="en" href="'.url('/en').'">',
+                '<link rel="alternate" hreflang="x-default" href="'.url('/').'">',
+                '<meta property="og:type" content="website">',
+                '<meta property="og:site_name" content="aguet.dev">',
+                '<meta property="og:title" content="'.$head['title'].'">',
+                '<meta property="og:description" content="'.$head['description'].'">',
+                '<meta property="og:url" content="'.$head['url'].'">',
+                '<meta property="og:locale" content="'.$head['locale'].'">',
+                '<meta property="og:locale:alternate" content="'.$head['alternate'].'">',
+                '<meta name="twitter:card" content="summary">',
+            ] as $tag) {
+                $this->assertSame(1, substr_count($html, $tag), "{$path}: {$tag}");
+            }
+
+            $this->assertSame(1, substr_count($html, '<title>'), "{$path}: one title");
+            $this->assertStringNotContainsString('og:image', $html);
+        }
+    }
+
+    public function test_sitemap_lists_both_homes_with_their_alternates_and_nothing_else(): void
+    {
+        $xml = simplexml_load_string($this->get('/sitemap.xml')->assertOk()->getContent());
+        $xml->registerXPathNamespace('s', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+
+        $this->assertSame([url('/'), url('/en')], array_map('strval', $xml->xpath('//s:url/s:loc')));
+
+        foreach ($xml->xpath('//s:url') as $url) {
+            $url->registerXPathNamespace('x', 'http://www.w3.org/1999/xhtml');
+            $alternates = [];
+            foreach ($url->xpath('x:link') as $link) {
+                $alternates[(string) $link['hreflang']] = (string) $link['href'];
+            }
+            ksort($alternates);
+
+            $this->assertSame(['en' => url('/en'), 'fr' => url('/'), 'x-default' => url('/')], $alternates);
+        }
+    }
+
+    public function test_robots_keeps_the_admin_out_in_production(): void
+    {
+        $this->app['env'] = 'production';
+
+        $this->get('/robots.txt')->assertOk()
+            ->assertSee('Disallow: /admin')
+            ->assertSee('Sitemap: '.url('/sitemap.xml'));
+    }
+
+    public function test_robots_keeps_everything_out_elsewhere(): void
+    {
+        $this->get('/robots.txt')->assertOk()
+            ->assertSee("Disallow: /\n", false)
+            ->assertDontSee('Disallow: /admin');
     }
 
     public function test_projects_show_featured_first_then_in_hand_order_in_both_languages(): void

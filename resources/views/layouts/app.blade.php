@@ -76,20 +76,7 @@
     <script>document.addEventListener('DOMContentLoaded',function(){if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){document.documentElement.classList.add('fonts-ready');});}else{document.documentElement.classList.add('fonts-ready');}});</script>
     @endunless
 
-    <title>{{ __('site.meta.title') }}</title>
-    <meta name="description" content="{{ __('site.meta.description') }}">
-
-    <link rel="canonical" href="{{ url()->current() }}">
-    @foreach ($homeUrls as $l => $u)
-        <link rel="alternate" hreflang="{{ $l }}" href="{{ $u }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ $homeUrls[array_key_first($homeUrls)] ?? url('/') }}">
-
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="aguet.dev">
-    <meta property="og:title" content="{{ __('site.meta.title') }}">
-    <meta property="og:description" content="{{ __('site.meta.description') }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    <x-velox::seo />
     <meta property="og:locale" content="{{ $ogLocales[$locale] ?? 'fr_CH' }}">
     @foreach (array_diff_key($ogLocales, [$locale => true]) as $og)
         <meta property="og:locale:alternate" content="{{ $og }}">

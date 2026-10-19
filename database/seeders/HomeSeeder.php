@@ -79,12 +79,25 @@ class HomeSeeder extends Seeder
             $translated['about_body'],
         );
 
+        // The page's meta title and description, rendered by Velox's SEO tags.
+        $seo = [
+            'fr' => [
+                'title' => 'Steve Aguet — Développeur web full-stack Laravel',
+                'description' => 'Steve Aguet, développeur web full-stack à dominante back-end, spécialisé Laravel — région lémanique. Intégration & automatisation, plateformes sur mesure.',
+            ],
+            'en' => [
+                'title' => 'Steve Aguet — Full-stack Laravel web developer',
+                'description' => 'Steve Aguet, full-stack web developer with a back-end focus, Laravel specialist — Lake Geneva region. Integration & automation, custom platforms.',
+            ],
+        ];
+
         $home = Entry::create([
             'type' => (new Home)->handle(),
             'title' => 'Accueil',
             'status' => 'published',
             'published_at' => now(),
             'data' => [...array_map(fn (array $value) => $value['fr'], $translated), ...$shared],
+            'seo' => $seo['fr'],
         ]);
 
         $home->translate('en', [
@@ -92,6 +105,7 @@ class HomeSeeder extends Seeder
             'status' => 'published',
             'published_at' => now(),
             'data' => array_map(fn (array $value) => $value['en'], $translated),
+            'seo' => $seo['en'],
         ]);
 
         Entry::setHomePage($home);
