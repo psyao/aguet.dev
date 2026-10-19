@@ -102,7 +102,7 @@ section and the ⌘K palette, and the email receives the contact form's messages
 ### Projects
 
 Velox's **Projets** item lists the projects: drag rows to set their order on the page. Each
-project has its name (the title), `Client`, `Rôle`, `Résumé` (inline Markdown), per
+project has its `Nom` (the Entry's title), `Client`, `Rôle`, `Résumé` (inline Markdown), per
 language; its `URL du site` and **Projet phare** (renders first, full-width), entered once on
 the French Origin; and its **Tags**. Publish a project to show it; a Draft stays off the page.
 

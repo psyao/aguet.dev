@@ -7,8 +7,11 @@ use Database\Seeders\ProjectSeeder;
 use Database\Seeders\SkillGroupSeeder;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\TextInput;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Velox\Cms\Filament\Resources\Entries\Pages\CreateEntry;
 use Velox\Cms\Filament\Resources\Entries\Pages\EditEntry;
 use Velox\Cms\Filament\Resources\Entries\Pages\ListEntries;
 use Velox\Cms\Filament\Resources\Terms\Pages\ListTerms;
@@ -92,4 +95,12 @@ it('shows no raw Filament translation key, a string French lacks falling back to
         ->assertOk()
         ->assertSee('Skip to content')
         ->assertDontSee('filament-panels::');
+});
+
+it('labels a Project\'s title « Nom », as the old Admin did', function () {
+    Filament::setCurrentResourceConfigurationKey('project');
+    $named = fn (TextInput|TextColumn $title): bool => $title->getLabel() === 'Nom';
+
+    Livewire::test(CreateEntry::class)->assertFormFieldExists('title', $named);
+    Livewire::test(ListEntries::class)->assertTableColumnExists('title', $named);
 });

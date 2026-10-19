@@ -25,6 +25,11 @@ class Project extends ContentType
         return 'Projets';
     }
 
+    public function titleLabel(): string
+    {
+        return 'Nom';
+    }
+
     public function icon(): string
     {
         return 'heroicon-o-rectangle-stack';
