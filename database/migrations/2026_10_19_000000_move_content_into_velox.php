@@ -6,6 +6,7 @@ use App\ContentTypes\SkillGroup;
 use App\Taxonomies\Tag;
 use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -42,9 +43,12 @@ return new class extends Migration
         }
 
         DB::transaction(function (): void {
-            $terms = DB::table('tags')->orderBy('id')->get()->mapWithKeys(fn (object $tag): array => [
-                $tag->id => Term::create(['taxonomy' => (new Tag)->handle(), 'name' => $tag->name])->id,
-            ]);
+            $terms = DB::table('tags')->orderBy('id')->get()->mapWithKeys(function (object $tag): array {
+                $id = Term::create(['taxonomy' => (new Tag)->handle(), 'name' => $tag->name])->id;
+                $this->date(DB::table('velox_terms')->where('id', $id), $tag);
+
+                return [$tag->id => $id];
+            });
 
             // Keyed by the morph type and id the old pivot stores.
             $entries = [];
@@ -52,6 +56,7 @@ return new class extends Migration
             foreach (DB::table('projects')->orderBy('sort_order')->orderBy('id')->get() as $row) {
                 $entries["App\\Models\\Project#{$row->id}"] = $this->entry(
                     new Project,
+                    $row,
                     $this->texts(['title' => $row->name, 'client' => $row->client, 'role' => $row->role, 'summary' => $row->summary]),
                     ['url' => $row->url, 'featured' => (bool) $row->featured],
                     $row->is_published ? 'published' : 'draft',
@@ -62,6 +67,7 @@ return new class extends Migration
             foreach (DB::table('skill_groups')->orderBy('sort_order')->orderBy('id')->get() as $row) {
                 $entries["App\\Models\\SkillGroup#{$row->id}"] = $this->entry(
                     new SkillGroup,
+                    $row,
                     $this->texts(['title' => $row->title, 'text' => $row->text, 'note' => $row->note]),
                     ['focus' => (bool) $row->focus],
                     'published',
@@ -87,6 +93,7 @@ return new class extends Migration
 
                 Entry::setHomePage($this->entry(
                     new Home,
+                    $row,
                     $texts,
                     collect((array) $row)->only(['contact_email', 'contact_linkedin', 'contact_linkedin_label', 'contact_github', 'contact_github_label'])->all(),
                     'published',
@@ -130,23 +137,33 @@ return new class extends Migration
     }
 
     /**
-     * Saves a French Origin, last in its type's hand order, with its English Translation.
+     * Saves a French Origin, last in its type's hand order, with its English Translation, both dated as the former row:
+     * created and published when it was created, last edited when it was.
      *
      * @param  array<string, array{fr: mixed, en: mixed}>  $texts  the title, then the translatable Fields
      * @param  array<string, mixed>  $shared  the untranslated Fields, on the Origin only
      * @param  array<string, mixed>  $origin  the Origin's other attributes
      * @param  array<string, mixed>  $translation  the Translation's other attributes
      */
-    private function entry(ContentType $type, array $texts, array $shared, string $status, array $origin = [], array $translation = []): Entry
+    private function entry(ContentType $type, object $row, array $texts, array $shared, string $status, array $origin = [], array $translation = []): Entry
     {
-        $publication = ['status' => $status, 'published_at' => $status === 'published' ? now() : null];
+        $publication = ['status' => $status, 'published_at' => $status === 'published' ? ($row->created_at ?? now()) : null];
         $in = fn (string $locale): array => array_map(fn (array $text): mixed => $text[$locale], Arr::except($texts, 'title'));
 
         $entry = Entry::newOfType($type)->fill([...$origin, ...$publication, 'title' => $texts['title']['fr'], 'data' => [...$in('fr'), ...$shared]]);
         $entry->save();
         $entry->translate('en', [...$translation, ...$publication, 'title' => $texts['title']['en'], 'data' => $in('en')]);
+        $this->date(DB::table('velox_entries')->where('id', $entry->id)->orWhere('origin_id', $entry->id), $row);
 
         return $entry;
+    }
+
+    /** Puts back the former row's creation and last edit dates, which saving set to now; through the query builder, which leaves them be. */
+    private function date(Builder $rows, object $former): void
+    {
+        if (($dates = array_filter(['created_at' => $former->created_at, 'updated_at' => $former->updated_at])) !== []) {
+            $rows->update($dates);
+        }
     }
 
     /** @param  array<string, array{int, int}>  $counts  what each source holds, and what Velox now holds of it */
