@@ -3,7 +3,6 @@
 namespace App\Livewire;
 
 use App\Models\ContactMessage;
-use App\Models\SiteContent;
 use App\Services\ContactMessageNotifier;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\View\View;
@@ -214,7 +213,7 @@ class ContactForm extends Component
     {
         $rails = [];
 
-        if (filled(SiteContent::current()->contact_email)) {
+        if (filled(ContactMessageNotifier::recipient())) {
             $rails['email'] = 'pending';
         }
 

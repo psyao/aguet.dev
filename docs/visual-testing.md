@@ -32,6 +32,11 @@ The browser suite runs against a **file-backed** SQLite DB
 `Browser` `beforeEach` in `tests/Pest.php`. Content therefore reflects the
 **seeders**, not locally hand-edited rows.
 
+To capture another database as it is (a restored production dump, say), point
+the suite at it and skip the migrate + seed:
+
+    BROWSER_KEEP_DATABASE=1 DB_CONNECTION=mysql DB_DATABASE=<database> ./vendor/bin/pest -c phpunit.browser.xml tests/Browser/HomeVisualTest.php
+
 ## Regenerate a baseline (after an INTENTIONAL visual change)
 
     ./vendor/bin/pest -c phpunit.browser.xml --update-snapshots

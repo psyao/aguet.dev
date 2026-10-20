@@ -6,11 +6,6 @@
 */
 return [
 
-    'meta' => [
-        'title' => 'Steve Aguet — Full-stack Laravel web developer',
-        'description' => 'Steve Aguet, full-stack web developer with a back-end focus, Laravel specialist — Lake Geneva region. Integration & automation, custom platforms.',
-    ],
-
     'skip' => 'Skip to content',
 
     'nav' => [

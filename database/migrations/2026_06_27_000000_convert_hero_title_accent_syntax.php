@@ -1,20 +1,25 @@
 <?php
 
-use App\Models\SiteContent;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    /**
+     * Through the query builder: the SiteContent model this once used is gone,
+     * its content now the Home Page's.
+     */
     public function up(): void
     {
-        $content = SiteContent::current();
+        foreach (DB::table('site_contents')->get(['id', 'hero_title']) as $row) {
+            $translations = array_map(
+                fn (?string $value) => str_replace('**', '*', (string) $value),
+                json_decode($row->hero_title ?? '[]', true) ?: [],
+            );
 
-        $translations = collect($content->getTranslations('hero_title'))
-            ->map(fn (?string $value) => str_replace('**', '*', (string) $value))
-            ->all();
-
-        $content->setTranslations('hero_title', $translations);
-        $content->save();
+            DB::table('site_contents')->where('id', $row->id)
+                ->update(['hero_title' => json_encode($translations, JSON_UNESCAPED_UNICODE)]);
+        }
     }
 
     public function down(): void

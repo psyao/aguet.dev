@@ -2,21 +2,27 @@
 
 namespace Database\Seeders;
 
-use App\Models\SiteContent;
+use App\ContentTypes\Home;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
+use Velox\Cms\Models\Entry;
 
-class SiteContentSeeder extends Seeder
+class HomeSeeder extends Seeder
 {
     /**
-     * Editorial singleton content (FR from the brief; EN translated).
-     * hero_title uses the *word* = accent emphasis and \n = line-break
-     * convention rendered by the front end.
+     * The Home Page: its French Origin and English Translation (FR from the
+     * brief; EN translated). hero_title uses the *word* = accent emphasis and
+     * \n = line-break convention rendered by the front end; about_body is
+     * written as Markdown here and stored as a rich-text document.
      */
     public function run(): void
     {
-        $content = SiteContent::current();
+        if (Entry::homePage() !== null) {
+            return;
+        }
 
-        $content->fill([
+        $translated = [
             'hero_title' => [
                 'fr' => "Développeur web *PHP*,\nspécialiste *backend*.",
                 'en' => "*PHP* web developer,\n*backend* focus.",
@@ -57,11 +63,51 @@ class SiteContentSeeder extends Seeder
                 'fr' => 'Un projet Laravel, une plateforme à reprendre ou à faire évoluer ?',
                 'en' => 'A Laravel project, a platform to take over or to grow?',
             ],
+        ];
+
+        // Untranslated Fields: entered once, on the Origin.
+        $shared = [
             'contact_email' => 'steve@aguet.dev',
             'contact_linkedin' => 'https://www.linkedin.com/in/steveaguet',
             'contact_linkedin_label' => '/in/steveaguet',
             'contact_github' => 'https://github.com/psyao',
             'contact_github_label' => '/psyao',
-        ])->save();
+        ];
+
+        $translated['about_body'] = array_map(
+            fn (string $markdown): array => RichContentRenderer::make(Str::markdown($markdown))->toArray(),
+            $translated['about_body'],
+        );
+
+        // The page's meta title and description, rendered by Velox's SEO tags.
+        $seo = [
+            'fr' => [
+                'title' => 'Steve Aguet — Développeur web full-stack Laravel',
+                'description' => 'Steve Aguet, développeur web full-stack à dominante back-end, spécialisé Laravel — région lémanique. Intégration & automatisation, plateformes sur mesure.',
+            ],
+            'en' => [
+                'title' => 'Steve Aguet — Full-stack Laravel web developer',
+                'description' => 'Steve Aguet, full-stack web developer with a back-end focus, Laravel specialist — Lake Geneva region. Integration & automation, custom platforms.',
+            ],
+        ];
+
+        $home = Entry::create([
+            'type' => (new Home)->handle(),
+            'title' => 'Accueil',
+            'status' => 'published',
+            'published_at' => now(),
+            'data' => [...array_map(fn (array $value) => $value['fr'], $translated), ...$shared],
+            'seo' => $seo['fr'],
+        ]);
+
+        $home->translate('en', [
+            'title' => 'Home',
+            'status' => 'published',
+            'published_at' => now(),
+            'data' => array_map(fn (array $value) => $value['en'], $translated),
+            'seo' => $seo['en'],
+        ]);
+
+        Entry::setHomePage($home);
     }
 }

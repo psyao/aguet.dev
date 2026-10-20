@@ -2,47 +2,49 @@
 
 namespace Database\Seeders;
 
-use App\Models\SkillGroup;
-use App\Models\Tag;
+use App\ContentTypes\SkillGroup;
+use App\Taxonomies\Tag;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Arr;
+use Velox\Cms\Models\Entry;
+use Velox\Cms\Models\Term;
 
 class SkillGroupSeeder extends Seeder
 {
     /**
-     * The five stack groups (previously config/skills.php + lang files).
-     * Idempotent: keyed on sort_order, so re-seeding never duplicates.
+     * The five stack groups (previously config/skills.php + lang files), each
+     * a French Origin with its English Translation, in hand order. Skipped
+     * once SkillGroups exist.
      */
     public function run(): void
     {
+        if (Entry::ofType(new SkillGroup)->exists()) {
+            return;
+        }
+
         $groups = [
             [
-                'sort_order' => 1,
                 'title' => ['fr' => 'Cœur Laravel', 'en' => 'Laravel core'],
                 'tags' => ['PHP', 'Laravel', 'Filament', 'Eloquent', 'Blade', 'Livewire'],
                 'focus' => false,
             ],
             [
-                'sort_order' => 2,
                 'title' => ['fr' => 'Intégration & automatisation', 'en' => 'Integration & automation'],
                 'tags' => ['XML', 'FTP', 'MS Graph', 'MS Entra'],
                 'focus' => true,
                 'note' => ['fr' => 'là où je fais la différence', 'en' => 'where I make the difference'],
             ],
             [
-                'sort_order' => 3,
                 'title' => ['fr' => 'Bases de données', 'en' => 'Databases'],
                 'tags' => ['SQLite', 'MySQL', 'PostgreSQL'],
                 'focus' => false,
             ],
             [
-                'sort_order' => 4,
                 'title' => ['fr' => 'Frontend', 'en' => 'Front-end'],
                 'tags' => ['HTML', 'Sass/CSS', 'JavaScript'],
                 'focus' => false,
             ],
             [
-                'sort_order' => 5,
                 'title' => ['fr' => 'Langues', 'en' => 'Languages'],
                 'text' => [
                     'fr' => 'FR (natif) · EN (pro) · DE (notions)',
@@ -52,29 +54,28 @@ class SkillGroupSeeder extends Seeder
             ],
         ];
 
-        // The create_skill_groups migration runs this seeder before the tags
-        // tables exist; tag sync is skipped there and done by the final seed.
-        $canSyncTags = Schema::hasTable('tags');
-
         foreach ($groups as $data) {
-            $tags = $data['tags'] ?? [];
-            unset($data['tags']);
+            $translated = Arr::only($data, ['text', 'note']);
 
-            $group = SkillGroup::updateOrCreate(['sort_order' => $data['sort_order']], $data);
+            $group = Entry::create([
+                'type' => (new SkillGroup)->handle(),
+                'title' => $data['title']['fr'],
+                'status' => 'published',
+                'published_at' => now(),
+                'data' => [...array_map(fn (array $value) => $value['fr'], $translated), 'focus' => $data['focus']],
+            ]);
 
-            if (! $canSyncTags) {
-                continue;
-            }
+            $group->translate('en', [
+                'title' => $data['title']['en'],
+                'status' => 'published',
+                'published_at' => now(),
+                'data' => array_map(fn (array $value) => $value['en'], $translated),
+            ]);
 
-            // sync (not attach) keeps re-seeding idempotent.
-            $group->tags()->sync(
-                collect($tags)
-                    ->values()
-                    ->mapWithKeys(fn (string $name, int $index) => [
-                        Tag::firstOrCreate(['name' => $name])->id => ['position' => $index],
-                    ])
-                    ->all(),
-            );
+            $group->classify(Tag::class, array_map(
+                fn (string $name) => Term::firstOrCreate(['taxonomy' => (new Tag)->handle(), 'name' => $name]),
+                $data['tags'] ?? [],
+            ));
         }
     }
 }

@@ -12,8 +12,9 @@ class StatsOverview extends StatsOverviewWidget
 {
     protected function getStats(): array
     {
-        $publishedProjects = Project::query()->where('is_published', true)->count();
-        $draftProjects = Project::query()->where('is_published', false)->count();
+        // One per Project: Origins only, their Translations left out.
+        $publishedProjects = Project::query()->visible()->whereNull('origin_id')->count();
+        $draftProjects = Project::query()->whereNull('origin_id')->where('status', 'draft')->count();
 
         return [
             Stat::make('Unread messages', ContactMessage::query()->whereNull('read_at')->count())
@@ -21,7 +22,7 @@ class StatsOverview extends StatsOverviewWidget
             Stat::make('Published projects', $publishedProjects)
                 ->description("$draftProjects draft")
                 ->icon(Heroicon::OutlinedBriefcase),
-            Stat::make('Featured projects', Project::query()->where('featured', true)->count())
+            Stat::make('Featured projects', Project::query()->whereNull('origin_id')->where('data->featured', true)->count())
                 ->icon(Heroicon::OutlinedStar),
         ];
     }

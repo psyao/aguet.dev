@@ -40,44 +40,42 @@ clean light theme when printed to PDF.
 
 ### Bilingual
 
-- French is served at `/`, English at `/en`. The `SetLocale` middleware reads the locale
-  from the URL and shares the alternate URL with views (used by the FR/EN switch and the
-  `hreflang` tags). Adding a locale is just a `config/aguet.php` change.
+- French is served at `/`, English at `/en`, both by Velox: the Home Page and its English
+  Translation. Velox sets the locale from the URL; the Locales are declared in
+  `config/velox.php`.
 - **UI chrome** strings (nav, buttons, labels) live in `lang/fr/site.php` + `lang/en/site.php`.
 - **Editorial content** (hero, about, projects, contact) lives in the database, is
   translatable, and is edited in Filament — never in Git.
 
 ### Content model
 
-Four tables back the editorial content. Translatable fields are stored as JSON, one key per
-locale (spatie/laravel-translatable); everything else is shared across languages.
+Velox stores the editorial content: each text per language on an Entry's French Origin or
+English Translation, what is shared across languages on the Origin.
 
-- **`SiteContent`** — the editorial singleton, fetched with `SiteContent::current()` (the
-  one row, created on demand). Translatable: `hero_title`, `hero_subtitle`, `hero_role`,
-  `hero_location`, `hero_exp`, `hero_focus`, `about_body` (Markdown), `contact_lead`.
-  Language-neutral: `contact_email`, `contact_linkedin`, `contact_linkedin_label`,
-  `contact_github`, `contact_github_label`. `hero_title` uses a small convention rendered by
-  `App\Support\Content::heroTitle()`: `**word**` becomes a green accent emphasis, a newline
-  becomes a line break.
-- **`Project`** — the projects collection. Translatable: `name`, `client`, `role`,
-  `summary`. Shared: `slug` (unique), `url`, `featured`, `sort_order`, `is_published`.
-  `Project::published()` returns published rows ordered featured-first then `sort_order`;
-  featured projects render full-width. `host()` derives the card's display host from `url`
-  (strips `www.`). Tech tags come from the shared `Tag` table (below), not a column.
-- **`SkillGroup`** — the rows of the `tree ~/stack` skills section, in `sort_order`
-  (`SkillGroup::ordered()`). Translatable: `title`, `text`, `note`. A group renders its
-  tags, unless `text` is set, which renders that sentence instead (e.g. the « Langues »
-  group). `focus` flags the ★ group, highlighted in the tree, whose `note` feeds the tree
-  footer.
-- **`Tag`** — shared, non-translatable tech tags (« Laravel », « a11y », …), attached to
-  both projects and skill groups through the `taggables` morph pivot. The pivot's `position`
-  preserves a manual per-item tag order (the `HasTags` trait orders by it). Names are unique
-  and normalized (trimmed, inner whitespace collapsed; max 50 chars).
+- **The Home Page** — the one Entry of Velox's `Home` Content Type (`App\ContentTypes\Home`),
+  fetched with `Entry::homePage()`: its French Origin and English Translation. Per language:
+  `hero_title`, `hero_subtitle`, `hero_role`, `hero_location`, `hero_exp`, `hero_focus`,
+  `about_body` (rich text), `contact_lead`. Shared, on the Origin: `contact_email`,
+  `contact_linkedin`, `contact_linkedin_label`, `contact_github`, `contact_github_label`.
+  `hero_title`, `hero_subtitle` and `contact_lead` keep inline Markdown, rendered by
+  `App\Support\Content`: `*word*` becomes a green accent emphasis, a newline in the title
+  a line break.
+- **Projects** — the Entries of Velox's `Project` Content Type (`App\ContentTypes\Project`),
+  not public, ordered by hand, each a French Origin with its English Translation. The title
+  is the project's name; per language: `client`, `role`, `summary` (inline Markdown). Shared,
+  on the Origin: `url`, `featured`. Featured projects render first, full-width. Each Entry is
+  an `App\Models\Project`, whose `host()` derives the card's display host from `url` (strips
+  `www.`). A card's `~/projects/{slug}` reads its Origin's slug, the same in both languages.
+- **Skill groups** — the Entries of the `SkillGroup` Content Type (`App\ContentTypes\SkillGroup`),
+  the rows of the `tree ~/stack` skills section, not public, ordered by hand. The title per
+  language, with `text` and `note`. A group renders its Tags, unless `text` is set, which
+  renders that sentence instead (e.g. the « Langues » group). `focus`, shared, flags the ★
+  group, highlighted in the tree, whose `note` feeds the tree footer.
+- **Tags** — the Terms of the flat `Tag` Taxonomy (`App\Taxonomies\Tag`), listed by both
+  types: one name in every language (`translatable()` false), never public. An Entry keeps
+  its Tags in the order they were picked.
 
-> Earlier versions kept skills in a static `config/skills.php` and stored tags as
-> `projects.stack[]` / `skill_groups.items[]` JSON columns. Both moved into the database —
-> the `SkillGroup` model and the shared `Tag` table — so skills and tags are now editable in
-> Filament without a deploy.
+The Home Page, Projects and skill groups render as before through `Home::render()`.
 
 ## Editing the site (Filament admin)
 
@@ -92,40 +90,35 @@ Open **`/admin`** and sign in. The admin user is seeded by `AdminUserSeeder` fro
 with `php artisan make:filament-user`. Translatable fields show **FR / EN** tabs (one per
 locale) — fill both.
 
-### Site content (« Contenu du site »)
+### Home Page
 
-The first nav item edits the `SiteContent` singleton, in three sections:
-
-- **Hero** — `Titre`, `Sous-titre`, `Rôle`, `Localisation`, `Expérience`, `Focus`. In the
-  title, `**mot**` renders the word as a green accent and a line break becomes a `<br>`.
-- **À propos** — `Texte`, written in Markdown (leave a blank line between paragraphs).
-- **Contact** — the lead line plus the email, LinkedIn and GitHub URLs and their displayed
-  labels (e.g. `/in/steveaguet`). These feed the contact section and the ⌘K palette.
+Velox's **Accueil** item lists the Home Page: edit the French texts on it, the English ones on
+its Translation (the Translations panel), and **Preview** it before saving. In the title,
+`*mot*` renders the word as a green accent and a line break becomes a `<br>`; the about
+text is edited as rich text. The email, LinkedIn and GitHub URLs and their displayed labels
+(e.g. `/in/steveaguet`) are entered once, on the French Origin; they feed the contact
+section and the ⌘K palette, and the email receives the contact form's messages.
 
 ### Projects
 
-The **Projects** resource is the collection. Each project has:
-
-- **Contenu** (translatable): `Nom`, `Client`, `Rôle`, `Résumé`.
-- **Métadonnées**: `Slug` (unique, auto-slugified as you type), `URL`, **Stack (tags)**,
-  `Ordre de tri`, **Projet phare** (renders full-width, in front), **Publié**.
-
-To feature a project, toggle **Projet phare**; to hide it, turn off **Publié**. Display
-order is `Ordre de tri` ascending, with featured projects first.
+Velox's **Projets** item lists the projects: drag rows to set their order on the page. Each
+project has its `Nom` (the Entry's title), `Client`, `Rôle`, `Résumé` (inline Markdown), per
+language; its `URL du site` and **Projet phare** (renders first, full-width), entered once on
+the French Origin; and its **Tags**. Publish a project to show it; a Draft stays off the page.
 
 ### Skill groups
 
-The **Skill Groups** resource drives the `tree ~/stack` section. Each group has a `Titre`,
-a set of **Tags**, an `Ordre de tri`, and a **Groupe ★ (focus)** toggle. Leave the tags
-empty and fill **Texte** instead to render a sentence rather than tags (used for the
+Velox's **Compétences** item drives the `tree ~/stack` section, dragged into order the same
+way. Each group has its title, a set of **Tags** and a **Groupe ★ (focus)** toggle. Leave the
+Tags empty and fill **Texte** instead to render a sentence rather than Tags (used for the
 « Langues » group). The focus group's **Note** shows in the tree footer.
 
 ### Tags
 
-The **Tags** resource is the shared vocabulary used by both projects and skill groups.
-Names are unique (case-insensitive, max 50 chars). You rarely open it directly: the
-Stack/Tags picker on a project or skill group searches existing tags and lets you create a
-new one inline, and the order you pick them in is the order they display.
+Velox's **Tags** item lists the shared vocabulary of projects and skill groups, one name in
+every language, so it offers no translation. You rarely open it directly: the Tags input
+on a project or skill group searches existing Tags and creates a new one inline, and the
+order you pick them in is the order they display.
 
 ## Front-end architecture
 
@@ -136,12 +129,13 @@ click-to-copy, the ⌘K palette, and the status bar's live vim-mode indicator.
 
 ### Request flow
 
-`routes/web.php` serves the one page through `HomeController`, behind the `SetLocale`
-middleware. `SetLocale` reads the locale from the first URL segment (default `fr` at `/`,
-others under their own prefix, e.g. `/en`), calls `app()->setLocale()`, and shares `locale`,
-`altUrl`, and the per-locale `homeUrls` with every view (used by the FR/EN switch and the
-`hreflang` tags). The controller loads the `SiteContent` singleton plus published projects
-and ordered skill groups, each with their tags eager-loaded.
+Velox serves the one page: the Home Page at `/`, its Translation at `/en`, setting the
+locale from the URL. `App\ContentTypes\Home::render()` renders the `home` view with the
+Entry as `content`, the visible Projects and skill groups in hand order (each with its Tags as
+`tags`), and
+`locale`, `altUrl` and the per-locale `homeUrls` built from `Velox::locales()` (used by the
+FR/EN switch and the `hreflang` tags). `SetSecurityHeaders`, appended to the `web` group,
+sets the CSP on Velox's public route only.
 
 ### Layout and chrome
 

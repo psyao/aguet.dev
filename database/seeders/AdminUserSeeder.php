@@ -5,11 +5,12 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Velox\Cms\Role;
 
 class AdminUserSeeder extends Seeder
 {
     /**
-     * The single Filament admin user, taken from env (never hard-coded).
+     * The single admin, a Velox Developer, taken from env (never hard-coded).
      * Set ADMIN_NAME / ADMIN_EMAIL / ADMIN_PASSWORD in your .env.
      */
     public function run(): void
@@ -23,13 +24,13 @@ class AdminUserSeeder extends Seeder
             return;
         }
 
-        User::updateOrCreate(
-            ['email' => $email],
-            [
+        User::firstOrNew(['email' => $email])
+            ->forceFill([
                 'name' => config('aguet.admin.name', 'Admin'),
                 'password' => Hash::make($password),
                 'email_verified_at' => now(),
-            ],
-        );
+                'role' => Role::Developer->value,
+            ])
+            ->save();
     }
 }

@@ -1,23 +1,29 @@
 <?php
 
-use App\Models\SkillGroup;
-use App\Models\Tag;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 return new class extends Migration
 {
     /**
      * Backfill tags/taggables from the legacy `skill_groups.items` JSON, then
      * drop the column — same pattern as the projects stack migration. Under
-     * RefreshDatabase the table is empty and this is a no-op.
+     * RefreshDatabase the table is empty and this is a no-op. Through the
+     * query builder: the Tag and SkillGroup models it once used are gone.
      */
     public function up(): void
     {
         foreach (DB::table('skill_groups')->get(['id', 'items']) as $row) {
-            $names = Tag::sanitizeNames(json_decode($row->items ?? '[]', true) ?: []);
+            // Strings only, whitespace squished, blanks dropped, deduplicated case-insensitively.
+            $names = collect(json_decode($row->items ?? '[]', true) ?: [])
+                ->filter(fn (mixed $value) => is_string($value))
+                ->map(fn (string $value) => Str::squish($value))
+                ->reject(fn (string $name) => $name === '')
+                ->unique(fn (string $name) => mb_strtolower($name))
+                ->all();
 
             foreach (array_values($names) as $position => $name) {
                 $tagId = DB::table('tags')
@@ -32,7 +38,7 @@ return new class extends Migration
                 DB::table('taggables')->updateOrInsert(
                     [
                         'tag_id' => $tagId,
-                        'taggable_type' => SkillGroup::class,
+                        'taggable_type' => 'App\\Models\\SkillGroup',
                         'taggable_id' => $row->id,
                     ],
                     ['position' => $position],
@@ -54,7 +60,7 @@ return new class extends Migration
 
         $rows = DB::table('taggables')
             ->join('tags', 'tags.id', '=', 'taggables.tag_id')
-            ->where('taggable_type', SkillGroup::class)
+            ->where('taggable_type', 'App\\Models\\SkillGroup')
             ->orderBy('taggables.position')
             ->orderBy('tags.name')
             ->get(['taggables.taggable_id', 'tags.name']);

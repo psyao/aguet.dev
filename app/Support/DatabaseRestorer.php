@@ -3,15 +3,22 @@
 namespace App\Support;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Restores a SQL dump (as produced by {@see DatabaseDumper}) over the live
- * database. Destructive: the dump's DROP/CREATE statements wipe existing tables.
+ * database. Destructive: every table is dropped before the import, so the
+ * database holds exactly the dump.
  *
- * To avoid locking the admin out, the current admin row is re-asserted after
- * the import — so the login you used to trigger the restore always still works,
- * regardless of what password hash the dump carried.
+ * The migrations then run, bringing a dump taken before a schema change up to
+ * the code's schema (a pre-Velox dump gets Velox's tables and the Role and MFA
+ * columns). Last, the current admin row is re-asserted whole (name, password,
+ * Role, MFA secret and recovery codes), so the Account that triggered the
+ * restore always still signs in, whatever the dump carried. Both run even when
+ * the import fails, and the re-assert even when the migrations fail, so a
+ * broken dump locks the Admin only if it leaves no `users` table behind.
  *
  * ponytail: no surrounding transaction — MySQL DDL (DROP/CREATE) can't roll
  * back anyway. The confirmation modal + admin re-assert are the safety net.
@@ -20,15 +27,30 @@ class DatabaseRestorer
 {
     public function restore(string $sql, User $admin): void
     {
-        DB::unprepared('SET FOREIGN_KEY_CHECKS=0;'.$sql.'SET FOREIGN_KEY_CHECKS=1;');
+        Schema::dropAllTables();
 
-        // Write the stored hash raw (DB::table, not Eloquent) so the model's
-        // 'hashed' cast doesn't re-hash an already-hashed value.
-        DB::table((new User)->getTable())->updateOrInsert(
-            ['email' => $admin->email],
+        try {
+            Schema::withoutForeignKeyConstraints(fn (): bool => DB::unprepared($sql));
+        } finally {
+            try {
+                Artisan::call('migrate', ['--force' => true]);
+            } finally {
+                $this->reassertAdmin($admin);
+            }
+        }
+    }
+
+    /**
+     * Writes raw values (DB::table, not Eloquent): the stored hash and the
+     * encrypted MFA columns go back as they are, not re-hashed or re-encrypted.
+     */
+    private function reassertAdmin(User $admin): void
+    {
+        DB::table($admin->getTable())->updateOrInsert(
+            ['email' => $admin->getRawOriginal('email')],
             [
-                'name' => $admin->name,
-                'password' => $admin->password,
+                ...collect(['name', 'password', 'role', 'app_authentication_secret', 'app_authentication_recovery_codes'])
+                    ->mapWithKeys(fn (string $column): array => [$column => $admin->getRawOriginal($column)]),
                 'updated_at' => now(),
                 'created_at' => now(),
             ],

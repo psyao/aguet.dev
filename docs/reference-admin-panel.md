@@ -33,25 +33,15 @@ static methods on the resource class itself).
 | Resource | Nav group | CRUD | Notes |
 |---|---|---|---|
 | `ContactMessageResource` | — | Read-only | `canCreate()` returns `false`, no edit page — only `Pages/ListContactMessages`. Uses an **infolist** (`Schemas/ContactMessageInfolist`) instead of a form, since messages aren't editable. Table: `Tables/ContactMessagesTable`. `getNavigationBadge()` returns the unread count. |
-| `ProjectResource` | Contenu | Full (List/Create/Edit) | Form: `Schemas/ProjectForm`. Table: `Tables/ProjectsTable`. |
-| `SkillGroupResource` | Taxonomies | Full (List/Create/Edit) | French labels ("Compétences"). Form: `Schemas/SkillGroupForm`. |
-| `TagResource` | Taxonomies | Full (List/Create/Edit) | Backs the `tags()` relation shared by `Project` and `SkillGroup` via the `HasTags` trait. |
 
-`Project` and `SkillGroup` forms use `.translatable()` fields (rendered as FR/EN tabs
-by the plugin above) for the columns marked with the `#[Translatable(...)]` attribute
-on the model.
+Projects, skill groups and Tags have no Resource of aguet's own: Velox's generic Entry
+Resources serve the `Project` and `SkillGroup` Content Types (Projets, Compétences, ordered
+by drag) and its Term Resource the `Tag` Taxonomy.
 
 ## Pages (non-resource)
 
-- **`ManageSiteContent`** (nav group Contenu, sort `-1` — pinned to the top) — a
-  singleton editor for the `SiteContent` model. `mount()` fills form state from
-  `SiteContent::current()->attributesToArray()`; `save()` writes it straight back with
-  `SiteContent::current()->update($this->form->getState())`. There is exactly one
-  `SiteContent` row (`current()` is `firstOrCreate([])`), so this page has no list/create
-  — just one form. Layout: `Section`s for Hero / À propos / Contact, `MarkdownEditor`
-  fields (`.translatable()` for the editorial ones) plus plain `TextInput`s for
-  language-neutral contact fields (`contact_email`, `contact_linkedin(_label)`,
-  `contact_github(_label)`).
+- The Home Page's texts are no longer a page of the panel: they are the Home Page's
+  Entry, edited in Velox's **Accueil** Entry Resource (`App\ContentTypes\Home`).
 - **`DatabaseBackup`** (nav group Système, "Sauvegarde DB") — two header actions:
   `download` streams a SQL dump via `App\Support\DatabaseDumper`; `restore` (danger
   color, confirmation required, 50MB `FileUpload` limit) rehydrates via
@@ -64,18 +54,11 @@ Both are auto-discovered (not explicitly registered — see Discovery above).
 
 - **`StatsOverview`** (`StatsOverviewWidget`) — three stats: unread message count
   (`ContactMessage::whereNull('read_at')->count()`), published vs. draft project
-  counts, and featured project count.
+  counts, and featured project count, each Project counted once, on its Origin.
 - **`LatestMessages`** (`TableWidget`) — unread `ContactMessage` rows, newest first,
   not paginated. Each row has a "Voir" action linking to
   `ContactMessageResource::getUrl('index')`. Empty state when there are no unread
   messages.
-
-## Reusable form helper
-
-`app/Filament/Forms/TagsSelect.php` builds the ordered multi-select used by both
-`ProjectForm` and `SkillGroupForm` for the `tags()` relation: supports inline tag
-creation (validated by the `UniqueTagName` rule) and persists the selected order into
-the `taggable` pivot's `position` column via `saveRelationshipsUsing`.
 
 ## Related
 

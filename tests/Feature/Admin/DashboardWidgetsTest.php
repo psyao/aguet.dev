@@ -5,6 +5,7 @@ use App\Filament\Widgets\StatsOverview;
 use App\Models\ContactMessage;
 use App\Models\Project;
 use App\Models\User;
+use Filament\Pages\Dashboard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 
@@ -14,19 +15,22 @@ beforeEach(function () {
     $this->actingAs(User::factory()->create());
 });
 
-it('renders the dashboard with its widgets', function () {
+it('renders the dashboard with its widgets, not Filament\'s account and info ones', function () {
     $this->get('/admin')->assertOk();
+
+    expect(array_values(Livewire::test(Dashboard::class)->instance()->getWidgets()))
+        ->toEqualCanonicalizing([LatestMessages::class, StatsOverview::class]);
 });
 
 it('shows unread message and project counts on the stats widget', function () {
     ContactMessage::factory()->count(2)->create(['read_at' => null]);
     ContactMessage::factory()->create(['read_at' => now()]);
-    Project::create(['slug' => 'published', 'name' => ['fr' => 'Publié', 'en' => 'Published'], 'is_published' => true]);
-    Project::create(['slug' => 'draft', 'name' => ['fr' => 'Brouillon', 'en' => 'Draft'], 'is_published' => false]);
+    Project::create(['title' => 'Publié', 'status' => 'published', 'published_at' => now()])
+        ->translate('en', ['title' => 'Published', 'status' => 'published', 'published_at' => now()]);
+    Project::create(['title' => 'Brouillon'])->translate('en', ['title' => 'Draft']);
 
     Livewire::test(StatsOverview::class)
-        ->assertSee('2')
-        ->assertSee('1 draft');
+        ->assertSeeInOrder(['Unread messages', '2', 'Published projects', '1', '1 draft']);
 });
 
 it('lists only unread messages on the latest messages widget', function () {

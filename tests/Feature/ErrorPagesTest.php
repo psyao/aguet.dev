@@ -1,7 +1,11 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+
+// An unknown path now reaches Velox's catch-all, which looks the path up among the Entries.
+uses(RefreshDatabase::class);
 
 function assertThemedErrorPage(int $status, string $codeText): void
 {

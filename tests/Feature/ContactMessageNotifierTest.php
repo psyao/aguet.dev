@@ -2,10 +2,10 @@
 
 use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
-use App\Models\SiteContent;
 use App\Services\ContactMessageNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 uses(RefreshDatabase::class);
@@ -23,7 +23,7 @@ function notifier(): ContactMessageNotifier
 it('delivers both rails and flips both flags (CMN1)', function () {
     Mail::fake();
     Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
-    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    setRecipient();
     config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
     $row = ContactMessage::factory()->create();
 
@@ -40,7 +40,7 @@ it('delivers both rails and flips both flags (CMN1)', function () {
 it('skips the email rail when no recipient is set (CMN2)', function () {
     Mail::fake();
     Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
-    // contact_email left null.
+    // No Home Page, so no recipient.
     config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
     $row = ContactMessage::factory()->create();
 
@@ -53,11 +53,27 @@ it('skips the email rail when no recipient is set (CMN2)', function () {
         ->and($row->kchat_notified_at)->not->toBeNull();
 });
 
+// CMN2b — a Home Page without a recipient is a misconfiguration worth a warning; kChat still goes.
+it('logs a warning when the Home Page has no recipient, still pinging kChat (CMN2b)', function () {
+    Mail::fake();
+    Log::spy();
+    Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
+    setRecipient(null);
+    config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
+    $row = ContactMessage::factory()->create();
+
+    notifier()->deliver($row);
+
+    Mail::assertNothingSent();
+    Log::shouldHaveReceived('warning')->withArgs(fn (string $message) => str_contains($message, 'contact_email'))->once();
+    expect($row->refresh()->kchat_notified_at)->not->toBeNull();
+});
+
 // CMN3 — deliver() skips the kChat rail when no webhook is configured.
 it('skips the kChat rail when no webhook is configured (CMN3)', function () {
     Mail::fake();
     Http::fake();
-    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    setRecipient();
     $row = ContactMessage::factory()->create();
 
     notifier()->deliver($row);
@@ -73,7 +89,7 @@ it('skips the kChat rail when no webhook is configured (CMN3)', function () {
 it('does not re-deliver an already-delivered row (CMN4)', function () {
     Mail::fake();
     Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
-    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    setRecipient();
     config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
     $row = ContactMessage::factory()->notified()->kchatNotified()->create();
 
@@ -87,7 +103,7 @@ it('does not re-deliver an already-delivered row (CMN4)', function () {
 it('increments the kChat counter on failure without touching email (CMN5)', function () {
     Mail::fake();
     Http::fake(['https://kchat.test/hook' => Http::response('boom', 500)]);
-    SiteContent::current()->update(['contact_email' => 'owner@example.com']);
+    setRecipient();
     config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
     $row = ContactMessage::factory()->create();
 

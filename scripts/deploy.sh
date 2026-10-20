@@ -12,11 +12,19 @@ fi
 
 cd "$APP_DIR"
 
+# The private-package token (COMPOSER_AUTH JSON, for psyao/velox), piped on stdin by the
+# deploy job: never stored on the shared host, never in its process list, and given to
+# Composer alone. Run by hand from a terminal, nothing is read.
+COMPOSER_AUTH_JSON=""
+if [[ ! -t 0 ]]; then
+    IFS= read -r COMPOSER_AUTH_JSON || true
+fi
+
 mkdir -p storage/framework/{cache/data,sessions,views}
 mkdir -p bootstrap/cache
 
 # Install dependencies BEFORE entering maintenance mode to keep downtime minimal.
-$PHP_BIN "$COMPOSER_BIN" install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
+COMPOSER_AUTH="$COMPOSER_AUTH_JSON" $PHP_BIN "$COMPOSER_BIN" install --no-dev --no-interaction --no-progress --prefer-dist --optimize-autoloader
 
 $PHP_BIN artisan down
 
@@ -28,6 +36,7 @@ trap '$PHP_BIN artisan up || true' EXIT
 
 $PHP_BIN artisan storage:link --force
 $PHP_BIN artisan migrate --force
+$PHP_BIN artisan velox:fields:check   # fails the deploy on stored content the code can't read
 $PHP_BIN artisan optimize   # config, routes, views and events, plus filament:optimize
 $PHP_BIN artisan queue:restart
 
