@@ -59,7 +59,7 @@ These are the platform facts the pipeline is built around — useful to understa
 | **PHP version** | `setup-stack/action.yml`, `deploy.sh`, `DEPLOY_PHP_BIN` var | Match your target PHP (template uses 8.4). Keep all three in sync. |
 | **rsync include list** | `deploy.yml` → *Sync files* | The `--include=` list is the standard Laravel tree. Add/remove top-level paths your app ships. The trailing `--exclude='*'` is what protects server-side `vendor/` and `storage/` from `--delete` — keep it. |
 | **`.env` source** | `deploy.yml` → *Generate .env* | Template uses **Doppler** (`doppler secrets download`). If you don't use Doppler, replace this step — e.g. compose `.env` from GitHub secrets, or decrypt a committed `.env` via `php artisan env:decrypt`. The `.env` must end up in `release/.env` before the rsync. |
-| **Private Composer packages** | `COMPOSER_AUTH` secret (CI and build job) + server-side `composer config` | The app installs `psyao/velox` from its private GitHub repository: CI reads a read-only GitHub token from the `COMPOSER_AUTH` secret, and the server's `composer install` (in `deploy.sh`) reads the one stored once with `composer config --global` (first-deploy setup). |
+| **Private Composer packages** | `COMPOSER_AUTH` secret (CI, build and deploy jobs) | The app installs `psyao/velox` from its private GitHub repository with a read-only GitHub token: CI and the build job read the `COMPOSER_AUTH` secret, and the deploy job pipes it on stdin to `deploy.sh`, which hands it to the server's `composer install` alone. Nothing is stored on the shared host, where every site runs as the same user. |
 | **Notifications** | `deploy.yml` → `notify` job + `notify-kchat` | Template posts to **Kchat** (Infomaniak chat). Swap the composite for Slack/Discord/etc., or remove the `notify` job entirely. |
 | **pnpm version** | `package.json` `packageManager` field | Set e.g. `"packageManager": "pnpm@11.x.y"`. `setup-stack` reads it (no `version:` is hardcoded). |
 | **Node version** | `setup-stack/action.yml` | Template uses Node 24. |
@@ -98,11 +98,7 @@ These are the platform facts the pipeline is built around — useful to understa
 
 **1. Private Composer credentials**
 
-`composer install` runs on the server (in `deploy.sh`) and needs the same read-only GitHub token as the `COMPOSER_AUTH` secret, stored once:
-
-```bash
-/opt/php8.5/bin/php /opt/php8.5/bin/composer2.phar config --global --auth github-oauth.github.com <token>
-```
+None on the server: `deploy.sh` gets the `COMPOSER_AUTH` secret on stdin from the deploy job for its `composer install`, so the token is never stored on the shared host (a `composer config --global` would leave it readable by every site of the account). Run by hand from a terminal, `deploy.sh` reads no token: a `composer install` needing to download Velox then fails, so deploy through the workflow.
 
 **2. SSH deploy key**
 
