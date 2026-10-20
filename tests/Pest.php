@@ -12,6 +12,11 @@ uses(TestCase::class)
         // Browser tests hit the app through a real HTTP request served in-process
         // (LaravelHttpServer/Amp). A transactional RefreshDatabase is not reliably
         // visible across that boundary, so seed a committed, file-backed DB instead.
+        // BROWSER_KEEP_DATABASE=1 runs on the database as it is, e.g. a restored production dump.
+        if (env('BROWSER_KEEP_DATABASE')) {
+            return;
+        }
+
         // The SQLite file is gitignored and absent on a fresh checkout, so create it.
         $db = database_path('testing.sqlite');
 
