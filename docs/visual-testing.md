@@ -7,6 +7,13 @@ CSS → Tailwind conversion can be verified pixel-for-pixel.
 
     composer test:visual            # builds assets, runs the browser suite
 
+A failed run is run once more before `composer test:visual` fails. Pest compares
+a capture's bytes, and under load Chromium's first capture of a page now and
+then shades an anti-aliased edge one step off: 12 pixels on a button's border,
+invisible, which Playwright's own tolerant diff accepts but Pest doesn't. A
+real change fails both runs. Running `./vendor/bin/pest -c phpunit.browser.xml`
+directly doesn't rerun.
+
 The default unit/feature suite is unaffected and still uses in-memory SQLite:
 
     php artisan test

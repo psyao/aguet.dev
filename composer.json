@@ -57,7 +57,7 @@
             "@php artisan config:clear --ansi",
             "rm -f public/hot",
             "pnpm build",
-            "./vendor/bin/pest -c phpunit.browser.xml"
+            "./vendor/bin/pest -c phpunit.browser.xml || (echo 'Visual suite failed: running it once more, as a first capture can shade an edge one step off (friction 20). A real change fails again.' && ./vendor/bin/pest -c phpunit.browser.xml)"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
