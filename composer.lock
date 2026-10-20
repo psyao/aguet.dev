@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "86a3459afd21f20fdea0e959e7c71c89",
+    "content-hash": "0fc1d3d9b0597ee7b936bff6a394ec67",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -4297,81 +4297,6 @@
             "time": "2025-09-03T16:03:54+00:00"
         },
         {
-            "name": "outerweb/filament-translatable-fields",
-            "version": "v4.1.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/outer-web/filament-translatable-fields.git",
-                "reference": "9af311a2b59e083aa36ab48035972db445a5fc89"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/outer-web/filament-translatable-fields/zipball/9af311a2b59e083aa36ab48035972db445a5fc89",
-                "reference": "9af311a2b59e083aa36ab48035972db445a5fc89",
-                "shasum": ""
-            },
-            "require": {
-                "filament/filament": "^4.0|^5.0",
-                "php": "^8.4",
-                "spatie/laravel-package-tools": "^1.16",
-                "spatie/laravel-translatable": "^6.12"
-            },
-            "require-dev": {
-                "larastan/larastan": "^3.0",
-                "laravel/pint": "^1.14",
-                "nunomaduro/collision": "^8.8",
-                "orchestra/testbench": "^9.0.0||^10.0.0||^11.0.0",
-                "pestphp/pest": "^4.0",
-                "pestphp/pest-plugin-arch": "^4.0",
-                "pestphp/pest-plugin-laravel": "^4.0",
-                "phpstan/extension-installer": "^1.4",
-                "phpstan/phpstan-deprecation-rules": "^2.0",
-                "phpstan/phpstan-phpunit": "^2.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Outerweb\\FilamentTranslatableFields\\FilamentTranslatableFieldsServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Outerweb\\FilamentTranslatableFields\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Outerweb",
-                    "email": "info@outerweb.be",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Filament integration for spatie/laravel-translatable",
-            "homepage": "https://github.com/outerweb/filament-translatable-fields",
-            "keywords": [
-                "Outerweb",
-                "filament-translatable-fields",
-                "laravel"
-            ],
-            "support": {
-                "issues": "https://github.com/outerweb/filament-translatable-fields/issues",
-                "source": "https://github.com/outerweb/filament-translatable-fields"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/outer-web",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-03-17T19:36:53+00:00"
-        },
-        {
             "name": "paragonie/constant_time_encoding",
             "version": "v3.1.3",
             "source": {
@@ -5776,89 +5701,6 @@
                 }
             ],
             "time": "2026-09-28T07:16:50+00:00"
-        },
-        {
-            "name": "spatie/laravel-translatable",
-            "version": "6.14.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/spatie/laravel-translatable.git",
-                "reference": "d120a925cf413b2427f886264bb6eb102ac23d42"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/spatie/laravel-translatable/zipball/d120a925cf413b2427f886264bb6eb102ac23d42",
-                "reference": "d120a925cf413b2427f886264bb6eb102ac23d42",
-                "shasum": ""
-            },
-            "require": {
-                "illuminate/database": "^11.0|^12.0|^13.0",
-                "illuminate/support": "^11.0|^12.0|^13.0",
-                "php": "^8.3",
-                "spatie/laravel-package-tools": "^1.93.0"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.90",
-                "mockery/mockery": "^1.6.12",
-                "orchestra/testbench": "^9.0|^10.0|^11.0",
-                "pestphp/pest": "^4.0.0"
-            },
-            "type": "library",
-            "extra": {
-                "aliases": {
-                    "Translatable": "Spatie\\Translatable\\Facades\\Translatable"
-                },
-                "laravel": {
-                    "providers": [
-                        "Spatie\\Translatable\\TranslatableServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Spatie\\Translatable\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Freek Van der Herten",
-                    "email": "freek@spatie.be",
-                    "homepage": "https://spatie.be",
-                    "role": "Developer"
-                },
-                {
-                    "name": "Sebastian De Deyne",
-                    "email": "sebastian@spatie.be",
-                    "homepage": "https://spatie.be",
-                    "role": "Developer"
-                }
-            ],
-            "description": "A trait to make an Eloquent model hold translations",
-            "homepage": "https://github.com/spatie/laravel-translatable",
-            "keywords": [
-                "eloquent",
-                "i8n",
-                "laravel-translatable",
-                "model",
-                "multilingual",
-                "spatie",
-                "translate"
-            ],
-            "support": {
-                "issues": "https://github.com/spatie/laravel-translatable/issues",
-                "source": "https://github.com/spatie/laravel-translatable/tree/6.14.1"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/spatie",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-04-23T08:26:29+00:00"
         },
         {
             "name": "spatie/shiki-php",
