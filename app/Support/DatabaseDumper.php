@@ -18,6 +18,8 @@ class DatabaseDumper
         $pdo = DB::connection()->getPdo();
 
         $sql = "-- aguet.dev database dump\n";
+        // The client's charset isn't the server's everywhere (the mysql CLI's default): read as utf8mb4, as dumped.
+        $sql .= "SET NAMES utf8mb4;\n";
         $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
 
         foreach ($this->tables() as $table) {
