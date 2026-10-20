@@ -28,6 +28,7 @@ trap '$PHP_BIN artisan up || true' EXIT
 
 $PHP_BIN artisan storage:link --force
 $PHP_BIN artisan migrate --force
+$PHP_BIN artisan velox:fields:check   # fails the deploy on stored content the code can't read
 $PHP_BIN artisan optimize   # config, routes, views and events, plus filament:optimize
 $PHP_BIN artisan queue:restart
 

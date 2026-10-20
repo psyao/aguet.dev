@@ -11,7 +11,7 @@
         "laravel/framework": "^13.37",
         "laravel/tinker": "^3.0",
         "outerweb/filament-translatable-fields": "^4",
-        "psyao/velox": "^0.24",
+        "psyao/velox": "^0.25",
         "spatie/laravel-translatable": "^6"
     },
     "require-dev": {
@@ -102,13 +102,7 @@
     "prefer-stable": true,
     "repositories": [{
         "name": "velox",
-        "type": "path",
-        "url": "/Users/steve/Code/velox",
-        "options": {
-            "symlink": true,
-            "versions": {
-                "psyao/velox": "0.24.0"
-            }
-        }
+        "type": "vcs",
+        "url": "https://github.com/psyao/velox"
     }]
 }

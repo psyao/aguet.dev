@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "64fc36265876ebedb5bf1c77ce802649",
+    "content-hash": "86a3459afd21f20fdea0e959e7c71c89",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -5140,11 +5140,17 @@
         },
         {
             "name": "psyao/velox",
-            "version": "0.24.0",
+            "version": "v0.25.0",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:psyao/velox.git",
+                "reference": "cd62bc78bb8149a277d628a678cdb13dbab3816a"
+            },
             "dist": {
-                "type": "path",
-                "url": "/Users/steve/Code/velox",
-                "reference": "396de802d264fdcc1025b7714a82989527d3ac44"
+                "type": "zip",
+                "url": "https://api.github.com/repos/psyao/velox/zipball/cd62bc78bb8149a277d628a678cdb13dbab3816a",
+                "reference": "cd62bc78bb8149a277d628a678cdb13dbab3816a",
+                "shasum": ""
             },
             "require": {
                 "ext-fileinfo": "*",
@@ -5268,10 +5274,7 @@
                 "issues": "https://github.com/psyao/velox/issues",
                 "source": "https://github.com/psyao/velox"
             },
-            "transport-options": {
-                "symlink": true,
-                "relative": false
-            }
+            "time": "2026-10-20T15:49:57+00:00"
         },
         {
             "name": "ramsey/collection",
