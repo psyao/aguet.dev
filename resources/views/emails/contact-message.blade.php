@@ -3,7 +3,7 @@ Nouveau message depuis aguet.dev
 
 De      : {{ $contactMessage->email }}
 Sujet   : {{ $contactMessage->subject }}
-Reçu le : {{ $contactMessage->created_at?->format('d.m.Y H:i') }}
+Reçu le : {{ $contactMessage->created_at?->inDisplayTimezone()->format('d.m.Y H:i') }}
 
 --------------------------------
 {{ $contactMessage->message }}

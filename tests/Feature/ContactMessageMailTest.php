@@ -2,6 +2,7 @@
 
 use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
+use Illuminate\Support\Carbon;
 
 it('renders as plain text, replies to the visitor, and strips header injection from the subject', function () {
     $message = ContactMessage::factory()->make([
@@ -30,4 +31,11 @@ it('renders as plain text, replies to the visitor, and strips header injection f
     $mail->assertSeeInText('Line one');
     $mail->assertSeeInText('🚀');
     $mail->assertSeeInText('visitor@example.com');
+});
+
+it('dates the message in Zurich time, stored in UTC', function () {
+    $message = ContactMessage::factory()->make();
+    $message->created_at = Carbon::parse('2026-07-01 22:30', 'UTC');
+
+    (new ContactMessageMail($message))->assertSeeInText('Reçu le : 02.07.2026 00:30');
 });

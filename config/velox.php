@@ -33,4 +33,11 @@ return [
         'en' => 'English',
     ],
 
+    /*
+     * The Display Time Zone: the Admin shows and takes dates in it, and views
+     * print them in it with `->inDisplayTimezone()`. Dates are stored in
+     * `app.timezone`: keep that UTC.
+     */
+    'display_timezone' => 'Europe/Zurich',
+
 ];

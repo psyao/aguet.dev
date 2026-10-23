@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0fc1d3d9b0597ee7b936bff6a394ec67",
+    "content-hash": "a88a0f4e5a267dcea125052a6cfec7c9",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -5065,16 +5065,16 @@
         },
         {
             "name": "psyao/velox",
-            "version": "v0.25.0",
+            "version": "v0.29.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:psyao/velox.git",
-                "reference": "cd62bc78bb8149a277d628a678cdb13dbab3816a"
+                "reference": "a32daaaee999314ccb1df5a8464f585f11d7f0c4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/psyao/velox/zipball/cd62bc78bb8149a277d628a678cdb13dbab3816a",
-                "reference": "cd62bc78bb8149a277d628a678cdb13dbab3816a",
+                "url": "https://api.github.com/repos/psyao/velox/zipball/a32daaaee999314ccb1df5a8464f585f11d7f0c4",
+                "reference": "a32daaaee999314ccb1df5a8464f585f11d7f0c4",
                 "shasum": ""
             },
             "require": {
@@ -5092,7 +5092,7 @@
             "require-dev": {
                 "driftingly/rector-laravel": "^2.6",
                 "larastan/larastan": "^3.0",
-                "laravel/pint": "^1.0",
+                "laravel/pint": "^1.27",
                 "nunomaduro/collision": "^8.0",
                 "orchestra/testbench": "^11.0",
                 "pestphp/pest": "^5.0",
@@ -5199,7 +5199,7 @@
                 "issues": "https://github.com/psyao/velox/issues",
                 "source": "https://github.com/psyao/velox"
             },
-            "time": "2026-10-20T15:49:57+00:00"
+            "time": "2026-10-23T19:41:51+00:00"
         },
         {
             "name": "ramsey/collection",
