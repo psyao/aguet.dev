@@ -328,6 +328,7 @@ class HomePageTest extends TestCase
         $this->assertSame('Person', $schema['@type']);
         $this->assertSame('Steve Aguet', $schema['name']);
         $this->assertSame('Développeur web full-stack — région lémanique', $schema['jobTitle']);
+        $this->assertSame('Je conçois, développe et fais évoluer des plateformes Laravel sur mesure.', $schema['description']);
         $this->assertSame(url('/'), $schema['url']);
         $this->assertIsList($schema['sameAs']);
         $this->assertSame([
@@ -361,6 +362,41 @@ class HomePageTest extends TestCase
         $schema = json_decode($matches[1][0], true, flags: JSON_THROW_ON_ERROR);
 
         $this->assertSame('Full-stack web developer — Lake Geneva region', $schema['jobTitle']);
+        $this->assertSame('I design, build and evolve custom Laravel platforms.', $schema['description']);
         $this->assertSame(url('/en'), $schema['url']);
+    }
+
+    public function test_home_answers_markdown_to_agents_asking_for_it(): void
+    {
+        $response = $this->get('/', ['Accept' => 'text/markdown']);
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+        $this->assertContains('Accept', $response->getVary());
+        $this->assertStringStartsWith('# Steve Aguet — Développeur web full-stack — région lémanique', $response->getContent());
+        $response->assertSee('Je développe pour le web depuis plus de quinze ans.', false);
+        $response->assertSee('### CVCI', false);
+        $response->assertSee('<'.url('/llms.txt').'>', false);
+        $response->assertDontSee('<p>', false);
+        $response->assertDontSee('steve@aguet.dev', false);
+    }
+
+    public function test_english_home_answers_markdown_in_english(): void
+    {
+        $response = $this->get('/en', ['Accept' => 'text/markdown']);
+
+        $response->assertOk();
+        $response->assertSee('# Steve Aguet — Full-stack web developer — Lake Geneva region', false);
+        $response->assertSee('## Skills & stack', false);
+    }
+
+    public function test_home_keeps_serving_html_to_browsers(): void
+    {
+        $response = $this->get('/', ['Accept' => 'text/html,application/xhtml+xml,*/*;q=0.8']);
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'text/html; charset=utf-8');
+        $this->assertContains('Accept', $response->getVary());
+        $response->assertSee('<!DOCTYPE html>', false);
     }
 }

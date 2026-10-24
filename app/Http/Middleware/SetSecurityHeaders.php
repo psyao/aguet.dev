@@ -25,7 +25,7 @@ class SetSecurityHeaders
         // Appended to the `web` group, so it also sees the Admin (Filament), whose
         // asset origins are unaudited: only the Public pages get the policy, and
         // their Preview, which shows them as Visitors see them.
-        if (! $request->routeIs('velox.entry', 'velox.preview')) {
+        if (! $request->routeIs('velox.entry', 'velox.preview', 'privacy', 'privacy.en')) {
             return $response;
         }
 
