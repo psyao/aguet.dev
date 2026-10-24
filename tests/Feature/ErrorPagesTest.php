@@ -96,3 +96,14 @@ it('renders the 500 page with no Vite build output present at all', function () 
         }
     }
 });
+
+it('answers a Markdown 404 to agents asking for Markdown', function () {
+    $response = $this->get('/nope', ['Accept' => 'text/markdown']);
+
+    $response->assertNotFound();
+    $response->assertHeader('Content-Type', 'text/markdown; charset=utf-8');
+    expect($response->getVary())->toContain('Accept');
+    expect($response->getContent())
+        ->toStartWith('# 404: page not found')
+        ->toContain('<'.url('/llms.txt').'>');
+});

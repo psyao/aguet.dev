@@ -7,6 +7,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -35,4 +36,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        // Agents asking for Markdown get a Markdown 404 pointing them at llms.txt;
+        // everyone else falls through to the themed errors/404 page.
+        $exceptions->render(function (NotFoundHttpException $e, Request $request) {
+            if ($request->wantsMarkdown()) {
+                return response()->markdown(view('markdown.not-found')->render(), 404)->setVary('Accept', false);
+            }
+        });
     })->create();

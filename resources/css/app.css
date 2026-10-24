@@ -142,6 +142,10 @@ main{padding:0 0 30px}
 .about-grid{margin-top:8px;display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:start}
 .about .body{color:var(--color-fg);font-size:15px;line-height:1.7}
 .about .body p+p{margin-top:1em}
+.legal{max-width:72ch}
+.legal h1{font-size:22px;font-weight:700;margin:8px 0 12px}
+.legal h2{font-size:15px;font-weight:700;color:var(--color-accent);margin:1.6em 0 .4em}
+.legal a{color:var(--color-accent);text-decoration:underline}
 .neofetch{border:1px solid var(--color-line);border-radius:8px;background:var(--color-panel);padding:22px 24px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
 .neofetch .logo{font-family:var(--mono);font-size:11px;line-height:1;color:var(--color-accent);background:linear-gradient(180deg,var(--color-accent),color-mix(in srgb,var(--color-accent) 45%,#0a0a0a));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;white-space:pre;letter-spacing:.5px}
 .nf-info{font-size:13px;line-height:1.85;min-width:0}

@@ -91,6 +91,7 @@
             '@type' => 'Person',
             'name' => 'Steve Aguet',
             'jobTitle' => strip_tags((string) $content->hero_role),
+            'description' => trim(strip_tags((string) \App\Support\Content::md($content->hero_subtitle))),
             'url' => url()->current(),
             'sameAs' => array_values(array_filter([
                 $content->contact_linkedin,

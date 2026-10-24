@@ -68,14 +68,21 @@ class Home extends ContentType
         $links = collect(Velox::locales());
         $alternate = $links->first(fn (LocaleLink $link) => ! $link->isCurrent);
 
-        return view('home', [
+        $data = [
             'content' => $entry,
             'projects' => $this->listed(new Project),
             'skills' => $this->listed(new SkillGroup),
             'locale' => app()->getLocale(),
             'altUrl' => $alternate?->url ?? url('/'),
             'homeUrls' => $links->mapWithKeys(fn (LocaleLink $link) => [$link->code => $link->url])->all(),
-        ]);
+        ];
+
+        // Agents asking for Markdown (Accept: text/markdown) get the same page as Markdown; Vary keeps caches apart.
+        $response = request()->wantsMarkdown()
+            ? response()->markdown(view('markdown.home', $data)->render())
+            : response()->view('home', $data);
+
+        return $response->setVary('Accept', false);
     }
 
     /**
