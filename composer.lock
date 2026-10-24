@@ -5062,16 +5062,16 @@
         },
         {
             "name": "psyao/velox",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "git@github.com:psyao/velox.git",
-                "reference": "c16904c057e0d21f41a79df0441caf38c7fd211f"
+                "reference": "cff56838345036a8f6453d1000c8ced37829e629"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/psyao/velox/zipball/c16904c057e0d21f41a79df0441caf38c7fd211f",
-                "reference": "c16904c057e0d21f41a79df0441caf38c7fd211f",
+                "url": "https://api.github.com/repos/psyao/velox/zipball/cff56838345036a8f6453d1000c8ced37829e629",
+                "reference": "cff56838345036a8f6453d1000c8ced37829e629",
                 "shasum": ""
             },
             "require": {
@@ -5196,7 +5196,7 @@
                 "issues": "https://github.com/psyao/velox/issues",
                 "source": "https://github.com/psyao/velox"
             },
-            "time": "2026-10-24T15:41:16+00:00"
+            "time": "2026-10-24T20:36:05+00:00"
         },
         {
             "name": "ramsey/collection",
