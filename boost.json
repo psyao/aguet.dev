@@ -1,6 +1,5 @@
 {
     "agents": [
-        "junie",
         "claude_code",
         "codex",
         "zed"
@@ -11,7 +10,7 @@
     "nightwatch": false,
     "packages": [
         "filament/filament",
-        "spatie/laravel-translatable"
+        "psyao/velox"
     ],
     "sail": false,
     "skills": [
@@ -20,6 +19,6 @@
         "testing-best-practices",
         "tailwindcss-development",
         "filament-development",
-        "translatable-development"
+        "velox-development"
     ]
 }
