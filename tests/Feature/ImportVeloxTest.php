@@ -22,6 +22,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Storage::fake('public');
     Storage::fake('local');
+    $this->travelTo('2026-11-12 10:00:00');
 });
 
 /**
@@ -56,6 +57,13 @@ function createVeloxTables(): void
     Schema::create('velox_entry_term', function (Blueprint $table) {
         $table->foreignId('entry_id');
         $table->foreignId('term_id');
+        $table->unsignedInteger('position');
+    });
+    Schema::create('velox_entry_relations', function (Blueprint $table) {
+        $table->foreignId('entry_id');
+        $table->string('field');
+        $table->string('related_type');
+        $table->unsignedBigInteger('related_id');
         $table->unsignedInteger('position');
     });
     Schema::create('velox_media_items', function (Blueprint $table) {
@@ -124,6 +132,7 @@ function seedVelox(): void
     $media = DB::table('velox_media_items')->insertGetId([
         'ulid' => '01jsocial', 'disk' => 'public', 'path' => 'media/01jsocial/aguet-dev.png', 'alt' => json_encode(['fr' => 'Steve Aguet', 'en' => 'Steve Aguet']), 'created_at' => '2025-01-11 09:00:00', 'updated_at' => '2025-01-11 09:00:00',
     ]);
+    DB::table('velox_entry_relations')->insert(['entry_id' => $home, 'field' => 'seo.image', 'related_type' => 'velox.media_item', 'related_id' => $media, 'position' => 0]);
     DB::table('velox_settings')->insert(['key' => 'seo', 'value' => json_encode(['site_name' => ['fr' => 'Steve Aguet', 'en' => 'Steve Aguet'], 'description' => 'Développeur Laravel.', 'image' => $media]), 'created_at' => $at, 'updated_at' => $at]);
 
     DB::table('contact_messages')->insert([
@@ -154,37 +163,39 @@ it('imports the Velox content, Media, messages and MFA, then proves the counts',
         ->assertSuccessful();
 
     $home = Home::entry();
+    $media = Media::query()->sole();
     expect($home->hero_title->raw())->toBe("Développeur *PHP*,\nbackend.")
         ->and($home->about_body->text())->toBe('Je développe pour le web.')
         ->and($home->contact_email)->toBe('steve@example.com')
         ->and($home->meta_title)->toBe('Steve Aguet — Développeur')
+        ->and($home->seo_image?->id)->toBe($media->id)
         ->and($home->status)->toBe('published')
         ->and($home->created_at->toDateTimeString())->toBe('2025-01-01 08:00:00')
         ->and($home->updated_at->toDateTimeString())->toBe('2025-03-01 10:00:00');
     expect($home->translation('en')->title)->toBe('Home');
 
     $projects = Entry::query()->ofType(Project::class)->ordered()->get();
-    expect($projects->pluck('title')->all())->toBe(['Animalia', 'CVCI'])
-        ->and($projects[1]->website)->toBe('https://cvci.example')
+    expect($projects->pluck('title')->all())->toBe(['Animalia', 'CVCI']);
+    expect($projects[1]->website)->toBe('https://cvci.example')
         ->and($projects[1]->directory)->toBe('cvci')
         ->and($projects[1]->featured)->toBeTrue()
         ->and($projects[1]->tags->pluck('title')->all())->toBe(['Vue', 'PHP', 'Laravel']);
     expect(Entry::query()->ofType(SkillGroup::class)->sole()->tags->pluck('title')->all())->toBe(['PHP', 'Laravel']);
 
-    $media = Media::query()->sole();
     expect(SiteSettings::entry()->default_social_image?->id)->toBe($media->id)
-        ->and(SiteSettings::entry()->site_name)->toBe('Steve Aguet')
-        ->and($media->created_at->toDateTimeString())->toBe('2025-01-11 09:00:00');
+        ->and(SiteSettings::entry()->site_name)->toBe('Steve Aguet');
+    expect($media->created_at->toDateTimeString())->toBe('2025-01-11 09:00:00');
 
     expect(Submission::query()->where('form', 'contact_form')->orderBy('created_at')->get()->map->only(['locale', 'read_at'])->toArray())->toEqual([
         ['locale' => 'fr', 'read_at' => CarbonImmutable::parse('2025-04-01 09:00:00')],
         ['locale' => 'fr', 'read_at' => null],
-    ])->and(DB::table('kami_form_deliveries')->count())->toBe(0);
+    ]);
+    expect(DB::table('kami_form_deliveries')->count())->toBe(0);
 
     $admin = User::query()->sole();
     expect($admin->getAppAuthenticationSecret())->toBe('JBSWY3DPEHPK3PXP')
-        ->and($admin->getAppAuthenticationRecoveryCodes())->toBe(['hashed-code-1', 'hashed-code-2'])
-        ->and($admin->password)->toBe($password);
+        ->and($admin->getAppAuthenticationRecoveryCodes())->toBe(['hashed-code-1', 'hashed-code-2']);
+    expect($admin->password)->toBe($password);
 });
 
 it('exits without writing once Velox is imported, unless given --again', function () {
@@ -210,17 +221,29 @@ it('replays with --again from the source, with no duplicated message', function 
         ->expectsOutputToContain('0 created, 1 updated')
         ->assertSuccessful();
 
-    expect(Entry::query()->ofType(Project::class)->get()->pluck('title')->sort()->values()->all())->toBe(['Animalia', 'CVCI renamed'])
-        ->and(Submission::query()->count())->toBe(2);
+    expect(Entry::query()->ofType(Project::class)->get()->pluck('title')->sort()->values()->all())->toBe(['Animalia', 'CVCI renamed']);
+    expect(Submission::query()->count())->toBe(2);
 });
 
-it('exits non-zero when a count does not match the source', function () {
+it('counts a message sent twice in the same second once, as its one Submission', function () {
     seedVelox();
     installKami();
-    // Two identical messages in the same second fold into one Submission.
     DB::table('contact_messages')->insert(DB::table('contact_messages')->select(['subject', 'email', 'message', 'read_at', 'created_at', 'updated_at'])->where('subject', 'A platform')->get()->map(fn (object $row) => (array) $row)->all());
 
     $this->artisan('app:import:velox')
-        ->expectsOutputToContain('Count mismatch')
+        ->expectsOutputToContain('Counts match')
+        ->assertSuccessful();
+
+    expect(Submission::query()->count())->toBe(2);
+});
+
+it('exits non-zero when Velox holds a relation the import does not carry', function () {
+    seedVelox();
+    installKami();
+    $home = DB::table('velox_entries')->where('type', 'home')->whereNull('origin_id')->value('id');
+    DB::table('velox_entry_relations')->insert(['entry_id' => $home, 'field' => 'about_body', 'related_type' => 'velox.media_item', 'related_id' => 1, 'position' => 0]);
+
+    $this->artisan('app:import:velox')
+        ->expectsOutputToContain('Count mismatch: Relations other than seo.image')
         ->assertFailed();
 });

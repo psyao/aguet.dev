@@ -12,6 +12,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -31,7 +33,7 @@ use RuntimeException;
  * ponytail: one pass over the Entries. aguet's Entries link only to Tags and Media, imported before them,
  * so `find()` resolves every link on the first pass; a second pass belongs here once an Entry links to another.
  */
-#[Signature('app:import:velox {--again : Replay over an earlier import. The source wins over every edit made in Kami since, and a message erased in Kami since (retention or an erasure request) is copied again}')]
+#[Signature('app:import:velox {--again : Replay over an earlier import, by hand only. The source wins over every edit made in Kami since; a message erased in Kami since (retention or an erasure request) is copied again; and the Messages count reports a mismatch for each Submission Kami received since}')]
 #[Description('Imports aguet.dev from Velox into Kami, then checks the counts')]
 final class ImportVelox extends Command
 {
@@ -42,7 +44,7 @@ final class ImportVelox extends Command
     private const array LISTED = [Project::class, SkillGroup::class];
 
     /** @var array<int, string> Kami's Media id for each Velox Media item id. */
-    private array $media = [];
+    private array $mediaIds = [];
 
     public function handle(): int
     {
@@ -84,7 +86,7 @@ final class ImportVelox extends Command
             $alt = json_decode((string) $item->alt, true);
             $values = array_map(fn (string $text): array => ['alt' => $text], $this->perLocale(is_array($alt) ? $alt : $item->alt));
 
-            $this->media[$item->id] = $import->media('velox.media', $item->ulid, Storage::disk($item->disk)->path($item->path), $values, $this->date($item->created_at), $this->date($item->updated_at))->id;
+            $this->mediaIds[$item->id] = $import->media('velox.media', $item->ulid, Storage::disk($item->disk)->path($item->path), $values, $this->date($item->created_at), $this->date($item->updated_at))->id;
         });
     }
 
@@ -106,12 +108,15 @@ final class ImportVelox extends Command
             $values[$locale] = array_filter(['site_name' => $names[$locale] ?? null, 'default_description' => $descriptions[$locale] ?? null]);
         }
 
-        $values[$this->defaultLocale()]['default_social_image'] = $this->media[(int) ($seo['image'] ?? 0)] ?? null;
+        $values[$this->defaultLocale()]['default_social_image'] = $this->mediaIds[(int) ($seo['image'] ?? 0)] ?? null;
 
         $import->entry('velox.setting', 'seo', SiteSettings::class, array_filter($values), $this->date($row->created_at), $this->date($row->updated_at));
     }
 
-    /** Each Velox Origin with its Translations as one item, its Tags resolved through the Terms imported before. */
+    /**
+     * Each Velox Origin with its Translations as one item, its Tags resolved through the Terms imported before.
+     * A Project's slug becomes its `directory`, the card's legend Velox read from the slug.
+     */
     private function importEntries(Import $import): void
     {
         DB::table('velox_entries')->whereNull('origin_id')->whereNull('deleted_at')->orderBy('id')->each(function (object $origin) use ($import): void {
@@ -126,7 +131,6 @@ final class ImportVelox extends Command
             }
 
             if ($type === Project::class) {
-                // The card's legend, which Velox read from the slug.
                 $values[$origin->locale]['directory'] = $origin->slug;
             }
 
@@ -168,9 +172,17 @@ final class ImportVelox extends Command
                 'meta_title' => $seo['title'] ?? null,
                 'meta_description' => $seo['description'] ?? null,
                 'noindex' => $seo['noindex'] ?? null,
-                'seo_image' => isset($seo['image']) ? $this->media[(int) $seo['image']] ?? null : null,
+                'seo_image' => $this->seoImage($row),
             ], fn (mixed $value): bool => $value !== null),
         ];
+    }
+
+    /** The Kami Media id of a Velox row's social image, which Velox kept among its relations as `seo.image`. */
+    private function seoImage(object $row): ?string
+    {
+        $image = DB::table('velox_entry_relations')->where(['entry_id' => $row->id, 'field' => 'seo.image', 'related_type' => 'velox.media_item'])->value('related_id');
+
+        return $image === null ? null : $this->mediaIds[$image] ?? null;
     }
 
     /** The contact messages, in the default Locale: Velox stored none. */
@@ -199,23 +211,40 @@ final class ImportVelox extends Command
         });
     }
 
-    /** #28 decision 3: every count in Kami against Velox's, printed for the Switch-over's proof. */
+    /**
+     * #28 decision 3: every count in Kami against Velox's, printed for the Switch-over's proof. A Velox relation
+     * other than an Entry's social image, which the import does not carry, fails it; identical messages sent in the
+     * same second count once, as they are one Submission.
+     */
     private function countsMatch(int $users): bool
     {
-        $origins = fn (string $type) => DB::table('velox_entries')->where('type', $type)->whereNull('origin_id')->whereNull('deleted_at');
-        $entries = fn (string $type) => Entry::query()->withUnpublished()->ofType($type);
+        $entries = fn (string $type): Builder => Entry::query()->withUnpublished()->ofType($type);
+        $counts = [];
 
-        $counts = [
-            'Home' => [$origins('home')->count(), $entries(Home::class)->count()],
-            'Projects' => [$origins('project')->count(), $entries(Project::class)->count()],
-            'SkillGroups' => [$origins('skill-group')->count(), $entries(SkillGroup::class)->count()],
+        foreach (self::TYPES as $handle => $type) {
+            $counts[class_basename($type)] = [
+                DB::table('velox_entries')->where('type', $handle)->whereNull('origin_id')->whereNull('deleted_at')->count(),
+                $entries($type)->count(),
+            ];
+        }
+
+        $velox = DB::table('velox_entries')->whereNull('deleted_at')->select('id');
+        $form = resolve(ContactForm::class)->handle();
+        $counts += [
             'Tags' => [DB::table('velox_terms')->where('taxonomy', 'tag')->whereNull('origin_id')->count(), Term::query()->withUnpublished()->ofType(Tag::class)->count()],
             'Classifications' => [
-                DB::table('velox_entry_term')->whereIn('entry_id', DB::table('velox_entries')->whereNull('deleted_at')->select('id'))->count(),
+                DB::table('velox_entry_term')->whereIn('entry_id', $velox)->count(),
                 collect(self::LISTED)->sum(fn (string $type): int => $entries($type)->with('tags')->get()->sum(fn (Entry $entry): int => $entry->tags->count())),
             ],
             'Media' => [DB::table('velox_media_items')->count(), Media::query()->count()],
-            'Messages' => [DB::table('contact_messages')->count(), Submission::query()->where('form', resolve(ContactForm::class)->handle())->count()],
+            'Relations other than seo.image' => [
+                DB::table('velox_entry_relations')->whereIn('entry_id', $velox)->whereNot(fn (QueryBuilder $query): QueryBuilder => $query->where(['field' => 'seo.image', 'related_type' => 'velox.media_item']))->count(),
+                0,
+            ],
+            'Messages' => [
+                DB::query()->fromSub(DB::table('contact_messages')->select(['subject', 'email', 'message', 'created_at'])->distinct(), 'messages')->count(),
+                Submission::query()->where('form', $form)->count(),
+            ],
             'Users' => [$users, DB::table('users')->count()],
         ];
 
