@@ -85,6 +85,13 @@ the Switch-over's `deploy.sh` fails without it, and `kami:install --email` grant
 User the `administrator` Role. It also holds `KAMI_TICK_TOKEN` (from
 `php artisan kami:tick:url`), which replaces `CRON_TOKEN`.
 
+`app:import:velox` runs once, at the Switch-over: it exits 0 without writing as soon as
+Kami holds a Velox key. A Switch-over whose import failed (a count mismatch, MFA, an
+item) leaves the site at 503 with some keys written, so **never re-run that deploy**: a
+second run would pass the guard and bring the site up unchecked. Roll back to the last
+Velox commit instead (#28 decision 8), fix the cause, and replay by hand with
+`php artisan app:import:velox --again` before the next Switch-over.
+
 **Repository secrets** — `Settings → Secrets and variables → Actions → Secrets`:
 
 | Name | Required | Description |

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f5a01879f6f08f7eb4ecd2540cab8bcb",
+    "content-hash": "3f023009d5b1ddf5c5873eb43872e753",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -5135,16 +5135,16 @@
         },
         {
             "name": "psyao/kami",
-            "version": "v0.8.0",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/psyao/kami.git",
-                "reference": "d23aaa6b8f27a48eecf1d7926f7615ced121e72f"
+                "reference": "09736c0b724eb0c94349857e10981e0c62cd72d7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/psyao/kami/zipball/d23aaa6b8f27a48eecf1d7926f7615ced121e72f",
-                "reference": "d23aaa6b8f27a48eecf1d7926f7615ced121e72f",
+                "url": "https://api.github.com/repos/psyao/kami/zipball/09736c0b724eb0c94349857e10981e0c62cd72d7",
+                "reference": "09736c0b724eb0c94349857e10981e0c62cd72d7",
                 "shasum": ""
             },
             "require": {
@@ -5171,6 +5171,7 @@
                 "phpstan/phpstan-deprecation-rules": "^2.0",
                 "rector/rector": "^2.8.3"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "laravel": {
@@ -5206,8 +5207,8 @@
                 "issues": "https://github.com/psyao/kami/issues",
                 "source": "https://github.com/psyao/kami"
             },
-            "time": "2026-11-11T17:18:57+00:00",
-            "published-time": "2026-11-11T17:19:15+00:00"
+            "time": "2026-11-12T19:38:58+00:00",
+            "published-time": "2026-11-12T19:39:04+00:00"
         },
         {
             "name": "ramsey/collection",
@@ -14151,7 +14152,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "psyao/kami": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
