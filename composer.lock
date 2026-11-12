@@ -5139,12 +5139,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/psyao/kami.git",
-                "reference": "09736c0b724eb0c94349857e10981e0c62cd72d7"
+                "reference": "c0d4aeae8e933bd982f24664ecb4f1f5e875fe18"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/psyao/kami/zipball/09736c0b724eb0c94349857e10981e0c62cd72d7",
-                "reference": "09736c0b724eb0c94349857e10981e0c62cd72d7",
+                "url": "https://api.github.com/repos/psyao/kami/zipball/c0d4aeae8e933bd982f24664ecb4f1f5e875fe18",
+                "reference": "c0d4aeae8e933bd982f24664ecb4f1f5e875fe18",
                 "shasum": ""
             },
             "require": {
@@ -5159,6 +5159,7 @@
                 "ueberdosis/tiptap-php": "^2.2"
             },
             "require-dev": {
+                "brianium/paratest": "<7.28.0",
                 "driftingly/rector-laravel": "^2.7",
                 "evilmartians/lefthook": "^2.2",
                 "larastan/larastan": "^3.13",
@@ -5207,8 +5208,8 @@
                 "issues": "https://github.com/psyao/kami/issues",
                 "source": "https://github.com/psyao/kami"
             },
-            "time": "2026-11-12T19:38:58+00:00",
-            "published-time": "2026-11-12T19:39:04+00:00"
+            "time": "2026-11-12T21:10:57+00:00",
+            "published-time": "2026-11-12T21:11:01+00:00"
         },
         {
             "name": "ramsey/collection",
