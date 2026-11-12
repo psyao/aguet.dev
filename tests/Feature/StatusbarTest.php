@@ -24,10 +24,10 @@ class StatusbarTest extends TestCase
         $this->get('/')
             ->assertOk()
             ->assertSee('class="seg mode"', false)
-            ->assertSee('$store.cmdk.toggle()', false)
+            ->assertSee('data-cmdk-toggle', false)
             // WCAG 2.5.3: accessible name is content-derived (visible mode + sr-only
             // description) so it always contains the visible text — no reordering aria-label.
-            ->assertSee('x-text="mode"', false)
+            ->assertSee('data-mode', false)
             ->assertSee('<span class="visually-hidden"> — '.__('site.footer.palette').'</span>', false)
             ->assertDontSee(':aria-label="mode', false);
     }
@@ -68,13 +68,13 @@ class StatusbarTest extends TestCase
         $res->assertSee('&lt;script&gt;x&lt;/script&gt;', false); // {{ }} escapes it
     }
 
-    public function test_screenshot_mode_has_no_alpine(): void
+    public function test_screenshot_mode_has_no_live_statusbar(): void
     {
         // PHPUnit boots with APP_ENV=testing (phpunit.xml), so $shot activates
         // on ?screenshot=1 — no need to set app.env here (it's a no-op post-boot).
         $this->get('/?screenshot=1')
             ->assertOk()
-            ->assertDontSee('x-data="statusbar"', false);
+            ->assertDontSee('data-mode', false);
     }
 
     public function test_exposes_vim_easter_egg_i18n_keys(): void
@@ -82,8 +82,8 @@ class StatusbarTest extends TestCase
         foreach (['/', '/en'] as $url) {
             $html = $this->get($url)->assertOk()->getContent();
 
-            // Extract the inline `window.__AGUET = {...};</script>` payload.
-            $this->assertSame(1, preg_match('#window\.__AGUET = (.*?);</script>#s', $html, $m));
+            // Extract the #aguet-config JSON payload.
+            $this->assertSame(1, preg_match('#<script type="application/json" id="aguet-config">(.*?)</script>#s', $html, $m));
             $cfg = json_decode($m[1], true);
 
             foreach (['cmd.wq', 'help.motions', 'help.jumps', 'help.excmd', 'help.konami'] as $key) {
@@ -98,16 +98,16 @@ class StatusbarTest extends TestCase
 
     public function test_renders_vim_command_line_echo_segment(): void
     {
-        $this->get('/')->assertOk()->assertSee('x-text="$store.vim.msg"', false);
+        $this->get('/')->assertOk()->assertSee('data-vim-echo', false);
     }
 
     public function test_screenshot_mode_omits_echo_segment(): void
     {
-        $this->get('/?screenshot=1')->assertOk()->assertDontSee('x-text="$store.vim.msg"', false);
+        $this->get('/?screenshot=1')->assertOk()->assertDontSee('data-vim-echo', false);
     }
 
-    public function test_palette_empty_state_hidden_in_command_mode(): void
+    public function test_palette_empty_state_starts_hidden(): void
     {
-        $this->get('/')->assertOk()->assertSee('!$store.cmdk.commandMode', false);
+        $this->get('/')->assertOk()->assertSee('<div class="cmdk-empty" hidden>', false);
     }
 }

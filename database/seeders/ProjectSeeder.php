@@ -2,28 +2,30 @@
 
 namespace Database\Seeders;
 
-use App\Models\Project;
+use App\ContentTypes\Project;
 use App\Taxonomies\Tag;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
-use Velox\Cms\Models\Term;
+use Psyao\Kami\Content\Actions\SaveEntry;
+use Psyao\Kami\Content\Entry;
+use Psyao\Kami\Content\Term;
 
 class ProjectSeeder extends Seeder
 {
     /**
      * The real projects (FR authored; EN translated), snapshot of prod content,
-     * each a French Origin with its English Translation, in hand order.
+     * each in French and English, in hand order.
      * CVCI is the flagship (featured). Skipped once Projects exist.
      */
     public function run(): void
     {
-        if (Project::query()->exists()) {
+        if (Entry::query()->withUnpublished()->ofType(Project::class)->exists()) {
             return;
         }
 
         $projects = [
             [
-                'slug' => 'cvci',
+                'directory' => 'cvci',
                 'name' => ['fr' => 'CVCI', 'en' => 'CVCI'],
                 'client' => [
                     'fr' => 'Chambre vaudoise du commerce et de l’industrie',
@@ -38,11 +40,11 @@ class ProjectSeeder extends Seeder
                     'en' => 'Institutional portal, CMS and member area for the CVCI, with two-way Microsoft Dynamics CRM synchronisation.',
                 ],
                 'tags' => ['Laravel', 'MS Entra', 'MS Graph', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'],
-                'url' => 'https://cvci.ch',
+                'website' => 'https://cvci.ch',
                 'featured' => true,
             ],
             [
-                'slug' => 'animalia',
+                'directory' => 'animalia',
                 'name' => ['fr' => 'Animalia', 'en' => 'Animalia'],
                 'client' => ['fr' => 'Vaudoise Assurance', 'en' => 'Vaudoise Assurance'],
                 'role' => ['fr' => 'Backend', 'en' => 'Backend'],
@@ -51,11 +53,11 @@ class ProjectSeeder extends Seeder
                     'en' => 'Back-end of Switzerland\'s first pet health insurance: quotes, contracts, claims, exposed through APIs.',
                 ],
                 'tags' => ['Laravel', 'API', 'AWS', 'Laravel Nova'],
-                'url' => 'https://animalia.ch',
+                'website' => 'https://animalia.ch',
                 'featured' => false,
             ],
             [
-                'slug' => 'atr-booking',
+                'directory' => 'atr-booking',
                 'name' => ['fr' => 'ATR Booking', 'en' => 'ATR Booking'],
                 'client' => ['fr' => 'After The Rain', 'en' => 'After The Rain'],
                 'role' => ['fr' => 'Backend', 'en' => 'Back-end'],
@@ -67,7 +69,7 @@ class ProjectSeeder extends Seeder
                 'featured' => false,
             ],
             [
-                'slug' => 'cvci-125',
+                'directory' => 'cvci-125',
                 'name' => ['fr' => 'CVCI 125 ans', 'en' => 'CVCI 125 ans'],
                 'client' => [
                     'fr' => 'Chambre vaudoise du commerce et de l\'industrie',
@@ -85,7 +87,7 @@ class ProjectSeeder extends Seeder
                 'featured' => false,
             ],
             [
-                'slug' => 'montreux-noel-2023',
+                'directory' => 'montreux-noel-2023',
                 'name' => ['fr' => 'Montreux Noël 2023', 'en' => 'Montreux Noël 2023'],
                 'client' => ['fr' => 'Montreux Noël', 'en' => 'Montreux Noël'],
                 'role' => ['fr' => 'Fullstack', 'en' => 'Frontend + Backend'],
@@ -97,7 +99,7 @@ class ProjectSeeder extends Seeder
                 'featured' => false,
             ],
             [
-                'slug' => 'terre-et-nature',
+                'directory' => 'terre-et-nature',
                 'name' => ['fr' => 'Terre & Nature', 'en' => 'Terre & Nature'],
                 'client' => ['fr' => 'Terre & Nature', 'en' => 'Weekly newspaper'],
                 'role' => ['fr' => 'Frontend + Backend', 'en' => 'Frontend + Backend'],
@@ -106,11 +108,11 @@ class ProjectSeeder extends Seeder
                     'en' => 'Digitisation of the Terre & Nature magazine with automated XML import of print content.',
                 ],
                 'tags' => ['WordPress', 'XML', 'Digitization', 'Blade'],
-                'url' => 'https://terrenature.ch',
+                'website' => 'https://terrenature.ch',
                 'featured' => false,
             ],
             [
-                'slug' => 'vaud-rando',
+                'directory' => 'vaud-rando',
                 'name' => ['fr' => 'Vaud Rando', 'en' => 'Vaud Rando'],
                 'client' => ['fr' => 'Vaud Rando', 'en' => 'Vaud Rando'],
                 'role' => ['fr' => 'Frontend + Backend', 'en' => 'Frontend + Backend'],
@@ -119,37 +121,48 @@ class ProjectSeeder extends Seeder
                     'en' => 'Association platform for Vaud Rando: hiking catalogue, registrations, member area and volunteer management (hike leaders and trail markers).',
                 ],
                 'tags' => ['Laravel', 'Livewire', 'Blade', 'Filament', 'Tailwind CSS'],
-                'url' => 'https://vaud-rando.ch',
+                'website' => 'https://vaud-rando.ch',
                 'featured' => false,
             ],
         ];
 
+        $save = resolve(SaveEntry::class);
+
         foreach ($projects as $data) {
             $translated = Arr::only($data, ['client', 'role', 'summary']);
 
-            $project = Project::create([
+            $project = $save->handle(Project::class, [
                 'title' => $data['name']['fr'],
-                'slug' => $data['slug'],
                 'status' => 'published',
-                'published_at' => now(),
-                'data' => [
-                    ...array_map(fn (array $value) => $value['fr'], $translated),
-                    'url' => $data['url'] ?? null,
-                    'featured' => $data['featured'],
-                ],
-            ]);
+                ...array_map(fn (array $value) => $value['fr'], $translated),
+                'website' => $data['website'] ?? null,
+                'featured' => $data['featured'],
+                'directory' => $data['directory'],
+                'tags' => self::tagIds($data['tags']),
+            ], locale: 'fr');
 
-            $project->translate('en', [
+            $save->handle(Project::class, [
                 'title' => $data['name']['en'],
                 'status' => 'published',
-                'published_at' => now(),
-                'data' => array_map(fn (array $value) => $value['en'], $translated),
-            ]);
-
-            $project->classify(Tag::class, array_map(
-                fn (string $name) => Term::firstOrCreate(['taxonomy' => (new Tag)->handle(), 'name' => $name]),
-                $data['tags'],
-            ));
+                ...array_map(fn (array $value) => $value['en'], $translated),
+            ], $project->refresh(), 'en');
         }
+    }
+
+    /**
+     * The ids of the Tags named, in that order, each created the first time it is named.
+     *
+     * @param  list<string>  $names
+     * @return list<string>
+     */
+    public static function tagIds(array $names): array
+    {
+        $existing = Term::query()->withUnpublished()->ofType(Tag::class)->get()->keyBy('title');
+
+        return array_map(
+            fn (string $name): string => $existing[$name]->id
+                ?? resolve(SaveEntry::class)->handle(Tag::class, ['title' => $name])->id,
+            $names,
+        );
     }
 }

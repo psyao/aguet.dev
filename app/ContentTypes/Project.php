@@ -4,66 +4,39 @@ namespace App\ContentTypes;
 
 use App\Models\Project as ProjectEntry;
 use App\Taxonomies\Tag;
-use Velox\Cms\ContentType;
-use Velox\Cms\Fields\Boolean;
-use Velox\Cms\Fields\Text;
-use Velox\Cms\Fields\Textarea;
+use Psyao\Kami\Content\ContentType;
+use Psyao\Kami\Content\Fields\Boolean;
+use Psyao\Kami\Content\Fields\Terms;
+use Psyao\Kami\Content\Fields\Text;
+use Psyao\Kami\Content\Fields\Textarea;
+use Psyao\Kami\Content\Fields\Url;
 
 /**
  * A card of the « ls -l ~/projects » section, its title the project's name.
  * Never served at a URL of its own: the Home Page lists the visible ones.
  */
-class Project extends ContentType
+final class Project extends ContentType
 {
-    public function singularLabel(): string
-    {
-        return 'Projet';
-    }
+    #[\Override]
+    protected bool $routable = false;
 
-    public function pluralLabel(): string
-    {
-        return 'Projets';
-    }
+    #[\Override]
+    protected bool $orderable = true;
 
-    public function titleLabel(): string
-    {
-        return 'Nom';
-    }
-
-    public function icon(): string
-    {
-        return 'heroicon-o-rectangle-stack';
-    }
-
-    public function public(): bool
-    {
-        return false;
-    }
-
-    public function orderable(): bool
-    {
-        return true;
-    }
-
-    public function model(): string
-    {
-        return ProjectEntry::class;
-    }
-
-    public function taxonomies(): array
-    {
-        return [Tag::class];
-    }
+    #[\Override]
+    protected ?string $model = ProjectEntry::class;
 
     public function fields(): array
     {
         return [
-            Text::make('client')->label('Client'),
-            Text::make('role')->label('Rôle'),
-            Textarea::make('summary')->label('Résumé')->helpText(Home::INLINE_MARKDOWN),
-            Text::make('url')->label('URL du site')->translatable(false),
-            Boolean::make('featured')->label('Projet phare')
-                ->helpText('Affiché en premier, en pleine largeur.')->translatable(false),
+            Text::make('client'),
+            Text::make('role'),
+            Textarea::make('summary')->inlineMarkdown(),
+            Url::make('website')->shared(),
+            Boolean::make('featured')->shared(),
+            // The card's « ~/projects/<directory> » legend, one for every Locale: Velox's slug, as the type has none.
+            Text::make('directory')->shared(),
+            Terms::make('tags')->of(Tag::class),
         ];
     }
 }

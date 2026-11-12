@@ -2,13 +2,17 @@
 
 namespace Tests\Feature;
 
-use App\Models\Project;
+use App\ContentTypes\Project;
 use Database\Seeders\HomeSeeder;
 use Database\Seeders\ProjectSeeder;
 use Database\Seeders\SkillGroupSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Psyao\Kami\Content\Actions\SaveEntry;
+use Psyao\Kami\Content\Entry;
+use Psyao\Kami\Content\SiteSettings;
+use Psyao\Kami\Media\Actions\SaveMedia;
 use Tests\TestCase;
-use Velox\Cms\Models\Entry;
 
 class HomePageTest extends TestCase
 {
@@ -147,48 +151,94 @@ class HomePageTest extends TestCase
         }
     }
 
-    public function test_sitemap_lists_both_homes_with_their_alternates_and_nothing_else(): void
+    public function test_sitemap_is_an_index_listing_both_homes_with_their_alternates_and_nothing_else(): void
     {
-        $xml = simplexml_load_string($this->get('/sitemap.xml')->assertOk()->getContent());
-        $xml->registerXPathNamespace('s', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+        // In a later second than the seeding: a build in the same one is stale already.
+        $this->travel(1)->minute();
+        $this->artisan('kami:sitemap')->assertSuccessful();
 
-        $this->assertSame([url('/'), url('/en')], array_map('strval', $xml->xpath('//s:url/s:loc')));
+        $index = simplexml_load_string($this->get('/sitemap.xml')->assertOk()->streamedContent());
+        $index->registerXPathNamespace('s', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+        $urls = [];
 
-        foreach ($xml->xpath('//s:url') as $url) {
-            $url->registerXPathNamespace('x', 'http://www.w3.org/1999/xhtml');
-            $alternates = [];
-            foreach ($url->xpath('x:link') as $link) {
-                $alternates[(string) $link['hreflang']] = (string) $link['href'];
+        foreach ($index->xpath('//s:sitemap/s:loc') as $file) {
+            $xml = simplexml_load_string($this->get((string) parse_url((string) $file, PHP_URL_PATH))->assertOk()->streamedContent());
+            $xml->registerXPathNamespace('s', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+
+            foreach ($xml->xpath('//s:url') as $url) {
+                $url->registerXPathNamespace('s', 'http://www.sitemaps.org/schemas/sitemap/0.9');
+                $url->registerXPathNamespace('x', 'http://www.w3.org/1999/xhtml');
+                $alternates = [];
+                foreach ($url->xpath('x:link') as $link) {
+                    $alternates[(string) $link['hreflang']] = (string) $link['href'];
+                }
+                ksort($alternates);
+                $urls[(string) $url->xpath('s:loc')[0]] = $alternates;
             }
-            ksort($alternates);
+        }
 
-            $this->assertSame(['en' => url('/en'), 'fr' => url('/'), 'x-default' => url('/')], $alternates);
+        $alternates = ['en' => url('/en'), 'fr' => url('/'), 'x-default' => url('/')];
+        $this->assertSame([url('/') => $alternates, url('/en') => $alternates], $urls);
+    }
+
+    public function test_an_upper_case_english_home_answers_one_301_to_it(): void
+    {
+        foreach (['/EN', '/En', '/eN'] as $path) {
+            $this->get($path)->assertStatus(301)->assertRedirect('/en');
         }
     }
 
-    public function test_robots_keeps_the_admin_out_in_production(): void
+    public function test_veloxs_social_image_url_redirects_to_the_current_social_conversion(): void
     {
-        $this->app['env'] = 'production';
+        $path = '/storage/media/01jxyz0000000000000000abcd/aguet-dev-1200.webp';
 
-        $this->get('/robots.txt')->assertOk()
-            ->assertSee('Disallow: /admin')
-            ->assertSee('Sitemap: '.url('/sitemap.xml'));
+        $this->get($path)->assertNotFound();
+
+        $image = resolve(SaveMedia::class)->handle(UploadedFile::fake()->image('aguet-dev.png', 1200, 630));
+        resolve(SaveEntry::class)->handle(SiteSettings::class, ['default_social_image' => $image->id], SiteSettings::entry());
+
+        $this->get($path)->assertStatus(301)->assertRedirect($image->url('kami-social'));
+
+        // An SVG has no `kami-social` Conversion: no card to point to.
+        $svg = resolve(SaveMedia::class)->handle(UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'));
+        resolve(SaveEntry::class)->handle(SiteSettings::class, ['default_social_image' => $svg->id], SiteSettings::entry());
+
+        $this->get($path)->assertNotFound();
     }
 
-    public function test_robots_keeps_everything_out_elsewhere(): void
+    public function test_a_project_card_without_a_directory_takes_its_title_as_legend(): void
     {
-        $this->get('/robots.txt')->assertOk()
-            ->assertSee("Disallow: /\n", false)
-            ->assertDontSee('Disallow: /admin');
+        $animalia = Entry::query()->ofType(Project::class)->get()->firstWhere('directory', 'animalia');
+        resolve(SaveEntry::class)->handle(Project::class, ['directory' => null], $animalia);
+
+        $this->get('/')->assertOk()->assertSee($this->legend('animalia'), false);
+    }
+
+    public function test_every_inline_script_and_style_is_allowed_by_the_csp(): void
+    {
+        foreach (['/' => 200, '/en' => 200, '/?screenshot=1' => 200, '/nope' => 404] as $path => $status) {
+            $response = $this->get($path)->assertStatus($status);
+            $csp = (string) $response->headers->get('Content-Security-Policy');
+
+            preg_match_all('#<(script|style)(?![^>]*\bsrc=)(?![^>]*type="application/(?:ld\+)?json")[^>]*>(.*?)</\1>#s', $response->getContent(), $inline, PREG_SET_ORDER);
+
+            foreach ($inline as [, $tag, $body]) {
+                $hash = "'sha256-".base64_encode(hash('sha256', $body, true))."'";
+                $this->assertStringContainsString($hash, $csp, "{$path}: an inline <{$tag}> lacks its hash in config/kami.php");
+            }
+        }
     }
 
     public function test_projects_show_featured_first_then_in_hand_order_in_both_languages(): void
     {
-        Entry::arrange(Project::query()->inLocale('fr')->whereIn('slug', ['vaud-rando', 'animalia'])->orderByDesc('slug')->pluck('id')->all());
+        $save = resolve(SaveEntry::class);
+        $projects = Entry::query()->ofType(Project::class)->get()->keyBy('directory');
+        $save->handle(Project::class, ['position' => 0], $projects['vaud-rando']);
+        $save->handle(Project::class, ['position' => 1], $projects['animalia']);
 
         foreach (['/', '/en'] as $url) {
             $this->get($url)->assertOk()->assertSeeInOrder(
-                array_map($this->legend(...), ['cvci', 'vaud-rando', 'atr-booking', 'cvci-125', 'montreux-noel-2023', 'terre-et-nature', 'animalia']),
+                array_map($this->legend(...), ['cvci', 'vaud-rando', 'animalia', 'atr-booking', 'cvci-125', 'montreux-noel-2023', 'terre-et-nature']),
                 false,
             );
         }
@@ -196,12 +246,13 @@ class HomePageTest extends TestCase
 
     public function test_a_draft_project_is_absent(): void
     {
-        Project::query()->inLocale('fr')->where('slug', 'animalia')->sole()->revertToDraft();
+        $animalia = Entry::query()->ofType(Project::class)->get()->firstWhere('directory', 'animalia');
+        resolve(SaveEntry::class)->handle(Project::class, ['status' => 'draft'], $animalia, 'fr');
 
         $this->get('/')->assertOk()->assertDontSee($this->legend('animalia'), false);
     }
 
-    public function test_a_project_card_reads_its_origins_slug_in_english(): void
+    public function test_a_project_card_keeps_its_directory_in_english(): void
     {
         $this->get('/en')
             ->assertOk()
@@ -252,7 +303,7 @@ class HomePageTest extends TestCase
     {
         foreach (['/', '/en'] as $url) {
             $html = $this->get($url)->assertOk()->getContent();
-            $this->assertSame(1, preg_match('#window\.__AGUET = (.*?);</script>#s', $html, $m));
+            $this->assertSame(1, preg_match('#<script type="application/json" id="aguet-config">(.*?)</script>#s', $html, $m));
             $projects = json_decode($m[1], true)['projects'];
 
             $this->assertSame(['label' => 'CVCI', 'host' => 'cvci.ch', 'url' => 'https://cvci.ch'], $projects[0]);
@@ -284,7 +335,7 @@ class HomePageTest extends TestCase
         $response->assertSee(base64_encode('steve@aguet.dev'), false);
     }
 
-    public function test_contact_modal_and_livewire_form_render(): void
+    public function test_contact_modal_renders_without_livewire(): void
     {
         $response = $this->get('/');
 
@@ -293,11 +344,12 @@ class HomePageTest extends TestCase
         $response->assertSee('id="contact-modal"', false);
         $response->assertSee('aria-labelledby="contact-modal-title"', false);
         $response->assertSee('Écrire un message', false);
-        // The Livewire form mounted (its fields are present).
-        $response->assertSee('id="cf-subject"', false);
+        // No Livewire on the front: the form comes back as a Kami Form (psyao/kami#560).
+        $response->assertDontSee('wire:', false);
+        $response->assertDontSee('livewire', false);
         // CTA opens the modal with JS; its no-JS fallback is LinkedIn, not a
         // mailto: (keeps the email out of the source).
-        $response->assertSee('$store.contact.open()', false);
+        $response->assertSee('data-contact-open', false);
         $response->assertDontSee('href="mailto:', false);
     }
 

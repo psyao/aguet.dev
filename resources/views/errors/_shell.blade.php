@@ -5,17 +5,11 @@
     no build output and a broken DB. See design doc for why: 403/404/419/429
     are not actually guaranteed to fire on a "healthy" app either.
 
-    Locale is resolved here from the URL segment: an error raised outside
-    Velox's pages (a 500, a 419) would otherwise render in French, even
-    under /en/*.
+    Kami::exceptions() in bootstrap/app.php sets the Locale from the URL's
+    first segment, so an error under /en/* renders in English. The inline style
+    block is allowed by its hash in config/kami.php.
 --}}
 @php
-    $locales = array_keys(config('velox.locales'));
-    $default = $locales[0];
-    $segment = request()->segment(1);
-    $locale = in_array($segment, $locales, true) ? $segment : $default;
-    app()->setLocale($locale);
-
     $title = __("site.errors.{$code}.title");
     $message = __("site.errors.{$code}.message");
 @endphp

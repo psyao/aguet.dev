@@ -21,21 +21,19 @@
         }
     }
 @endphp
-<footer class="statusbar" @unless($shot ?? false) x-data="statusbar" @endunless>
-    <button type="button" class="seg mode"
-            @unless($shot ?? false) @click="$store.cmdk.toggle()" @endunless><span @unless($shot ?? false) x-text="mode" @endunless>NORMAL</span><span class="visually-hidden"> — {{ __('site.footer.palette') }}</span></button>
+<footer class="statusbar">
+    <button type="button" class="seg mode" @unless($shot ?? false) data-cmdk-toggle @endunless><span @unless($shot ?? false) data-mode @endunless>NORMAL</span><span class="visually-hidden"> — {{ __('site.footer.palette') }}</span></button>
 
     @unless($shot ?? false)
-    <span class="seg cmd-echo" x-show="$store.vim.msg" x-cloak x-text="$store.vim.msg"></span>
+    <span class="seg cmd-echo" data-vim-echo hidden></span>
     @endunless
 
-    <span class="seg hide branch"
-          @unless($shot ?? false) @click.outside="popover = false" @keydown.escape="popover = false" @endunless>
+    <span class="seg hide branch" @unless($shot ?? false) data-branch @endunless>
         <button type="button" class="branch-trigger"
-                @unless($shot ?? false) @click="popover = ! popover" :aria-expanded="popover" @endunless
+                @unless($shot ?? false) aria-expanded="false" @endunless
                 aria-label="main — {{ __('site.footer.commit') }}"><span aria-hidden="true">●</span> <b>main</b></button>
         @unless($shot ?? false)
-        <div class="sb-pop" x-show="popover" x-cloak x-transition.opacity
+        <div class="sb-pop" hidden
              role="dialog" aria-label="{{ __('site.footer.commit') }}">
             @if ($commitUrl)
                 <a class="sb-pop-row sb-pop-sha" href="{{ $commitUrl }}"
@@ -59,6 +57,6 @@
     <span class="seg grow"></span>
     <span class="seg r hide">utf-8</span>
     <a class="seg r" href="{{ $altUrl }}" title="{{ __('site.footer.switch') }}" aria-label="{{ strtoupper($locale) }} — {{ __('site.footer.switch') }}"><b>{{ strtoupper($locale) }}</b></a>
-    <span class="seg r hide" @unless($shot ?? false) x-data="clock" x-text="time" @endunless>{{ ($shot ?? false) ? '00:00' : '--:--' }}</span>
+    <span class="seg r hide" @unless($shot ?? false) data-clock @endunless>{{ ($shot ?? false) ? '00:00' : '--:--' }}</span>
     <span class="seg r">© {{ ($shot ?? false) ? '2026' : date('Y') }}</span>
 </footer>

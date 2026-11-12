@@ -10,7 +10,7 @@
         "filament/filament": "^5.10",
         "laravel/framework": "^13.37",
         "laravel/tinker": "^3.0",
-        "psyao/velox": "^1.0"
+        "psyao/kami": "^0.8"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -98,10 +98,5 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true,
-    "repositories": [{
-        "name": "velox",
-        "type": "vcs",
-        "url": "https://github.com/psyao/velox"
-    }]
+    "prefer-stable": true
 }

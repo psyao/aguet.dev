@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+use Psyao\Kami\Facades\Kami;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -13,3 +14,6 @@ Artisan::command('inspire', function () {
 // 15-minute floor — so the sweep runs every fifteen minutes. The DB row is
 // written instantly on submit regardless; this only governs the email lag.
 Schedule::command('contact:notify')->everyFifteenMinutes()->withoutOverlapping();
+
+// Kami's own tasks: the sitemap's rebuild, publications, pruning.
+Kami::schedule();

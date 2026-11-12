@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Velox\Cms\Role;
+use Psyao\Kami\Users\Actions\AssignRoles;
 
 /**
  * @extends Factory<User>
@@ -31,7 +31,6 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
-            'role' => Role::Developer->value,
         ];
     }
 
@@ -43,5 +42,16 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Indicate that the user holds Kami's administrator Role, with MFA set up as Kami requires of it.
+     */
+    public function administrator(): static
+    {
+        return $this->afterCreating(function (User $user): void {
+            resolve(AssignRoles::class)->handle($user, ['administrator']);
+            $user->saveAppAuthenticationSecret('JBSWY3DPEHPK3PXP');
+        });
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Console\Commands\NotifyContactMessages;
+use App\ContentTypes\Home;
 use App\Livewire\ContactForm;
 use App\Mail\ContactMessageMail;
 use App\Models\ContactMessage;
@@ -10,7 +11,6 @@ use App\Notifications\ContactMessageReceived;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
-use Velox\Cms\Models\Entry;
 
 /**
  * Delivers the owner notification for a contact-form submission on two
@@ -56,7 +56,7 @@ class ContactMessageNotifier
     /** The owner's address: the Home Page's contact_email, entered once for every Locale. */
     public static function recipient(): ?string
     {
-        return Entry::homePage()?->contact_email;
+        return Home::entry()?->contact_email;
     }
 
     public function emailPending(ContactMessage $message): bool

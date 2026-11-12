@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, kami]
   pull_request:
-    branches: [main]
+    branches: [main, kami]
 
 # Run Node-based actions on the runner's Node 24 runtime instead of the
 # default Node 20. pnpm/action-setup's self-installer runs on the action
@@ -47,8 +47,6 @@ jobs:
           restore-keys: ${{ runner.os }}-pnpm-store-
 
       - name: Install Composer dependencies
-        env:
-          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}   # private packages (psyao/velox); empty until set
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Prepare environment

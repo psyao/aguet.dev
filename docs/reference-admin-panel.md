@@ -41,12 +41,7 @@ by drag) and its Term Resource the `Tag` Taxonomy.
 ## Pages (non-resource)
 
 - The Home Page's texts are no longer a page of the panel: they are the Home Page's
-  Entry, edited in Velox's **Accueil** Entry Resource (`App\ContentTypes\Home`).
-- **`DatabaseBackup`** (nav group Système, "Sauvegarde DB") — two header actions:
-  `download` streams a SQL dump via `App\Support\DatabaseDumper`; `restore` (danger
-  color, confirmation required, 50MB `FileUpload` limit) rehydrates via
-  `App\Support\DatabaseRestorer`. Both classes live in `app/Support/` and are injected
-  into the page's actions rather than called statically.
+  Entry, edited on Kami's **Page d’accueil** Singleton page (`App\ContentTypes\Home`).
 
 ## Widgets
 
