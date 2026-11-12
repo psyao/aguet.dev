@@ -3,6 +3,7 @@
 use App\ContentTypes\Home;
 use App\ContentTypes\Project;
 use App\ContentTypes\SkillGroup;
+use App\Forms\ContactForm;
 use App\Taxonomies\Tag;
 
 /*
@@ -16,6 +17,10 @@ return [
         Project::class,
         SkillGroup::class,
         Tag::class,
+    ],
+
+    'forms' => [
+        ContactForm::class,
     ],
 
     /*

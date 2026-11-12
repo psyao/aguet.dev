@@ -20,7 +20,6 @@ clean light theme when printed to PDF.
   [CI deploy pipeline](DEPLOY.md) ·
   [admin panel internals](docs/reference-admin-panel.md) ·
   [contact message pipeline](docs/explanation-contact-pipeline.md) ·
-  [rotating the cron token](docs/howto-rotate-cron-token.md) ·
   [themed error pages](docs/explanation-error-pages.md)
 
 ## Stack
@@ -266,19 +265,24 @@ Point the web server's document root at **`public/`**. Set `APP_ENV=production` 
 (`php artisan optimize` does config + route + view + events in one go;
 `php artisan optimize:clear` reverts).
 
-### Database backups
+### Backups
 
-A `mysqldump`-based script is provided (it reads credentials from `.env`, writes a
-timestamped gzip to a directory outside the repo, and prunes old dumps):
+`scripts/backup.sh` runs on your machine, never on the server. Over the `tsumigeya`
+SSH alias (same Infomaniak account), it dumps production's database and copies all
+of `storage/app` into `storage/backups/<timestamp>/`, keeping the last ten. Set
+`PRODUCTION_PATH` in the local `.env` to the app's folder on the server (the
+`DEPLOY_PATH` secret):
 
 ```bash
-BACKUP_DIR=~/backups/aguet ./scripts/backup-db.sh
+./scripts/backup.sh
 ```
 
-Schedule it with cron, e.g. daily at 03:00:
+`scripts/restore.sh` loads the latest snapshot, or the folder it is given, into the
+local database and `storage/app`. It refuses to run unless `APP_ENV` is `local`, and
+resets every password to `password` with no second factor.
 
-```cron
-0 3 * * *  BACKUP_DIR=$HOME/backups/aguet /path/to/aguet/scripts/backup-db.sh >> $HOME/backups/aguet/backup.log 2>&1
+```bash
+./scripts/restore.sh
 ```
 
 ## Security notes (public repo)

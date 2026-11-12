@@ -1,20 +1,31 @@
 <?php
 
-use App\Filament\Resources\ContactMessages\ContactMessageResource;
-use App\Models\ContactMessage;
+use App\Forms\ContactForm;
+use App\Notifications\Channels\KChatChannel;
 use App\Notifications\ContactMessageReceived;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\URL;
+use Psyao\Kami\Forms\Submission;
 
-it('posts the card to the routed webhook url', function () {
+/** Send the card alone, as Kami sends each channel of the notification on its own. */
+function sendCard(string $webhook): void
+{
+    config(['services.kchat.contact_webhook_url' => $webhook]);
+    $submission = new Submission(['data' => ['subject' => 'Hi', 'email' => 'v@x.com', 'message' => 'Hello world']]);
+
+    Notification::sendNow(
+        Notification::route('mail', 'owner@example.com'),
+        new ContactMessageReceived(resolve(ContactForm::class), $submission),
+        [KChatChannel::class],
+    );
+}
+
+it('posts the card to the configured webhook url', function () {
     Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
-    $row = ContactMessage::factory()->make(['subject' => 'Hi', 'email' => 'v@x.com', 'message' => 'Hello world']);
 
-    Notification::route('kchat', 'https://kchat.test/hook')
-        ->notifyNow(new ContactMessageReceived($row));
+    sendCard('https://kchat.test/hook');
 
     Http::assertSent(function ($request) {
         return $request->url() === 'https://kchat.test/hook'
@@ -24,19 +35,15 @@ it('posts the card to the routed webhook url', function () {
 
 it('throws on a non-2xx response so the caller can retry', function () {
     Http::fake(['https://kchat.test/hook' => Http::response('boom', 500)]);
-    $row = ContactMessage::factory()->make();
 
-    expect(fn () => Notification::route('kchat', 'https://kchat.test/hook')
-        ->notifyNow(new ContactMessageReceived($row)))
+    expect(fn () => sendCard('https://kchat.test/hook'))
         ->toThrow(RuntimeException::class);
 });
 
 it('throws fast and sends nothing when the url is blank or invalid', function () {
     Http::fake();
-    $row = ContactMessage::factory()->make();
 
-    expect(fn () => Notification::route('kchat', 'not-a-url')
-        ->notifyNow(new ContactMessageReceived($row)))
+    expect(fn () => sendCard('not-a-url'))
         ->toThrow(RuntimeException::class);
 
     Http::assertNothingSent();
@@ -44,11 +51,9 @@ it('throws fast and sends nothing when the url is blank or invalid', function ()
 
 it('never leaks the webhook url in the failure message (non-2xx)', function () {
     Http::fake(['https://secret.test/hook' => Http::response('err', 500)]);
-    $row = ContactMessage::factory()->make();
 
     try {
-        Notification::route('kchat', 'https://secret.test/hook')
-            ->notifyNow(new ContactMessageReceived($row));
+        sendCard('https://secret.test/hook');
         $this->fail('Expected the channel to throw.');
     } catch (Throwable $e) {
         expect($e->getMessage())->not->toContain('secret.test');
@@ -63,11 +68,9 @@ it('redacts the url when the request throws a connection error', function () {
             'cURL error 6: Could not resolve host: secret.test'
         );
     });
-    $row = ContactMessage::factory()->make();
 
     try {
-        Notification::route('kchat', 'https://secret.test/hook')
-            ->notifyNow(new ContactMessageReceived($row));
+        sendCard('https://secret.test/hook');
         $this->fail('Expected the channel to throw.');
     } catch (Throwable $e) {
         expect($e->getMessage())->not->toContain('secret.test');
@@ -76,20 +79,4 @@ it('redacts the url when the request throws a connection error', function () {
 
 it('does not implement ShouldQueue (must send synchronously)', function () {
     expect(is_subclass_of(ContactMessageReceived::class, ShouldQueue::class))->toBeFalse();
-});
-
-it('builds an absolute admin inbox link from a non-HTTP context', function () {
-    // Force the URL root deterministically — setting config('app.url') after
-    // boot does not reliably move the generator's root.
-    URL::useOrigin('https://aguet.dev');
-
-    $url = ContactMessageResource::getUrl(name: 'index', panel: 'admin');
-
-    // Scheme-agnostic: in production the scheme comes from APP_URL at bootstrap;
-    // here we only assert getUrl resolves to an absolute URL with the right
-    // host + Filament slug from a non-HTTP context.
-    expect($url)->toStartWith('http')
-        ->and($url)->toEndWith('aguet.dev/admin/contact-messages');
-
-    URL::useOrigin(null); // reset for other tests
 });

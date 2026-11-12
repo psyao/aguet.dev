@@ -5,11 +5,8 @@
 // prompt only renders inside the open dialog), then capture. Run against
 // /?screenshot=1 so animations are frozen and the real font is restored.
 //
-// Only the OPEN state is captured here. The per-field error state needs a
-// Livewire round-trip (/livewire/update), which the browser harness cannot do
-// reliably because SESSION_DRIVER=array does not persist the CSRF token across
-// requests. That state's behaviour is covered by the component test
-// "rejects invalid input and writes nothing (F3)" in tests/Feature.
+// The Kami Form posts a full page; its confirmation and its errors come back
+// on a fresh load, where app.js opens the modal by itself (tests below).
 
 it('matches the contact modal open state (FR, desktop)', function () {
     $page = visit('/?screenshot=1')
@@ -23,7 +20,7 @@ it('matches the contact modal open state (FR, desktop)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');
+});
 
 it('matches the contact modal open state (EN, desktop)', function () {
     $page = visit('/en?screenshot=1')
@@ -37,7 +34,7 @@ it('matches the contact modal open state (EN, desktop)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');
+});
 
 it('matches the contact modal open state (FR, mobile)', function () {
     $page = visit('/?screenshot=1')
@@ -52,7 +49,7 @@ it('matches the contact modal open state (FR, mobile)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');
+});
 
 it('matches the contact modal open state (EN, mobile)', function () {
     $page = visit('/en?screenshot=1')
@@ -67,4 +64,26 @@ it('matches the contact modal open state (EN, mobile)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');
+});
+
+it('opens the modal by itself over the confirmation of a sent message', function () {
+    visit('/?sent=contact_form')
+        ->assertVisible('#contact-modal-panel')
+        ->assertSee('Message envoyé. Merci — je te réponds bientôt.')
+        ->assertNoJavaScriptErrors();
+});
+
+it('opens the modal by itself over the errors of a refused message', function () {
+    $page = visit('/');
+
+    $page->click('.cta')
+        ->type('#subject', 'Bonjour')
+        ->type('#email', 'visitor@example.com')
+        ->type('#message', str_repeat('a', 3))
+        ->script("document.getElementById('email').value = 'not-an-email'; document.getElementById('email').type = 'text'");
+
+    $page->click('.cf-actions button[type=submit]')
+        ->assertVisible('#contact-modal-panel')
+        ->assertSee('Entre une adresse email valide.')
+        ->assertNoJavaScriptErrors();
+});

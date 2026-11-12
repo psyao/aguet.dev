@@ -43,7 +43,7 @@
                 <p class="sb-pop-row sb-pop-msg">{{ $message }}</p>
             @endif
             @if ($relDate)
-                <p class="sb-pop-row sb-pop-date">{{ $relDate }}</p>
+                <p class="sb-pop-row sb-pop-date"><time datetime="{{ $bi['date'] }}" data-reldate>{{ $relDate }}</time></p>
             @endif
             @if ($repo !== '')
                 <a class="sb-pop-row sb-pop-repo" href="{{ $repo }}"
@@ -58,5 +58,5 @@
     <span class="seg r hide">utf-8</span>
     <a class="seg r" href="{{ $altUrl }}" title="{{ __('site.footer.switch') }}" aria-label="{{ strtoupper($locale) }} — {{ __('site.footer.switch') }}"><b>{{ strtoupper($locale) }}</b></a>
     <span class="seg r hide" @unless($shot ?? false) data-clock @endunless>{{ ($shot ?? false) ? '00:00' : '--:--' }}</span>
-    <span class="seg r">© {{ ($shot ?? false) ? '2026' : date('Y') }}</span>
+    <span class="seg r" @unless($shot ?? false) data-year @endunless>© {{ ($shot ?? false) ? '2026' : date('Y') }}</span>
 </footer>

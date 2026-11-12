@@ -28,6 +28,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
+            // Every Resource needs a policy: Kami's have theirs, and aguet adds none.
+            ->strictAuthorization()
             ->brandName('aguet.dev')
             ->colors([
                 'primary' => Color::Emerald,
