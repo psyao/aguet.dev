@@ -92,6 +92,11 @@ second run would pass the guard and bring the site up unchecked. Roll back to th
 Velox commit instead (#28 decision 8), fix the cause, and replay by hand with
 `php artisan app:import:velox --again` before the next Switch-over.
 
+Right after the Switch-over's `up`, `scripts/replay-urls.sh https://aguet.dev` replays the
+public URL inventory (#28 decision 6) and exits 1 on any status or `Location` that
+changed. Run it against Apache, not Herd: Herd's nginx answers `robots.txt` with a 404 and
+ignores `public/.htaccess`, which redirects `/en/` to `/en`.
+
 **Repository secrets** — `Settings → Secrets and variables → Actions → Secrets`:
 
 | Name | Required | Description |
