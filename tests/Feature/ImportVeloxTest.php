@@ -128,7 +128,6 @@ function seedVelox(): void
     $image = imagecreatetruecolor(4, 4);
     ob_start();
     imagepng($image);
-    // As in production: `disk` names where Velox wrote the variants, and it kept the original on the private disk.
     Storage::disk('local')->put('media/01jsocial/aguet-dev.png', ob_get_clean());
     $media = DB::table('velox_media_items')->insertGetId([
         'ulid' => '01jsocial', 'disk' => 'public', 'path' => 'media/01jsocial/aguet-dev.png', 'alt' => json_encode(['fr' => 'Steve Aguet', 'en' => 'Steve Aguet']), 'created_at' => '2025-01-11 09:00:00', 'updated_at' => '2025-01-11 09:00:00',

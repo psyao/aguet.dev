@@ -94,8 +94,7 @@ Velox commit instead (#28 decision 8), fix the cause, and replay by hand with
 
 Right after the Switch-over's `up`, `scripts/replay-urls.sh https://aguet.dev` replays the
 public URL inventory (#28 decision 6) and exits 1 on any status or `Location` that
-changed. Run it against Apache, not Herd: Herd's nginx answers `robots.txt` with a 404 and
-ignores `public/.htaccess`, which redirects `/en/` to `/en`.
+changed (its header says why it needs Apache).
 
 **Repository secrets** — `Settings → Secrets and variables → Actions → Secrets`:
 

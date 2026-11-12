@@ -12,7 +12,7 @@
     # Redirect Trailing Slashes If Not A Folder... (`/en/` → `/en`, as Velox did; Kami does not, ADR 0008)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
-    RewriteRule ^ %1 [L,R=301]
+    RewriteRule ^ https://%{HTTP_HOST}%1 [L,R=301]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
