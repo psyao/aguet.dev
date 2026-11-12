@@ -198,6 +198,20 @@ class HomePageTest extends TestCase
         resolve(SaveEntry::class)->handle(SiteSettings::class, ['default_social_image' => $image->id], SiteSettings::entry());
 
         $this->get($path)->assertStatus(301)->assertRedirect($image->url('kami-social'));
+
+        // An SVG has no `kami-social` Conversion: no card to point to.
+        $svg = resolve(SaveMedia::class)->handle(UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>'));
+        resolve(SaveEntry::class)->handle(SiteSettings::class, ['default_social_image' => $svg->id], SiteSettings::entry());
+
+        $this->get($path)->assertNotFound();
+    }
+
+    public function test_a_project_card_without_a_directory_takes_its_title_as_legend(): void
+    {
+        $animalia = Entry::query()->ofType(Project::class)->get()->firstWhere('directory', 'animalia');
+        resolve(SaveEntry::class)->handle(Project::class, ['directory' => null], $animalia);
+
+        $this->get('/')->assertOk()->assertSee($this->legend('animalia'), false);
     }
 
     public function test_every_inline_script_and_style_is_allowed_by_the_csp(): void

@@ -18,9 +18,9 @@ beforeEach(function () {
 });
 
 /** The legend of a Project card. */
-function projectLegend(string $host): string
+function projectLegend(string $directory): string
 {
-    return '<span class="slash">~/projects/</span><b>'.$host.'</b>';
+    return '<span class="slash">~/projects/</span><b>'.$directory.'</b>';
 }
 
 /** A seeded Entry of the type, by its French title. */

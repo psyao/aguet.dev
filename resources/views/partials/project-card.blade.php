@@ -1,7 +1,7 @@
 {{-- $project: App\Models\Project · $variant: 'feat' | 'full' | 'normal' --}}
 @php
     $variant ??= 'normal';
-    $slug = $project->directory; // one legend in every Locale
+    $slug = $project->legend(); // one legend in every Locale
 @endphp
 
 @if ($variant === 'feat')

@@ -2,7 +2,7 @@
    Registered from app.js, which hands over its palette, contact modal and
    vim echo. */
 
-let ui = { cmdk: { isOpen: false }, contact: { isOpen: false }, vim: { flash() {} } };
+let ui;
 
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 

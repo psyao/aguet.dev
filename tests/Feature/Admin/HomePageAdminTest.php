@@ -5,7 +5,6 @@ use App\Models\User;
 use Database\Seeders\HomeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Psyao\Kami\Content\Actions\SaveEntry;
-use Psyao\Kami\Content\Entry;
 
 uses(RefreshDatabase::class);
 
@@ -20,14 +19,14 @@ it('opens the Home Page in the Admin in each language', function () {
 });
 
 it('shows a Home Page text saved in French on the French page only', function () {
-    resolve(SaveEntry::class)->handle(Home::class, ['hero_role' => 'Artisan Laravel — Lausanne'], Entry::query()->ofType(Home::class)->sole(), 'fr');
+    resolve(SaveEntry::class)->handle(Home::class, ['hero_role' => 'Artisan Laravel — Lausanne'], Home::entry(), 'fr');
 
     $this->get('/')->assertSee('Artisan Laravel — Lausanne');
     $this->get('/en')->assertSee('Full-stack web developer — Lake Geneva region');
 });
 
 it('renders an English text\'s inline Markdown on the English page only', function () {
-    resolve(SaveEntry::class)->handle(Home::class, ['contact_lead' => 'Got a *Laravel* project?'], Entry::query()->ofType(Home::class)->sole(), 'en');
+    resolve(SaveEntry::class)->handle(Home::class, ['contact_lead' => 'Got a *Laravel* project?'], Home::entry(), 'en');
 
     $this->get('/en')->assertSee('Got a <em>Laravel</em> project?', false);
     $this->get('/')->assertDontSee('Got a', false);

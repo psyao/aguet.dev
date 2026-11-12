@@ -156,11 +156,13 @@ function applyTheme(name) {
   return true;
 }
 
-// Shows or hides a dialog root: `hidden` for layout, `show` for its transition.
-function setShown(root, on) {
-  if (!root) return;
-  root.hidden = !on;
-  root.classList.toggle('show', on);
+// Shows or hides a dialog: `hidden` for layout, `show` for its transition, the
+// rest of the page inert and unscrollable behind it, focus handed to `focusTo`.
+function showDialog(root, on, otherDialog, focusTo) {
+  if (root) { root.hidden = !on; root.classList.toggle('show', on); }
+  setBackgroundInert(on, otherDialog);
+  document.body.style.overflow = on ? 'hidden' : '';
+  requestAnimationFrame(() => { const el = focusTo(); if (el && typeof el.focus === 'function') el.focus(); });
 }
 
 // Command palette (⌘K): fuzzy filter, keyboard nav, grouped results.
@@ -262,22 +264,16 @@ const cmdk = {
     this.trigger = document.activeElement;
     this.isOpen = true;
     this.render();
-    setShown(this.root, true);
-    setBackgroundInert(true, '#contact-modal');
-    document.body.style.overflow = 'hidden';
+    showDialog(this.root, true, '#contact-modal', () => this.input);
     updateMode();
-    requestAnimationFrame(() => { if (this.input) this.input.focus(); });
   },
   close() {
     if (!this.isOpen) return;
     this.isOpen = false;
-    setShown(this.root, false);
-    setBackgroundInert(false, '#contact-modal');
-    document.body.style.overflow = '';
-    updateMode();
     const tr = this.trigger;
     this.trigger = null;
-    requestAnimationFrame(() => { if (tr && typeof tr.focus === 'function') tr.focus(); });
+    showDialog(this.root, false, '#contact-modal', () => tr);
+    updateMode();
   },
   toggle() { this.isOpen ? this.close() : this.open(); },
   run(item) { this.close(); item.run(); },
@@ -341,13 +337,9 @@ const contact = {
     if (this.isOpen) return;
     this.trigger = document.activeElement;
     this.isOpen = true;
-    setShown(document.getElementById('contact-modal'), true);
-    setBackgroundInert(true, '#cmdk');
-    document.body.style.overflow = 'hidden';
-    requestAnimationFrame(() => {
+    showDialog(document.getElementById('contact-modal'), true, '#cmdk', () => {
       const panel = document.getElementById('contact-modal-panel');
-      if (!panel) return;
-      (tabbable(panel)[0] || panel).focus();
+      return panel && (tabbable(panel)[0] || panel);
     });
   },
 
@@ -355,12 +347,9 @@ const contact = {
   close() {
     if (!this.isOpen) return;
     this.isOpen = false;
-    setShown(document.getElementById('contact-modal'), false);
-    setBackgroundInert(false, '#cmdk');
-    document.body.style.overflow = '';
     const tr = this.trigger;
     this.trigger = null;
-    requestAnimationFrame(() => { if (tr && typeof tr.focus === 'function') tr.focus(); });
+    showDialog(document.getElementById('contact-modal'), false, '#cmdk', () => tr);
   },
 };
 
@@ -431,7 +420,6 @@ function initContactRows() {
     }
     const btn = $('.cp', row);
     let timer = null;
-    btn.textContent = t('contact.copy', 'copy');
     btn.addEventListener('click', async () => {
       await writeClipboard(value);
       btn.classList.add('ok');

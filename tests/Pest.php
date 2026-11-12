@@ -4,7 +4,6 @@ use App\ContentTypes\Home;
 use Database\Seeders\HomeSeeder;
 use Illuminate\Support\Facades\Artisan;
 use Psyao\Kami\Content\Actions\SaveEntry;
-use Psyao\Kami\Content\Entry;
 use Tests\TestCase;
 
 uses(TestCase::class)->in('Feature', 'Unit');
@@ -37,5 +36,5 @@ function setRecipient(?string $email = 'owner@example.com'): void
         (new HomeSeeder)->run();
     }
 
-    resolve(SaveEntry::class)->handle(Home::class, ['contact_email' => $email], Entry::query()->ofType(Home::class)->sole());
+    resolve(SaveEntry::class)->handle(Home::class, ['contact_email' => $email], Home::entry());
 }

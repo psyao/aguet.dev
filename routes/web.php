@@ -17,11 +17,12 @@ Route::permanentRedirect('/{locale}', '/en')->where('locale', '(?!en)[Ee][Nn]');
 // Velox's social image, still in shared links' cached previews: the current `kami-social`
 // Conversion of the Site settings' Social image, read at each request as its URL changes.
 Route::get('/storage/media/{ulid}/aguet-dev-1200.webp', function (): RedirectResponse {
-    $image = SiteSettings::entry()?->default_social_image;
+    // An image with no `kami-social` Conversion, an SVG for one, has no card to point to.
+    $url = rescue(fn (): ?string => SiteSettings::entry()?->default_social_image?->url('kami-social'), report: false);
 
-    abort_if($image === null, 404);
+    abort_if($url === null, 404);
 
-    return redirect($image->url('kami-social'), 301);
+    return redirect($url, 301);
 })->where('ulid', '[0-9A-Za-z]{26}');
 
 Kami::routes();
