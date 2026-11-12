@@ -1,9 +1,11 @@
 <?php
 
+use App\ContentTypes\Home;
 use Database\Seeders\HomeSeeder;
 use Illuminate\Support\Facades\Artisan;
+use Psyao\Kami\Content\Actions\SaveEntry;
+use Psyao\Kami\Content\Entry;
 use Tests\TestCase;
-use Velox\Cms\Models\Entry;
 
 uses(TestCase::class)->in('Feature', 'Unit');
 
@@ -31,10 +33,9 @@ uses(TestCase::class)
 /** Set the owner address the contact pipeline delivers to: the Home Page's contact_email, seeded first if need be. */
 function setRecipient(?string $email = 'owner@example.com'): void
 {
-    if (Entry::homePage() === null) {
+    if (Home::entry() === null) {
         (new HomeSeeder)->run();
     }
 
-    $home = Entry::homePage();
-    $home->update(['data' => [...$home->data, 'contact_email' => $email]]);
+    resolve(SaveEntry::class)->handle(Home::class, ['contact_email' => $email], Entry::query()->ofType(Home::class)->sole());
 }

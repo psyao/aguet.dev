@@ -1,42 +1,19 @@
-{{-- ⌘K command palette. State lives in the Alpine $store.cmdk (resources/js/app.js). --}}
-<div class="cmdk" id="cmdk" x-cloak
-     x-show="$store.cmdk.isOpen"
-     :class="{ show: $store.cmdk.isOpen }"
-     @keydown.escape.window="$store.cmdk.close()">
-    <div class="cmdk-backdrop" @click="$store.cmdk.close()"></div>
+{{-- ⌘K command palette. Opened, filtered and listed by the `cmdk` object in resources/js/app.js. --}}
+<div class="cmdk" id="cmdk" hidden>
+    <div class="cmdk-backdrop" data-cmdk-close></div>
     <div class="cmdk-panel" id="cmdk-panel" role="dialog" aria-modal="true"
-         aria-label="{{ __('site.cmd.palette') }}"
-         @keydown.tab="$store.cmdk.trapFocus($event)">
+         aria-label="{{ __('site.cmd.palette') }}">
         <div class="cmdk-input" role="search">
             <span class="prompt" aria-hidden="true">›</span>
             <input id="cmdk-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
                    aria-label="{{ __('site.cmd.placeholder') }}"
-                   placeholder="{{ __('site.cmd.placeholder') }}"
-                   x-model="$store.cmdk.query"
-                   @input="$store.cmdk.active = 0"
-                   @keydown.down.prevent="$store.cmdk.move(1)"
-                   @keydown.up.prevent="$store.cmdk.move(-1)"
-                   @keydown.enter.prevent="$store.cmdk.enter()">
-            <button type="button" class="cmdk-x" @click="$store.cmdk.close()"
+                   placeholder="{{ __('site.cmd.placeholder') }}">
+            <button type="button" class="cmdk-x" data-cmdk-close
                     aria-label="{{ __('site.cmd.close') }}">✕</button>
         </div>
         <div class="cmdk-list" id="cmdk-list" role="region" aria-label="{{ __('site.cmd.results') }}">
-            <template x-for="grp in $store.cmdk.groups" :key="grp.g">
-                <div>
-                    <div class="cmdk-grp" x-text="grp.g"></div>
-                    <template x-for="item in grp.items" :key="item._i">
-                        <button class="cmdk-item" type="button"
-                                :class="{ on: item._i === $store.cmdk.active }"
-                                @click="$store.cmdk.run(item)"
-                                @mousemove="$store.cmdk.active = item._i">
-                            <span class="ci-prompt" aria-hidden="true">›</span>
-                            <span class="ci-label" x-text="item.label"></span>
-                            <span class="ci-hint" x-text="item.hint"></span>
-                        </button>
-                    </template>
-                </div>
-            </template>
-            <div class="cmdk-empty" x-show="$store.cmdk.filtered.length === 0 && !$store.cmdk.commandMode">— {{ __('site.cmd.empty') }} —</div>
+            <div id="cmdk-groups"></div>
+            <div class="cmdk-empty" hidden>— {{ __('site.cmd.empty') }} —</div>
         </div>
         <div class="cmdk-foot">
             <span><b>↑↓</b> {{ __('site.cmd.hint_nav') }}</span>

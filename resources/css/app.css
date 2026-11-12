@@ -55,7 +55,7 @@ body[data-theme="crt"]{--color-bg:#100a00;--color-panel:#1a1200;--color-panel-2:
 body[data-theme="light"]{--color-bg:#fdf6e3;--color-panel:#eee8d5;--color-panel-2:#e6dfca;--color-line:#ddd6c1;--color-line-soft:#e8e1cc;--color-fg:#002b36;--color-muted:#45575e;--color-dim:#586e75;--color-faint:#808f8b;--color-accent:#1c6fa8;--color-accent-ink:#fdf6e3;--color-danger:#c02a26;--fx-glow:.12;color-scheme:light}
 
 *{box-sizing:border-box;margin:0;padding:0}
-[x-cloak]{display:none!important}
+[hidden]{display:none!important}
 html{color-scheme:dark}
 @media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 body{background:var(--color-bg);color:var(--color-fg);font-family:var(--mono);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -114,6 +114,7 @@ main{padding:0 0 30px}
 .section{padding:var(--bpy) 0;border-bottom:1px solid var(--color-line-soft);scroll-margin-top:calc(var(--nav-h) + 14px)}
 .cmd{color:var(--color-muted);font-size:13px;margin-bottom:6px}
 .cmd .arg{color:var(--color-fg)}
+.cmd.cmd-gap{margin-top:20px}
 
 /* ───── HERO ───── */
 .hero .who{color:var(--color-muted);font-size:13px;margin-bottom:8px}
@@ -154,6 +155,7 @@ main{padding:0 0 30px}
 .nf-info dd.hot{color:var(--color-fg)}
 .nf-sw{display:flex;gap:0;margin-top:12px}
 .nf-sw i{width:18px;height:12px;display:block}
+.sw-accent{background:var(--color-accent)}.sw-3a4a40{background:#3a4a40}.sw-566459{background:#566459}.sw-869589{background:#869589}.sw-a6b5ab{background:#a6b5ab}.sw-cdd8d0{background:#cdd8d0}.sw-e7efe9{background:#e7efe9}
 
 /* ───── SKILLS TREE ───── */
 .tree-head{color:var(--color-muted);font-size:13px;margin:2px 0 4px}

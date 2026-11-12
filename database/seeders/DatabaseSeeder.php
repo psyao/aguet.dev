@@ -7,8 +7,7 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database. Model events stay on: Velox forgets its
-     * cached Settings (the Home Page among them) when a Setting is saved.
+     * Seed the application's database, every Entry through Kami's SaveEntry.
      */
     public function run(): void
     {

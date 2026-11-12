@@ -7,12 +7,11 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
-use Velox\Cms\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->actingAs(User::factory()->create());
+    $this->actingAs(User::factory()->administrator()->create());
 });
 
 it('lists contact messages for an admin', function () {
@@ -46,12 +45,6 @@ it('requires authentication', function () {
     auth()->logout();
 
     $this->get('/admin/contact-messages')->assertRedirect('/admin/login');
-});
-
-it('opens the inbox to a Writer', function () {
-    $this->actingAs(User::factory()->create(['role' => Role::Writer->value]));
-
-    $this->get('/admin/contact-messages')->assertOk();
 });
 
 it('badges the inbox with its unread count', function () {

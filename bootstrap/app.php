@@ -1,12 +1,13 @@
 <?php
 
 use App\Http\Controllers\CronController;
-use App\Http\Middleware\SetSecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Psyao\Kami\Facades\Kami;
+use Psyao\Kami\Support\SecurityHeaders;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,7 +24,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: SetSecurityHeaders::class);
+        // Kami's front CSP and security headers on aguet's own routes too (Kami's pages get them in its `kami` group).
+        $middleware->web(append: [SecurityHeaders::class]);
 
         // No trustProxies: Infomaniak passes the real client IP in REMOTE_ADDR
         // and never sets X-Forwarded-For. Trusting XFF would let any visitor
@@ -32,6 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // groups (web/api) registered.
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        // First: error pages render in the URL's Locale, `/en/…` in English.
+        Kami::exceptions($exceptions);
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );

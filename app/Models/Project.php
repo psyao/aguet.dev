@@ -2,21 +2,21 @@
 
 namespace App\Models;
 
-use Velox\Cms\Models\Entry;
+use Psyao\Kami\Content\Entry;
 
 /** An Entry of the Project Content Type. */
 class Project extends Entry
 {
-    /** Host shown on the project card, derived from the URL (e.g. "cvci.ch"). */
+    /** Host shown on the project card, derived from the website (e.g. "cvci.ch"). */
     public function host(): ?string
     {
-        $url = $this->getAttribute('url');
+        $website = $this->getAttribute('website');
 
-        if (! $url) {
+        if (! $website) {
             return null;
         }
 
-        $host = parse_url($url, PHP_URL_HOST) ?: $url;
+        $host = parse_url($website, PHP_URL_HOST) ?: $website;
 
         return preg_replace('/^www\./', '', $host);
     }

@@ -1,21 +1,21 @@
-/* aguet.dev — Terminal v2 interactions (Alpine.js)
+/* aguet.dev — Terminal v2 interactions, plain modules with no framework.
    Adapted from the Claude Design prototype (shared/terminal-v2.js).
 
-   Alpine is NOT bundled here: Filament 5 / Livewire 4 ships Alpine, starts it,
-   and exposes window.Alpine. We register our components on the `alpine:init`
-   event against that shared instance (no import, no Alpine.start()). The public
-   layout loads Livewire's scripts so Alpine is available.
+   Kami's front Content Security Policy runs no inline handler and no eval, so
+   every behaviour is wired here, on data-* hooks in the Blade partials.
 
    - Language is server-side (URL /  vs /en); the command palette's
      "switch language" navigates to the alternate URL.
-   - The design-tool "Tweaks" panel is removed.
-   - Per-locale UI strings + palette data come from window.__AGUET, injected by
-     the Blade layout for the current locale only.
+   - Per-locale UI strings + palette data come from the #aguet-config JSON
+     block, rendered by the Blade layout for the current locale only.
    The page is fully functional without this script (progressive enhancement). */
 
 import { initEasterEggs } from './easter-eggs';
 
-const CFG = window.__AGUET || { locale: 'fr', altUrl: '/en', i18n: {}, projects: [], contact: {} };
+const CFG = (() => {
+  const fallback = { locale: 'fr', altUrl: '/en', i18n: {}, projects: [], contact: {} };
+  try { return JSON.parse(document.getElementById('aguet-config').textContent) || fallback; } catch (_) { return fallback; }
+})();
 const t = (k, fallback) => (CFG.i18n && CFG.i18n[k] != null ? CFG.i18n[k] : (fallback || ''));
 const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -122,326 +122,356 @@ function scrollspy() {
   ids.forEach((id) => { const s = document.getElementById(id); if (s) io.observe(s); });
 }
 
-/* ───────────────── ALPINE COMPONENTS (registered on alpine:init) ───────────────── */
-document.addEventListener('alpine:init', () => {
-  const Alpine = window.Alpine;
+/* ───────────────── COMPONENTS ───────────────── */
 
-  // Root: kicks off the one-shot boot animation + scrollspy.
-  Alpine.data('terminal', () => ({
-    init() { boot(); scrollspy(); },
-  }));
+// Vim command-line echo: ex-commands flash a transient message here, shown
+// in the statusbar (the bottom line, like vim's command-line). Auto-clears.
+const vim = {
+  _t: null,
+  flash(m) {
+    const el = $('[data-vim-echo]');
+    if (!el) return;
+    el.textContent = m;
+    el.hidden = false;
+    clearTimeout(this._t);
+    this._t = setTimeout(() => { el.textContent = ''; el.hidden = true; }, 2500);
+  },
+};
 
-  // Focuses the element on init. Kept as a named component (rather than an
-  // inline x-init arrow function) so it still works under Livewire's
-  // csp_safe mode, whose restricted expression parser doesn't support
-  // arrow functions in HTML attributes.
-  Alpine.data('focusOnInit', () => ({
-    init() { this.$nextTick(() => this.$el.focus()); },
-  }));
+// ── Colorscheme ──────────────────────────────────────────────────────
+// :colorscheme <name> swaps the --color-* block via a body[data-theme]
+// attribute (same mechanism as data-fx / data-density), persisted in
+// localStorage and re-applied pre-paint by the inline script in the layout.
+const THEMES = ['default', 'gruvbox', 'nord', 'crt', 'light'];
+
+function applyTheme(name) {
+  if (!THEMES.includes(name)) return false;
+  if (name === 'default') {
+    delete document.body.dataset.theme;
+    try { localStorage.removeItem('theme'); } catch (e) { /* private mode */ }
+  } else {
+    document.body.dataset.theme = name;
+    try { localStorage.setItem('theme', name); } catch (e) { /* private mode */ }
+  }
+  return true;
+}
+
+// Shows or hides a dialog root: `hidden` for layout, `show` for its transition.
+function setShown(root, on) {
+  if (!root) return;
+  root.hidden = !on;
+  root.classList.toggle('show', on);
+}
+
+// Command palette (⌘K): fuzzy filter, keyboard nav, grouped results.
+const cmdk = {
+  isOpen: false,
+  active: 0,
+  items: [],
+  trigger: null,
+
+  get root() { return document.getElementById('cmdk'); },
+  get input() { return document.getElementById('cmdk-input'); },
+  get query() { return this.input ? this.input.value : ''; },
+
+  build() {
+    const go = (id) => () => { this.close(); const s = document.getElementById(id); if (s) s.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }); };
+    const open = (u) => () => window.open(u, '_blank', 'noopener');
+    const nav = t('cmd.nav', 'Navigation');
+    const act = t('cmd.actions', 'Actions');
+    const out = [
+      { g: nav, label: t('nav.about', 'about'), hint: '~/about', run: go('about') },
+      { g: nav, label: t('nav.skills', 'skills'), hint: '~/skills', run: go('skills') },
+      { g: nav, label: t('nav.projects', 'projects'), hint: '~/projects', run: go('projects') },
+      { g: nav, label: t('nav.contact', 'contact'), hint: '~/contact', run: go('contact') },
+    ];
+    (CFG.projects || []).forEach((p) => { if (p.url) out.push({ g: 'projects', label: p.label, hint: p.host, run: open(p.url) }); });
+    out.push({ g: act, label: t('cmd.lang', 'Switch language'), hint: 'fr ↔ en', run: () => { window.location.href = CFG.altUrl; } });
+    const c = CFG.contact || {};
+    const email = deob(c.emailEnc || '');
+    if (email) out.push({ g: act, label: t('cmd.email', 'Email'), hint: email, run: () => { window.location.href = 'mailto:' + email; } });
+    if (c.linkedin) out.push({ g: act, label: t('cmd.linkedin', 'LinkedIn'), hint: c.linkedinLabel || '', run: open(c.linkedin) });
+    if (c.github) out.push({ g: act, label: t('cmd.github', 'GitHub'), hint: c.githubLabel || '', run: open(c.github) });
+    this.items = out;
+  },
+
+  // A query starting with ':' is vim command-line mode, not fuzzy search.
+  get commandMode() { return this.query.trim().toLowerCase().startsWith(':'); },
+
+  // `:help` / `:h` lists the eggs as ordinary palette rows (reuses list UI).
+  get helpRows() {
+    const g = t('cmd.actions', 'Actions');
+    return ['help.motions', 'help.jumps', 'help.excmd', 'help.colorscheme', 'help.konami'].map((k, i) => ({
+      g, label: t(k, k), hint: '', run: () => this.close(), _i: i,
+    }));
+  },
+
+  get filtered() {
+    const raw = this.query.trim().toLowerCase();
+    if (raw.startsWith(':')) {
+      return (raw === ':help' || raw === ':h') ? this.helpRows : [];
+    }
+    const list = raw ? this.items.filter((c) => (c.label + ' ' + c.hint + ' ' + c.g).toLowerCase().includes(raw)) : this.items;
+    return list.map((c, i) => ({ ...c, _i: i }));
+  },
+
+  // Renders the grouped list (group header + its items) from the flat filtered list.
+  render() {
+    const box = document.getElementById('cmdk-groups');
+    if (!box) return;
+    const f = this.filtered;
+    const groups = [];
+    let cur = null;
+    f.forEach((it) => {
+      if (!cur || cur.g !== it.g) { cur = { g: it.g, items: [] }; groups.push(cur); }
+      cur.items.push(it);
+    });
+    box.replaceChildren(...groups.map((grp) => {
+      const wrap = document.createElement('div');
+      const head = document.createElement('div');
+      head.className = 'cmdk-grp';
+      head.textContent = grp.g;
+      wrap.append(head);
+      grp.items.forEach((item) => {
+        const b = document.createElement('button');
+        b.className = 'cmdk-item';
+        b.type = 'button';
+        b.dataset.i = String(item._i);
+        b.classList.toggle('on', item._i === this.active);
+        const span = (cls, text, hidden) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; if (hidden) s.setAttribute('aria-hidden', 'true'); return s; };
+        b.append(span('ci-prompt', '›', true), span('ci-label', item.label), span('ci-hint', item.hint));
+        b.addEventListener('click', () => this.run(item));
+        b.addEventListener('mousemove', () => this.setActive(item._i));
+        wrap.append(b);
+      });
+      return wrap;
+    }));
+    const empty = $('#cmdk .cmdk-empty');
+    if (empty) empty.hidden = !(f.length === 0 && !this.commandMode);
+  },
+
+  setActive(i) {
+    this.active = i;
+    $$('#cmdk-list .cmdk-item').forEach((el) => el.classList.toggle('on', el.dataset.i === String(i)));
+  },
+
+  open(seed = '') {
+    if (!this.items.length) this.build();
+    if (this.input) this.input.value = seed;
+    this.active = 0;
+    this.trigger = document.activeElement;
+    this.isOpen = true;
+    this.render();
+    setShown(this.root, true);
+    setBackgroundInert(true, '#contact-modal');
+    document.body.style.overflow = 'hidden';
+    updateMode();
+    requestAnimationFrame(() => { if (this.input) this.input.focus(); });
+  },
+  close() {
+    if (!this.isOpen) return;
+    this.isOpen = false;
+    setShown(this.root, false);
+    setBackgroundInert(false, '#contact-modal');
+    document.body.style.overflow = '';
+    updateMode();
+    const tr = this.trigger;
+    this.trigger = null;
+    requestAnimationFrame(() => { if (tr && typeof tr.focus === 'function') tr.focus(); });
+  },
+  toggle() { this.isOpen ? this.close() : this.open(); },
+  run(item) { this.close(); item.run(); },
+  move(d) {
+    const n = this.filtered.length; if (!n) return;
+    this.setActive((this.active + d + n) % n);
+    // Keep the highlighted row visible when nav runs past the viewport.
+    const el = $('#cmdk-list .cmdk-item.on');
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  },
+  enter() {
+    if (this.commandMode) {
+      // `:help`/`:h` populate `filtered` with selectable help rows — Enter runs
+      // the active one (its run = close), so arrow-select + Enter works. Every
+      // other ':' command has empty `filtered`, so fall through to execEx.
+      const f = this.filtered;
+      if (f.length) { this.run(f[this.active]); return; }
+      this.execEx(this.query.trim().toLowerCase());
+      return;
+    }
+    const f = this.filtered; if (f[this.active]) this.run(f[this.active]);
+  },
+
+  // Vim ex-commands. Always close the palette first so the statusbar echo
+  // (z-index 30) isn't hidden behind the palette/backdrop (z-index 100).
+  // Note: `:help`/`:h` never reach here — their non-empty `filtered` is handled
+  // by enter() above.
+  execEx(cmd) {
+    const say = (m) => { this.close(); vim.flash(m); };
+
+    // :colorscheme <name> (vim abbrev :colo). Bare form lists the options.
+    const cs = cmd.match(/^:colo(?:rscheme)?\b\s*(\S*)$/);
+    if (cs) {
+      const name = cs[1];
+      if (!name) { say('colorscheme: ' + THEMES.join(' ')); return; }
+      if (applyTheme(name)) say(':colorscheme ' + name);
+      else say(t('cmd.e185', 'E185: Cannot find color scheme ') + name);
+      return;
+    }
+
+    switch (cmd) {
+      case ':q': case ':quit':
+        say(t('cmd.q', 'E37: No write since last change (add ! to override)')); break;
+      case ':q!':
+        this.close(); break;
+      case ':wq': case ':x': case ':w':
+        say(t('cmd.wq', '"aguet.dev" written — nothing to save')); break;
+      default:
+        say(t('cmd.e492', 'E492: Not an editor command: ') + cmd.slice(1)); break;
+    }
+  },
+};
+
+// Contact modal: accessible dialog shell. Like cmdk it hand-rolls a focus
+// trap, but also returns focus to the trigger and marks the background inert.
+const contact = {
+  isOpen: false,
+  trigger: null,
+
+  open() {
+    if (this.isOpen) return;
+    this.trigger = document.activeElement;
+    this.isOpen = true;
+    setShown(document.getElementById('contact-modal'), true);
+    setBackgroundInert(true, '#cmdk');
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => {
+      const panel = document.getElementById('contact-modal-panel');
+      if (!panel) return;
+      (tabbable(panel)[0] || panel).focus();
+    });
+  },
+
+  // Hide only: a draft in the form is kept (ESC, backdrop, ✕).
+  close() {
+    if (!this.isOpen) return;
+    this.isOpen = false;
+    setShown(document.getElementById('contact-modal'), false);
+    setBackgroundInert(false, '#cmdk');
+    document.body.style.overflow = '';
+    const tr = this.trigger;
+    this.trigger = null;
+    requestAnimationFrame(() => { if (tr && typeof tr.focus === 'function') tr.focus(); });
+  },
+};
+
+// Statusbar: live vim-mode pill. COMMAND while the palette is open, INSERT in a
+// field, VISUAL with a page selection, NORMAL otherwise.
+let insertMode = false;
+let visualMode = false;
+function updateMode() {
+  const el = $('[data-mode]');
+  if (!el) return;
+  el.textContent = cmdk.isOpen ? 'COMMAND' : insertMode ? 'INSERT' : visualMode ? 'VISUAL' : 'NORMAL';
+}
+
+function initStatusbar() {
+  document.addEventListener('selectionchange', () => {
+    const s = window.getSelection();
+    const txt = s ? s.toString().trim() : '';
+    let inUI = false;
+    if (txt && s && s.anchorNode) {
+      const el = s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement;
+      if (el && el.closest('#cmdk, #contact-modal-panel')) inUI = true;
+    }
+    visualMode = !!txt && !inUI;
+    updateMode();
+  });
+  document.addEventListener('focusin', (e) => {
+    insertMode = !!(e.target && e.target.closest && e.target.closest('input,textarea,select,[contenteditable]'));
+    updateMode();
+  });
+  document.addEventListener('focusout', () => { insertMode = false; updateMode(); });
+
+  // Commit popover: server-rendered content, toggled here; closes on Escape or a click outside.
+  const branch = $('[data-branch]');
+  if (branch) {
+    const trigger = $('.branch-trigger', branch);
+    const pop = $('.sb-pop', branch);
+    const show = (on) => { pop.hidden = !on; trigger.setAttribute('aria-expanded', String(on)); };
+    trigger.addEventListener('click', () => show(pop.hidden));
+    branch.addEventListener('keydown', (e) => { if (e.key === 'Escape') show(false); });
+    document.addEventListener('click', (e) => { if (!branch.contains(e.target)) show(false); });
+  }
 
   // Live clock (Europe/Zurich), tmux-style status bar segment.
-  Alpine.data('clock', () => ({
-    time: '--:--',
-    _iv: null,
-    init() { this.tick(); this._iv = setInterval(() => this.tick(), 15000); },
-    destroy() { clearInterval(this._iv); },
-    tick() {
-      this.time = new Date().toLocaleTimeString(CFG.locale === 'fr' ? 'fr-CH' : 'en-GB', {
+  const clock = $('[data-clock]');
+  if (clock) {
+    const tick = () => {
+      clock.textContent = new Date().toLocaleTimeString(CFG.locale === 'fr' ? 'fr-CH' : 'en-GB', {
         hour: '2-digit', minute: '2-digit', hourCycle: 'h23', timeZone: 'Europe/Zurich',
       });
-    },
-  }));
+    };
+    tick();
+    setInterval(tick, 15000);
+  }
+}
 
-  // Click-to-copy contact value with transient "copied" feedback.
-  Alpine.data('copy', (value) => ({
-    value,
-    copied: false,
-    label: t('contact.copy', 'copy'),
-    _t: null,
-    async copyValue() {
-      await writeClipboard(this.value);
-      this.copied = true;
-      this.label = t('contact.copied', 'copied');
-      clearTimeout(this._t);
-      this._t = setTimeout(() => { this.copied = false; this.label = t('contact.copy', 'copy'); }, 1500);
-    },
-    destroy() { clearTimeout(this._t); },
-  }));
-
-  // Email row: the address is base64-encoded in the markup and rebuilt here at
-  // runtime, so no plaintext "user@domain" ever sits in the HTML source for
-  // naive scrapers to harvest. Without JS the row stays hidden (x-cloak).
-  Alpine.data('email', (enc) => ({
-    value: '',
-    display: '',
-    mailto: '#',
-    copied: false,
-    label: t('contact.copy', 'copy'),
-    _t: null,
-    init() {
-      this.value = deob(enc);
-      this.display = '"' + this.value + '"';
-      this.mailto = 'mailto:' + this.value;
-    },
-    async copyValue() {
-      await writeClipboard(this.value);
-      this.copied = true;
-      this.label = t('contact.copied', 'copied');
-      clearTimeout(this._t);
-      this._t = setTimeout(() => { this.copied = false; this.label = t('contact.copy', 'copy'); }, 1500);
-    },
-    destroy() { clearTimeout(this._t); },
-  }));
-
-  // Command palette (⌘K): fuzzy filter, keyboard nav, grouped results.
-  Alpine.store('cmdk', {
-    isOpen: false,
-    query: '',
-    active: 0,
-    items: [],
-    trigger: null,
-
-    build() {
-      const go = (id) => () => { this.close(); const s = document.getElementById(id); if (s) s.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth' }); };
-      const open = (u) => () => window.open(u, '_blank', 'noopener');
-      const nav = t('cmd.nav', 'Navigation');
-      const act = t('cmd.actions', 'Actions');
-      const out = [
-        { g: nav, label: t('nav.about', 'about'), hint: '~/about', run: go('about') },
-        { g: nav, label: t('nav.skills', 'skills'), hint: '~/skills', run: go('skills') },
-        { g: nav, label: t('nav.projects', 'projects'), hint: '~/projects', run: go('projects') },
-        { g: nav, label: t('nav.contact', 'contact'), hint: '~/contact', run: go('contact') },
-      ];
-      (CFG.projects || []).forEach((p) => { if (p.url) out.push({ g: 'projects', label: p.label, hint: p.host, run: open(p.url) }); });
-      out.push({ g: act, label: t('cmd.lang', 'Switch language'), hint: 'fr ↔ en', run: () => { window.location.href = CFG.altUrl; } });
-      const c = CFG.contact || {};
-      const email = deob(c.emailEnc || '');
-      if (email) out.push({ g: act, label: t('cmd.email', 'Email'), hint: email, run: () => { window.location.href = 'mailto:' + email; } });
-      if (c.linkedin) out.push({ g: act, label: t('cmd.linkedin', 'LinkedIn'), hint: c.linkedinLabel || '', run: open(c.linkedin) });
-      if (c.github) out.push({ g: act, label: t('cmd.github', 'GitHub'), hint: c.githubLabel || '', run: open(c.github) });
-      this.items = out;
-    },
-
-    // A query starting with ':' is vim command-line mode, not fuzzy search.
-    get commandMode() { return this.query.trim().toLowerCase().startsWith(':'); },
-
-    // `:help` / `:h` lists the eggs as ordinary palette rows (reuses list UI).
-    get helpRows() {
-      const g = t('cmd.actions', 'Actions');
-      return ['help.motions', 'help.jumps', 'help.excmd', 'help.colorscheme', 'help.konami'].map((k, i) => ({
-        g, label: t(k, k), hint: '', run: () => this.close(), _i: i,
-      }));
-    },
-
-    get filtered() {
-      const raw = this.query.trim().toLowerCase();
-      if (raw.startsWith(':')) {
-        return (raw === ':help' || raw === ':h') ? this.helpRows : [];
-      }
-      const list = raw ? this.items.filter((c) => (c.label + ' ' + c.hint + ' ' + c.g).toLowerCase().includes(raw)) : this.items;
-      return list.map((c, i) => ({ ...c, _i: i }));
-    },
-
-    // Grouped view (group header + its items) built from the flat filtered list.
-    get groups() {
-      const out = [];
-      let cur = null;
-      this.filtered.forEach((it) => {
-        if (!cur || cur.g !== it.g) { cur = { g: it.g, items: [] }; out.push(cur); }
-        cur.items.push(it);
-      });
-      return out;
-    },
-
-    open(seed = '') {
-      if (!this.items.length) this.build();
-      this.query = seed;
-      this.active = 0;
-      this.trigger = document.activeElement;
-      this.isOpen = true;
-      setBackgroundInert(true, '#contact-modal');
-      document.body.style.overflow = 'hidden';
-      window.Alpine.nextTick(() => { const i = document.getElementById('cmdk-input'); if (i) i.focus(); });
-    },
-    close() {
-      this.isOpen = false;
-      setBackgroundInert(false, '#contact-modal');
-      document.body.style.overflow = '';
-      const t = this.trigger;
-      this.trigger = null;
-      window.Alpine.nextTick(() => { if (t && typeof t.focus === 'function') t.focus(); });
-    },
-    toggle() { this.isOpen ? this.close() : this.open(); },
-    trapFocus(e) { trapTab(e, document.getElementById('cmdk-panel')); },
-    run(item) { this.close(); item.run(); },
-    move(d) {
-      const n = this.filtered.length; if (!n) return;
-      this.active = (this.active + d + n) % n;
-      // Keep the highlighted row visible when nav runs past the viewport.
-      window.Alpine.nextTick(() => {
-        const el = document.querySelector('#cmdk-list .cmdk-item.on');
-        if (el) el.scrollIntoView({ block: 'nearest' });
-      });
-    },
-    enter() {
-      if (this.commandMode) {
-        // `:help`/`:h` populate `filtered` with selectable help rows — Enter runs
-        // the active one (its run = close), so arrow-select + Enter works. Every
-        // other ':' command has empty `filtered`, so fall through to execEx.
-        const f = this.filtered;
-        if (f.length) { this.run(f[this.active]); return; }
-        this.execEx(this.query.trim().toLowerCase());
-        return;
-      }
-      const f = this.filtered; if (f[this.active]) this.run(f[this.active]);
-    },
-
-    // Vim ex-commands. Always close the palette first so the statusbar echo
-    // (z-index 30) isn't hidden behind the palette/backdrop (z-index 100).
-    // Note: `:help`/`:h` never reach here — their non-empty `filtered` is handled
-    // by enter() above.
-    execEx(cmd) {
-      const vim = window.Alpine.store('vim');
-      const say = (m) => { this.close(); if (vim) vim.flash(m); };
-
-      // :colorscheme <name> (vim abbrev :colo). Bare form lists the options.
-      const cs = cmd.match(/^:colo(?:rscheme)?\b\s*(\S*)$/);
-      if (cs) {
-        const name = cs[1];
-        if (!name) { say('colorscheme: ' + THEMES.join(' ')); return; }
-        if (window.applyTheme(name)) say(':colorscheme ' + name);
-        else say(t('cmd.e185', 'E185: Cannot find color scheme ') + name);
-        return;
-      }
-
-      switch (cmd) {
-        case ':q': case ':quit':
-          say(t('cmd.q', 'E37: No write since last change (add ! to override)')); break;
-        case ':q!':
-          this.close(); break;
-        case ':wq': case ':x': case ':w':
-          say(t('cmd.wq', '"aguet.dev" written — nothing to save')); break;
-        default:
-          say(t('cmd.e492', 'E492: Not an editor command: ') + cmd.slice(1)); break;
-      }
-    },
-  });
-
-  // Vim command-line echo: ex-commands flash a transient message here, shown
-  // in the statusbar (the bottom line, like vim's command-line). Auto-clears.
-  Alpine.store('vim', {
-    msg: '',
-    _t: null,
-    flash(m) {
-      this.msg = m;
-      clearTimeout(this._t);
-      this._t = setTimeout(() => { this.msg = ''; }, 2500);
-    },
-  });
-
-  // ── Colorscheme ──────────────────────────────────────────────────────
-  // :colorscheme <name> swaps the --color-* block via a body[data-theme]
-  // attribute (same mechanism as data-fx / data-density), persisted in
-  // localStorage and re-applied pre-paint by the inline script in the layout.
-  const THEMES = ['default', 'gruvbox', 'nord', 'crt', 'light'];
-
-  window.applyTheme = function (name) {
-    if (!THEMES.includes(name)) return false;
-    if (name === 'default') {
-      delete document.body.dataset.theme;
-      try { localStorage.removeItem('theme'); } catch (e) { /* private mode */ }
-    } else {
-      document.body.dataset.theme = name;
-      try { localStorage.setItem('theme', name); } catch (e) { /* private mode */ }
+// Click-to-copy contact rows with transient "copied" feedback. The email is
+// base64-encoded in the markup and rebuilt here, so no plaintext "user@domain"
+// sits in the HTML source for naive scrapers; without JS its row stays hidden.
+function initContactRows() {
+  $$('[data-email], [data-copy]').forEach((row) => {
+    let value = row.dataset.copy || '';
+    if (row.dataset.email !== undefined) {
+      value = deob(row.dataset.email);
+      const a = $('a', row);
+      a.href = 'mailto:' + value;
+      a.textContent = '"' + value + '"';
+      row.hidden = false;
     }
-    return true;
-  };
+    const btn = $('.cp', row);
+    let timer = null;
+    btn.textContent = t('contact.copy', 'copy');
+    btn.addEventListener('click', async () => {
+      await writeClipboard(value);
+      btn.classList.add('ok');
+      btn.textContent = t('contact.copied', 'copied');
+      clearTimeout(timer);
+      timer = setTimeout(() => { btn.classList.remove('ok'); btn.textContent = t('contact.copy', 'copy'); }, 1500);
+    });
+  });
+}
 
-  // Contact modal: accessible dialog shell around the <livewire:contact-form>.
-  // Like cmdk (both hand-roll a focus trap since Livewire's bundled Alpine has
-  // no @alpinejs/focus x-trap), but also returns focus to the trigger and marks
-  // the background inert.
-  Alpine.store('contact', {
-    isOpen: false,
-    trigger: null,
-
-    _setBackgroundInert(on) { setBackgroundInert(on, '#cmdk'); },
-
-    open() {
-      if (this.isOpen) return;
-      this.trigger = document.activeElement;
-      this.isOpen = true;
-      this._setBackgroundInert(true);
-      document.body.style.overflow = 'hidden';
-      window.Alpine.nextTick(() => {
-        const panel = document.getElementById('contact-modal-panel');
-        if (!panel) return;
-        (tabbable(panel)[0] || panel).focus();
-      });
-    },
-
-    // Hide only — the draft is preserved (ESC, backdrop, ✕). Clearing the form
-    // is the explicit "annuler" button's job (wire:click="resetForm").
-    close() {
-      if (!this.isOpen) return;
-      this.isOpen = false;
-      this._setBackgroundInert(false);
-      document.body.style.overflow = '';
-      const t = this.trigger;
-      this.trigger = null;
-      window.Alpine.nextTick(() => { if (t && typeof t.focus === 'function') t.focus(); });
-    },
-
-    toggle() { this.isOpen ? this.close() : this.open(); },
-
-    // Wrap Tab focus inside the panel.
-    trapFocus(e) { trapTab(e, document.getElementById('contact-modal-panel')); },
+function initDialogs() {
+  $$('[data-cmdk-open]').forEach((el) => el.addEventListener('click', () => cmdk.open()));
+  $$('[data-cmdk-toggle]').forEach((el) => el.addEventListener('click', () => cmdk.toggle()));
+  $$('[data-cmdk-close]').forEach((el) => el.addEventListener('click', () => cmdk.close()));
+  $$('[data-contact-close]').forEach((el) => el.addEventListener('click', () => contact.close()));
+  $$('[data-contact-open]').forEach((el) => {
+    el.setAttribute('aria-haspopup', 'dialog');
+    el.addEventListener('click', (e) => { e.preventDefault(); contact.open(); });
   });
 
-  // Statusbar: live vim-mode pill (palette trigger) + commit-popover toggle.
-  // The popover CONTENT is server-rendered Blade; this only flips visibility
-  // and reflects the current "mode".
-  Alpine.data('statusbar', () => ({
-    popover: false,
-    _sel: false,
-    _insert: false,
-    _onSel: null, _onFocusIn: null, _onFocusOut: null,
+  const input = document.getElementById('cmdk-input');
+  if (input) {
+    input.addEventListener('input', () => { cmdk.active = 0; cmdk.render(); });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); cmdk.move(1); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); cmdk.move(-1); }
+      else if (e.key === 'Enter') { e.preventDefault(); cmdk.enter(); }
+    });
+  }
+  const cmdkPanel = document.getElementById('cmdk-panel');
+  if (cmdkPanel) cmdkPanel.addEventListener('keydown', (e) => { if (e.key === 'Tab') trapTab(e, cmdkPanel); });
+  const contactPanel = document.getElementById('contact-modal-panel');
+  if (contactPanel) contactPanel.addEventListener('keydown', (e) => { if (e.key === 'Tab') trapTab(e, contactPanel); });
+}
 
-    init() {
-      this._onSel = () => {
-        const s = window.getSelection();
-        const txt = s ? s.toString().trim() : '';
-        let inUI = false;
-        if (txt && s && s.anchorNode) {
-          const el = s.anchorNode.nodeType === 1 ? s.anchorNode : s.anchorNode.parentElement;
-          if (el && el.closest('#cmdk, #contact-modal-panel')) inUI = true;
-        }
-        this._sel = !!txt && !inUI;
-      };
-      this._onFocusIn = (e) => {
-        this._insert = !!(e.target && e.target.closest && e.target.closest('input,textarea,select,[contenteditable]'));
-      };
-      this._onFocusOut = () => { this._insert = false; };
-      document.addEventListener('selectionchange', this._onSel);
-      document.addEventListener('focusin', this._onFocusIn);
-      document.addEventListener('focusout', this._onFocusOut);
-    },
-
-    destroy() {
-      document.removeEventListener('selectionchange', this._onSel);
-      document.removeEventListener('focusin', this._onFocusIn);
-      document.removeEventListener('focusout', this._onFocusOut);
-    },
-
-    get mode() {
-      const cmdk = window.Alpine && window.Alpine.store('cmdk');
-      if (cmdk && cmdk.isOpen) return 'COMMAND';
-      if (this._insert) return 'INSERT';
-      if (this._sel) return 'VISUAL';
-      return 'NORMAL';
-    },
-  }));
-});
+boot();
+scrollspy();
+initStatusbar();
+initContactRows();
+initDialogs();
 
 // ⌘K is Mac-only; the binding accepts Ctrl too, so show "Ctrl K" off Mac.
 {
@@ -453,15 +483,13 @@ document.addEventListener('alpine:init', () => {
 
 // Global shortcuts: ⌘K / Ctrl-K toggles the palette; ':' opens it (vim reflex).
 document.addEventListener('keydown', (e) => {
-  const cmdk = window.Alpine && window.Alpine.store('cmdk');
-  if (!cmdk) return;
+  if (e.key === 'Escape') { cmdk.close(); contact.close(); return; }
 
   if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) {
     e.preventDefault();
     // Don't stack the palette over an open contact modal — closing it would
     // unlock scroll + un-inert the background the modal still needs held.
-    const contact = window.Alpine.store('contact');
-    if (contact && contact.isOpen) return;
+    if (contact.isOpen) return;
     cmdk.toggle();
     return;
   }
@@ -471,12 +499,11 @@ document.addEventListener('keydown', (e) => {
   if (e.key === ':' && !e.metaKey && !e.ctrlKey && !e.altKey) {
     const tgt = e.target;
     if (tgt && tgt.closest && (tgt.matches('input,textarea,select') || tgt.closest('[contenteditable]'))) return;
-    const contact = window.Alpine.store('contact');
-    if (cmdk.isOpen || (contact && contact.isOpen)) return;
+    if (cmdk.isOpen || contact.isOpen) return;
     e.preventDefault();
     cmdk.open(':');
   }
 });
 
 // Vim easter eggs: j/k section motions + konami matrix rain.
-initEasterEggs();
+initEasterEggs({ cmdk, contact, vim });

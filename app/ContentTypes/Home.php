@@ -2,91 +2,76 @@
 
 namespace App\ContentTypes;
 
-use App\Taxonomies\Tag;
-use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
+use Psyao\Kami\Content\ContentType;
+use Psyao\Kami\Content\Entry;
+use Psyao\Kami\Content\Fields\Email;
+use Psyao\Kami\Content\Fields\RichText;
+use Psyao\Kami\Content\Fields\Text;
+use Psyao\Kami\Content\Fields\Textarea;
+use Psyao\Kami\Content\Fields\Url;
+use Psyao\Kami\Content\Singleton;
 use Symfony\Component\HttpFoundation\Response;
-use Velox\Cms\ContentType;
-use Velox\Cms\Facades\Velox;
-use Velox\Cms\Fields\RichText;
-use Velox\Cms\Fields\Text;
-use Velox\Cms\Fields\Textarea;
-use Velox\Cms\LocaleLink;
-use Velox\Cms\Models\Entry;
 
 /**
  * The one-page Site: its one Entry is the Home Page, served at "/" in French and
- * at "/en" through its English Translation. The Fields keep the names of the
- * former SiteContent columns.
+ * at "/en" through its English Translation. Its Fields are those of Kami's
+ * `tests/Install/AguetDevTest.php`, `about_body` a RichText.
  */
-class Home extends ContentType
+final class Home extends Singleton
 {
-    public const string INLINE_MARKDOWN = '*mot* = accent vert · **mot** = gras.';
-
-    public function singularLabel(): string
-    {
-        return 'Page d’accueil';
-    }
-
-    public function pluralLabel(): string
-    {
-        return 'Accueil';
-    }
-
-    public function icon(): string
-    {
-        return 'heroicon-o-home';
-    }
+    #[\Override]
+    protected ?string $prefix = '';
 
     public function fields(): array
     {
         return [
-            Textarea::make('hero_title')->label('Titre')
-                ->helpText(self::INLINE_MARKDOWN.' Un retour à la ligne = saut de ligne.'),
-            Text::make('hero_subtitle')->label('Sous-titre')->helpText(self::INLINE_MARKDOWN),
-            Text::make('hero_role')->label('Rôle (ligne « whoami »)'),
-            Text::make('hero_location')->label('Localisation'),
-            Text::make('hero_exp')->label('Expérience'),
-            Text::make('hero_focus')->label('Focus'),
-            RichText::make('about_body')->label('À propos'),
-            Text::make('contact_lead')->label('Accroche du contact')->helpText(self::INLINE_MARKDOWN),
-            Text::make('contact_email')->label('Email de contact')
-                ->helpText('Reçoit les messages du formulaire de contact.')->translatable(false),
-            Text::make('contact_linkedin')->label('LinkedIn (URL)')->translatable(false),
-            Text::make('contact_linkedin_label')->label('LinkedIn (libellé affiché)')->translatable(false),
-            Text::make('contact_github')->label('GitHub (URL)')->translatable(false),
-            Text::make('contact_github_label')->label('GitHub (libellé affiché)')->translatable(false),
+            Textarea::make('hero_title')->inlineMarkdown(),
+            Text::make('hero_subtitle')->inlineMarkdown(),
+            Text::make('hero_role'),
+            Text::make('hero_location'),
+            Text::make('hero_exp'),
+            Text::make('hero_focus'),
+            RichText::make('about_body'),
+            Text::make('contact_lead')->inlineMarkdown(),
+            Email::make('contact_email')->shared(),
+            Url::make('contact_linkedin')->shared(),
+            Text::make('contact_linkedin_label')->shared(),
+            Url::make('contact_github')->shared(),
+            Text::make('contact_github_label')->shared(),
         ];
     }
 
     /**
-     * aguet's own home view, its language switch built from Velox's locale links.
+     * aguet's own home view, its language switch built from the Entry's URL in each Locale.
      */
-    public function render(Entry $entry): Responsable|View|Response
+    #[\Override]
+    public function render(Entry $entry): View|Response
     {
-        $links = collect(Velox::locales());
-        $alternate = $links->first(fn (LocaleLink $link) => ! $link->isCurrent);
+        $homeUrls = collect(array_keys(config('kami.sites.default.locales')))
+            ->mapWithKeys(fn (string $locale): array => [$locale => $entry->url($locale)])
+            ->filter()
+            ->all();
 
         return view('home', [
             'content' => $entry,
-            'projects' => $this->listed(new Project),
-            'skills' => $this->listed(new SkillGroup),
+            'projects' => $this->listed(Project::class),
+            'skills' => $this->listed(SkillGroup::class),
             'locale' => app()->getLocale(),
-            'altUrl' => $alternate?->url ?? url('/'),
-            'homeUrls' => $links->mapWithKeys(fn (LocaleLink $link) => [$link->code => $link->url])->all(),
+            'altUrl' => collect($homeUrls)->except(app()->getLocale())->first() ?? url('/'),
+            'homeUrls' => $homeUrls,
         ]);
     }
 
     /**
-     * A type's visible Entries in the Locale, in hand order, each with its Tags
-     * set as its `tags` relation, which the views read.
+     * A type's visible Entries in the Locale, in hand order, with their Tags.
      *
+     * @param  class-string<ContentType>  $type
      * @return Collection<int, Entry>
      */
-    private function listed(ContentType $type): Collection
+    private function listed(string $type): Collection
     {
-        return Entry::ofType($type)->visible()->ordered()->with('allTerms', 'origin.allTerms')->get()
-            ->each(fn (Entry $entry) => $entry->setRelation('tags', $entry->terms(Tag::class)));
+        return Entry::query()->ofType($type)->ordered()->with('tags')->get();
     }
 }

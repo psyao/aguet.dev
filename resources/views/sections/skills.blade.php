@@ -19,7 +19,7 @@
                         @if ($group->text)
                             <span>{{ $group->text }}</span>
                         @else
-                            @foreach ($group->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
+                            @foreach ($group->tags as $tag)<span>{{ $tag->title }}</span>@endforeach
                         @endif
                     </span>
                 </div>

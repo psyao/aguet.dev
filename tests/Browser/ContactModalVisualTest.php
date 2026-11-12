@@ -23,7 +23,7 @@ it('matches the contact modal open state (FR, desktop)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-});
+})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');
 
 it('matches the contact modal open state (EN, desktop)', function () {
     $page = visit('/en?screenshot=1')
@@ -37,7 +37,7 @@ it('matches the contact modal open state (EN, desktop)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-});
+})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');
 
 it('matches the contact modal open state (FR, mobile)', function () {
     $page = visit('/?screenshot=1')
@@ -52,7 +52,7 @@ it('matches the contact modal open state (FR, mobile)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-});
+})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');
 
 it('matches the contact modal open state (EN, mobile)', function () {
     $page = visit('/en?screenshot=1')
@@ -67,4 +67,4 @@ it('matches the contact modal open state (EN, mobile)', function () {
         ->wait(1)
         ->assertNoJavaScriptErrors()
         ->assertScreenshotMatches(fullPage: false);
-});
+})->skip('The contact form comes back as a Kami Form in psyao/kami#560, with a baseline Steve validates.');

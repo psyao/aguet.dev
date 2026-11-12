@@ -1,7 +1,7 @@
 {{-- $project: App\Models\Project · $variant: 'feat' | 'full' | 'normal' --}}
 @php
     $variant ??= 'normal';
-    $slug = ($project->origin ?? $project)->slug; // one legend in every Locale
+    $slug = $project->directory; // one legend in every Locale
 @endphp
 
 @if ($variant === 'feat')
@@ -11,12 +11,12 @@
         <div class="feat-grid">
             <div>
                 <div class="pname">{{ $project->title }}</div>
-                <p class="desc">{!! \App\Support\Content::md($project->summary) !!}</p>
+                <p class="desc">{{ $project->summary }}</p>
                 <div class="stack">
-                    @foreach ($project->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
+                    @foreach ($project->tags as $tag)<span>{{ $tag->title }}</span>@endforeach
                 </div>
-                @if ($project->url)
-                    <a class="open" href="{{ $project->url }}" target="_blank" rel="noopener">
+                @if ($project->website)
+                    <a class="open" href="{{ $project->website }}" target="_blank" rel="noopener">
                         <span>{{ __('site.projects.visit') }}</span> <b>{{ $project->host() }}</b> <span class="arr">↗</span>
                     </a>
                 @endif
@@ -37,11 +37,11 @@
             <dt>{{ __('site.projects.role') }}</dt><dd>{{ $project->role }}</dd>
         </dl>
         <div class="stack">
-            @foreach ($project->tags as $tag)<span>{{ $tag->name }}</span>@endforeach
+            @foreach ($project->tags as $tag)<span>{{ $tag->title }}</span>@endforeach
         </div>
-        <p class="desc">{!! \App\Support\Content::md($project->summary) !!}</p>
-        @if ($project->url)
-            <a class="open" href="{{ $project->url }}" target="_blank" rel="noopener">
+        <p class="desc">{{ $project->summary }}</p>
+        @if ($project->website)
+            <a class="open" href="{{ $project->website }}" target="_blank" rel="noopener">
                 <span>{{ __('site.projects.visit') }}</span> <b>{{ $project->host() }}</b> <span class="arr">↗</span>
             </a>
         @endif
