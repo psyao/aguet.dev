@@ -80,13 +80,14 @@ final class ImportVelox extends Command
         });
     }
 
+    /** Velox's `disk` names where it wrote the variants; it kept each original at the same path on the private disk. */
     private function importMedia(Import $import): void
     {
         DB::table('velox_media_items')->orderBy('id')->each(function (object $item) use ($import): void {
             $alt = json_decode((string) $item->alt, true);
             $values = array_map(fn (string $text): array => ['alt' => $text], $this->perLocale(is_array($alt) ? $alt : $item->alt));
 
-            $this->mediaIds[$item->id] = $import->media('velox.media', $item->ulid, Storage::disk($item->disk)->path($item->path), $values, $this->date($item->created_at), $this->date($item->updated_at))->id;
+            $this->mediaIds[$item->id] = $import->media('velox.media', $item->ulid, Storage::disk('local')->path($item->path), $values, $this->date($item->created_at), $this->date($item->updated_at))->id;
         });
     }
 

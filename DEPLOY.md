@@ -92,6 +92,10 @@ second run would pass the guard and bring the site up unchecked. Roll back to th
 Velox commit instead (#28 decision 8), fix the cause, and replay by hand with
 `php artisan app:import:velox --again` before the next Switch-over.
 
+Right after the Switch-over's `up`, `scripts/replay-urls.sh https://aguet.dev` replays the
+public URL inventory (#28 decision 6) and exits 1 on any status or `Location` that
+changed (its header says why it needs Apache).
+
 **Repository secrets** — `Settings → Secrets and variables → Actions → Secrets`:
 
 | Name | Required | Description |

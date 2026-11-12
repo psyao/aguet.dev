@@ -67,6 +67,14 @@ it('opens the modal on its errors, in French, and stores nothing', function () {
     expect(Submission::query()->count())->toBe(0);
 });
 
+it('refuses a field posted as an array with its errors, not a 500', function () {
+    postContact(['subject' => ['Bonjour']])
+        ->assertUnprocessable()
+        ->assertSee('data-contact-autoopen', false);
+
+    expect(Submission::query()->count())->toBe(0);
+});
+
 it('renders the Home with the modal closed and the form ready', function () {
     $this->get('/')
         ->assertOk()
