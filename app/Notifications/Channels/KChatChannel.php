@@ -7,20 +7,18 @@ use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
- * Custom notification channel that posts a card to a kChat (Mattermost) incoming
- * webhook. Routed on-demand:
- *   Notification::route('kchat', $webhookUrl)->notifyNow(new ContactMessageReceived($m)).
+ * Posts a notification's card to the kChat (Mattermost) incoming webhook in
+ * `services.kchat.contact_webhook_url`.
  *
- * Failure model: a blank/invalid URL or a non-2xx response THROWS so the caller
- * (the contact:notify sweep) counts the failure and retries. The webhook URL is a
- * secret and is never put into the thrown message.
+ * Failure model: a blank/invalid URL or a non-2xx response THROWS, so Kami
+ * records the failed delivery and retries it from a Tick. The webhook URL is a
+ * secret and is never put into the thrown message, which Kami stores.
  */
 class KChatChannel
 {
     public function send(object $notifiable, Notification $notification): void
     {
-        // AnonymousNotifiable::routeNotificationFor() takes one argument.
-        $url = $notifiable->routeNotificationFor('kchat');
+        $url = config('services.kchat.contact_webhook_url');
 
         // Only http(s) — FILTER_VALIDATE_URL alone would accept ftp:// etc.
         if (! is_string($url) || ! in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)) {
@@ -34,8 +32,8 @@ class KChatChannel
             $response = Http::connectTimeout(3)
                 ->timeout(8)
                 // Recover from a transient blip (reset, brief 5xx) in-process so it
-                // doesn't burn one of the sweep's MAX_ATTEMPTS or wait ~15 min for
-                // the next tick. throw: false lets a persistent HTTP error fall
+                // doesn't burn one of Kami's attempts or wait ~15 min for the next
+                // Tick. throw: false lets a persistent HTTP error fall
                 // through to the failed() check below with the URL still hidden.
                 ->retry([100, 500], throw: false)
                 ->asJson()

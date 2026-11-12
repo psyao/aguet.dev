@@ -307,6 +307,11 @@ main{padding:0 0 30px}
 .cf-counter{position:absolute;right:11px;bottom:6px;color:var(--color-dim);font-size:11.5px;pointer-events:none}
 .cf-error{color:var(--color-danger);font-size:12px;margin:-10px 2px 16px}
 .cf-alert{color:var(--color-danger);font-size:13px;border:1px solid var(--color-danger);border-radius:6px;padding:9px 11px;margin-bottom:14px}
+/* Kami's errors summary: a heading, then one link per refused field. */
+.cf-alert:focus{outline:none}
+.cf-alert h3{font-size:13px;font-weight:700;margin:0 0 4px}
+.cf-alert ul{margin:0;padding-left:16px}
+.cf-alert a{color:inherit}
 .cf-actions{margin-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 /* Secondary action: the panel-coloured .tui-btn would vanish on the panel, so
    give it a lighter fill + a visible border (it sits beside the green primary).
@@ -315,18 +320,6 @@ main{padding:0 0 30px}
 .cf-success{outline:none}
 .cf-success-line{color:var(--color-accent);font-size:14px;margin-bottom:16px}
 .cf-success-line .prompt{margin-right:6px}
-
-/* Live delivery progress: one terminal line per rail, colored by state. */
-.cf-progress{list-style:none;margin:0 0 16px;padding:0;font-size:14px}
-.cf-progress-line{color:var(--color-muted);padding:2px 0;display:flex;gap:6px;align-items:baseline}
-.cf-progress-line .prompt{margin-right:2px}
-.cf-progress-rail{color:var(--color-fg)}
-.cf-progress-state{opacity:.85}
-.cf-progress-line[data-status="ok"] .cf-progress-state{color:var(--color-accent)}
-.cf-progress-line[data-status="fail"] .cf-progress-state{color:var(--color-danger)}
-.cf-progress-line[data-status="pending"] .cf-progress-state{animation:cf-blink 1s step-start infinite}
-@keyframes cf-blink{50%{opacity:.35}}
-@media(prefers-reduced-motion:reduce){.cf-progress-line[data-status="pending"] .cf-progress-state{animation:none}}
 
 @media(max-width:520px){
   .contact-modal{padding:0;align-items:stretch}

@@ -59,7 +59,6 @@ These are the platform facts the pipeline is built around — useful to understa
 | **PHP version** | `setup-stack/action.yml`, `deploy.sh`, `DEPLOY_PHP_BIN` var | Match your target PHP (template uses 8.4). Keep all three in sync. |
 | **rsync include list** | `deploy.yml` → *Sync files* | The `--include=` list is the standard Laravel tree. Add/remove top-level paths your app ships. The trailing `--exclude='*'` is what protects server-side `vendor/` and `storage/` from `--delete` — keep it. |
 | **`.env` source** | `deploy.yml` → *Generate .env* | Template uses **Doppler** (`doppler secrets download`). If you don't use Doppler, replace this step — e.g. compose `.env` from GitHub secrets, or decrypt a committed `.env` via `php artisan env:decrypt`. The `.env` must end up in `release/.env` before the rsync. |
-| **Private Composer packages** | `COMPOSER_AUTH` secret (CI, build and deploy jobs) | The app installs `psyao/velox` from its private GitHub repository with a read-only GitHub token: CI and the build job read the `COMPOSER_AUTH` secret, and the deploy job pipes it on stdin to `deploy.sh`, which hands it to the server's `composer install` alone. Nothing is stored on the shared host, where every site runs as the same user. |
 | **Notifications** | `deploy.yml` → `notify` job + `notify-kchat` | Template posts to **Kchat** (Infomaniak chat). Swap the composite for Slack/Discord/etc., or remove the `notify` job entirely. |
 | **pnpm version** | `package.json` `packageManager` field | Set e.g. `"packageManager": "pnpm@11.x.y"`. `setup-stack` reads it (no `version:` is hardcoded). |
 | **Node version** | `setup-stack/action.yml` | Template uses Node 24. |
@@ -81,12 +80,16 @@ These are the platform facts the pipeline is built around — useful to understa
 | `DEPLOY_PORT` | No | SSH port — defaults to `22` |
 | `DOPPLER_TOKEN` | If using Doppler | Service token for the production config |
 
+The production Doppler config holds `ADMIN_EMAIL`, the existing administrator's email:
+the Switch-over's `deploy.sh` fails without it, and `kami:install --email` grants that
+User the `administrator` Role. It also holds `KAMI_TICK_TOKEN` (from
+`php artisan kami:tick:url`), which replaces `CRON_TOKEN`.
+
 **Repository secrets** — `Settings → Secrets and variables → Actions → Secrets`:
 
 | Name | Required | Description |
 |---|---|---|
 | `KCHAT_WEBHOOK_URL` | If using notifications | Chat incoming webhook URL |
-| `COMPOSER_AUTH` | Once the app requires `psyao/velox` | `{"github-oauth":{"github.com":"<token>"}}`, a fine-grained GitHub token with read-only Contents on `psyao/velox` |
 
 **Repository variables** — `Settings → Secrets and variables → Actions → Variables`:
 
@@ -96,11 +99,7 @@ These are the platform facts the pipeline is built around — useful to understa
 
 ### First-deploy one-time server setup
 
-**1. Private Composer credentials**
-
-None on the server: `deploy.sh` gets the `COMPOSER_AUTH` secret on stdin from the deploy job for its `composer install`, so the token is never stored on the shared host (a `composer config --global` would leave it readable by every site of the account). Run by hand from a terminal, `deploy.sh` reads no token: a `composer install` needing to download Velox then fails, so deploy through the workflow.
-
-**2. SSH deploy key**
+**1. SSH deploy key**
 
 Use a **dedicated** key (trivially revocable, scoped to deploys only):
 
@@ -118,7 +117,7 @@ cat ~/.ssh/deploy_key
 ssh -i ~/.ssh/deploy_key USER@HOST
 ```
 
-**3. Pinned SSH host key (`DEPLOY_KNOWN_HOSTS`)**
+**2. Pinned SSH host key (`DEPLOY_KNOWN_HOSTS`)**
 
 The deploy connects with `StrictHostKeyChecking=yes` against a pinned key instead of trusting the host on first connect. Capture it once:
 

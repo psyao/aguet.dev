@@ -65,37 +65,9 @@ return [
             'message_label' => 'Message',
             'message_placeholder' => 'Tell me everything…',
             'send' => 'send',
-            'sending' => 'sending…',
             'success' => 'Message sent. Thanks — I’ll get back to you soon.',
-            'another' => 'Write another message',
-
-            // Live delivery progress bar (polls the row's rail flags).
-            'progress' => [
-                'email' => 'email',
-                'kchat' => 'kchat',
-                'state' => [
-                    'pending' => 'sending…',
-                    'ok' => 'delivered ✓',
-                    'fail' => 'failed ✗',
-                    'queued' => 'queued …',
-                ],
-            ],
-            'error' => 'Couldn’t save your message. Please try again in a moment.',
-            'throttled' => 'Too many attempts. Wait a minute before trying again.',
             'close' => 'Close',
             'cancel' => 'cancel',
-
-            // Custom validation messages (kept symmetric with the FR file).
-            'err' => [
-                'required' => ':attribute is required.',
-                'email' => 'Enter a valid email address.',
-                'max' => ':attribute is too long (:max characters max).',
-            ],
-            'attr' => [
-                'subject' => 'The subject',
-                'email' => 'The email',
-                'message' => 'The message',
-            ],
         ],
     ],
 

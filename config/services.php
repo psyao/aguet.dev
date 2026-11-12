@@ -37,7 +37,7 @@ return [
 
     'kchat' => [
         // Dedicated kChat (Infomaniak/Mattermost) incoming-webhook URL for the
-        // contact-form owner ping. Unset => the contact:notify sweep emails only.
+        // contact Form's owner ping. Unset => the contact Form mails only.
         'contact_webhook_url' => env('KCHAT_CONTACT_WEBHOOK_URL'),
     ],
 

@@ -3,7 +3,6 @@
 namespace App\Filament\Widgets;
 
 use App\ContentTypes\Project;
-use App\Models\ContactMessage;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -18,8 +17,6 @@ class StatsOverview extends StatsOverviewWidget
         $draftProjects = Entry::query()->ofType(Project::class)->withUnpublished()->count() - $visibleProjects->count();
 
         return [
-            Stat::make('Unread messages', ContactMessage::query()->whereNull('read_at')->count())
-                ->icon(Heroicon::OutlinedInbox),
             Stat::make('Published projects', $visibleProjects->count())
                 ->description("$draftProjects draft")
                 ->icon(Heroicon::OutlinedBriefcase),

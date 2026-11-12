@@ -88,8 +88,8 @@ class HomePageTest extends TestCase
 
     public function test_home_is_not_marked_no_store(): void
     {
-        // The contact-form Livewire component otherwise makes Livewire stamp the
-        // page "no-store", which disables the browser back-forward cache.
+        // A "no-store" page loses the browser's back-forward cache; the contact
+        // Form keeps the Home cacheable, with no session or cookie.
         $response = $this->get('/');
 
         $this->assertStringNotContainsString(

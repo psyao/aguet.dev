@@ -45,6 +45,9 @@ class StatusbarTest extends TestCase
         $res->assertSee('href="https://github.com/psyao/aguet.dev/commit/'.$sha.'"', false);
         $res->assertSee('rel="noopener noreferrer"', false);
         $res->assertSee('feat: ship the thing', false);
+        // The page is cached: app.js computes the relative date and the year from these hooks.
+        $res->assertSee('<time datetime="2026-06-20T10:00:00+02:00" data-reldate>', false);
+        $res->assertSee('data-year', false);
     }
 
     public function test_invalid_sha_falls_back_to_repo_link_only(): void
@@ -74,7 +77,8 @@ class StatusbarTest extends TestCase
         // on ?screenshot=1 — no need to set app.env here (it's a no-op post-boot).
         $this->get('/?screenshot=1')
             ->assertOk()
-            ->assertDontSee('data-mode', false);
+            ->assertDontSee('data-mode', false)
+            ->assertDontSee('data-year', false);
     }
 
     public function test_exposes_vim_easter_egg_i18n_keys(): void

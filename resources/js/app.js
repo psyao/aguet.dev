@@ -333,13 +333,16 @@ const contact = {
   isOpen: false,
   trigger: null,
 
+  // Focus goes to the confirmation or the errors summary when the page holds
+  // one, else to the first control. Opened on load, focus returns to the CTA.
   open() {
     if (this.isOpen) return;
-    this.trigger = document.activeElement;
+    const active = document.activeElement;
+    this.trigger = active && active !== document.body ? active : $('[data-contact-open]');
     this.isOpen = true;
     showDialog(document.getElementById('contact-modal'), true, '#cmdk', () => {
       const panel = document.getElementById('contact-modal-panel');
-      return panel && (tabbable(panel)[0] || panel);
+      return panel && ($('[data-contact-focus]', panel) || tabbable(panel)[0] || panel);
     });
   },
 
@@ -361,6 +364,13 @@ function updateMode() {
   const el = $('[data-mode]');
   if (!el) return;
   el.textContent = cmdk.isOpen ? 'COMMAND' : insertMode ? 'INSERT' : visualMode ? 'VISUAL' : 'NORMAL';
+}
+
+// "3 days ago" / "il y a 3 jours", from a signed number of seconds.
+function relativeTime(seconds) {
+  const units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
+  const [unit, size] = units.find(([, s]) => Math.abs(seconds) >= s) || ['second', 1];
+  return new Intl.RelativeTimeFormat(CFG.locale, { numeric: 'auto' }).format(Math.round(seconds / size), unit);
 }
 
 function initStatusbar() {
@@ -391,6 +401,16 @@ function initStatusbar() {
     branch.addEventListener('keydown', (e) => { if (e.key === 'Escape') show(false); });
     document.addEventListener('click', (e) => { if (!branch.contains(e.target)) show(false); });
   }
+
+  // The deploy's relative date and the year, computed here: the page is served
+  // from Kami's page cache, where the server's values would freeze.
+  const relDate = $('[data-reldate]');
+  if (relDate) {
+    const seconds = (Date.parse(relDate.getAttribute('datetime')) - Date.now()) / 1000;
+    if (!Number.isNaN(seconds)) relDate.textContent = relativeTime(seconds);
+  }
+  const year = $('[data-year]');
+  if (year) year.textContent = '© ' + new Date().getFullYear();
 
   // Live clock (Europe/Zurich), tmux-style status bar segment.
   const clock = $('[data-clock]');
@@ -453,6 +473,22 @@ function initDialogs() {
   if (cmdkPanel) cmdkPanel.addEventListener('keydown', (e) => { if (e.key === 'Tab') trapTab(e, cmdkPanel); });
   const contactPanel = document.getElementById('contact-modal-panel');
   if (contactPanel) contactPanel.addEventListener('keydown', (e) => { if (e.key === 'Tab') trapTab(e, contactPanel); });
+
+  // The contact Form posts a full page: its confirmation or its errors come
+  // back on a fresh load, inside the modal, which opens itself over them.
+  const modal = document.getElementById('contact-modal');
+  if (modal && modal.hasAttribute('data-contact-autoopen')) contact.open();
+}
+
+// The message's character counter, kept in step on typing and on reset.
+function initContactCounter() {
+  const count = $('[data-cf-count]');
+  const message = document.getElementById('message');
+  if (!count || !message) return;
+  const update = () => { count.textContent = String(message.value.length); };
+  message.addEventListener('input', update);
+  // `reset` fires before the fields are cleared.
+  if (message.form) message.form.addEventListener('reset', () => setTimeout(update));
 }
 
 boot();
@@ -460,6 +496,7 @@ scrollspy();
 initStatusbar();
 initContactRows();
 initDialogs();
+initContactCounter();
 
 // ⌘K is Mac-only; the binding accepts Ctrl too, so show "Ctrl K" off Mac.
 {
