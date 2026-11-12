@@ -56,8 +56,9 @@ it('stores a valid message and sends the visitor back to the Home with the modal
 });
 
 it('opens the modal on its errors, in French, and stores nothing', function () {
-    postContact(['subject' => '', 'email' => 'not-an-email'])
+    postContact(['subject' => '', 'email' => 'not-an-email', 'message' => 'é😀'])
         ->assertUnprocessable()
+        ->assertSee('<span data-cf-count>3</span>', false)
         ->assertSee('data-contact-autoopen', false)
         ->assertSee('Le sujet est requis.')
         ->assertSee('Entre une adresse email valide.')
@@ -75,7 +76,21 @@ it('renders the Home with the modal closed and the form ready', function () {
         ->assertSee('maxlength="'.ContactForm::MAX_MESSAGE.'"', false);
 });
 
-it('mails the owner and pings kChat after the response', function () {
+it('sends kChat nothing while no webhook is configured', function () {
+    config(['services.kchat.contact_webhook_url' => null]);
+    Notification::fake();
+
+    $this->withoutDefer();
+    postContact();
+
+    Notification::assertSentOnDemandTimes(ContactMessageReceived::class, 1);
+    Notification::assertSentOnDemand(
+        ContactMessageReceived::class,
+        fn (ContactMessageReceived $notification, array $channels): bool => $channels === ['mail'],
+    );
+});
+
+it('mails the owner and posts the card to the configured webhook after the response', function () {
     config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
     Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
     Notification::fake();
@@ -95,21 +110,7 @@ it('mails the owner and pings kChat after the response', function () {
     );
 });
 
-it('sends kChat nothing while no webhook is configured', function () {
-    config(['services.kchat.contact_webhook_url' => null]);
-    Notification::fake();
-
-    $this->withoutDefer();
-    postContact();
-
-    Notification::assertSentOnDemandTimes(ContactMessageReceived::class, 1);
-    Notification::assertSentOnDemand(
-        ContactMessageReceived::class,
-        fn (ContactMessageReceived $notification, array $channels): bool => $channels === ['mail'],
-    );
-});
-
-it('delivers the mail through Kami and the card to the configured webhook', function () {
+it('delivers the card with its link to the Submission and records both deliveries', function () {
     config(['services.kchat.contact_webhook_url' => 'https://kchat.test/hook']);
     Http::fake(['https://kchat.test/hook' => Http::response('', 200)]);
     Mail::fake();
@@ -117,9 +118,11 @@ it('delivers the mail through Kami and the card to the configured webhook', func
     $this->withoutDefer();
     postContact(['subject' => 'Hi @channel']);
 
+    $card = fn ($request): array => $request['attachments'][0];
     Http::assertSent(fn ($request): bool => $request->url() === 'https://kchat.test/hook'
-        && $request['attachments'][0]['title'] === 'New contact message'
-        && collect($request['attachments'][0]['fields'])->firstWhere('title', 'Subject')['value'] === "Hi @\u{200B}channel");
+        && $card($request)['title'] === 'New contact message'
+        && str_contains($card($request)['text'], url('/admin/submissions/'.Submission::sole()->getKey()))
+        && collect($card($request)['fields'])->firstWhere('title', 'Subject')['value'] === "Hi @\u{200B}channel");
     $this->assertDatabaseCount('kami_form_deliveries', 2)
         ->assertDatabaseMissing('kami_form_deliveries', ['delivered_at' => null]);
 });

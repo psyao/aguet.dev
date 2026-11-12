@@ -30,9 +30,9 @@ Filament 5's file layout splits each resource into a `Resource.php` plus
 `Pages/`, `Schemas/`, and `Tables/` subfolders (no monolithic `getForm()`/`getTable()`
 static methods on the resource class itself).
 
-| Resource | Nav group | CRUD | Notes |
-|---|---|---|---|
-| `ContactMessageResource` | — | Read-only | `canCreate()` returns `false`, no edit page — only `Pages/ListContactMessages`. Uses an **infolist** (`Schemas/ContactMessageInfolist`) instead of a form, since messages aren't editable. Table: `Tables/ContactMessagesTable`. `getNavigationBadge()` returns the unread count. |
+aguet declares no Resource of its own. The contact Form's messages are Kami's
+Submissions, listed on Kami's **Messages reçus** screen, which counts the unread ones.
+The panel runs `->strictAuthorization()`: a Resource added later needs its policy.
 
 Projects, skill groups and Tags have no Resource of aguet's own: Velox's generic Entry
 Resources serve the `Project` and `SkillGroup` Content Types (Projets, Compétences, ordered
@@ -45,20 +45,12 @@ by drag) and its Term Resource the `Tag` Taxonomy.
 
 ## Widgets
 
-Both are auto-discovered (not explicitly registered — see Discovery above).
+Auto-discovered (not explicitly registered — see Discovery above).
 
-- **`StatsOverview`** (`StatsOverviewWidget`) — three stats: unread message count
-  (`ContactMessage::whereNull('read_at')->count()`), published vs. draft project
-  counts, and featured project count, each Project counted once, on its Origin.
-- **`LatestMessages`** (`TableWidget`) — unread `ContactMessage` rows, newest first,
-  not paginated. Each row has a "Voir" action linking to
-  `ContactMessageResource::getUrl('index')`. Empty state when there are no unread
-  messages.
+- **`StatsOverview`** (`StatsOverviewWidget`) — published vs. draft project counts,
+  and featured project count, each Project counted once, on its Origin.
 
 ## Related
 
 - [README: admin panel walkthrough](../README.md#editing-the-site-filament-admin) — how-to,
   end-user perspective.
-- [Explanation: contact message pipeline](explanation-contact-pipeline.md) — the
-  `ContactMessageResource`/`StatsOverview`/`LatestMessages` widgets all read from the
-  same `contact_messages` table this doc describes.

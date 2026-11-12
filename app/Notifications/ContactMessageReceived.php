@@ -5,7 +5,6 @@ namespace App\Notifications;
 use App\Forms\ContactForm;
 use App\Notifications\Channels\KChatChannel;
 use App\Notifications\Channels\KChatMessage;
-use Filament\Facades\Filament;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
@@ -42,7 +41,7 @@ class ContactMessageReceived extends Notification
         return (new KChatMessage)
             ->title('New contact message')
             ->color('#3ecf8e')
-            ->link('Open in the admin', Filament::getPanel('admin')->getUrl())
+            ->link('Open in the admin', route('filament.admin.resources.submissions.view', $this->submission))
             ->body(Str::limit((string) ($data['message'] ?? ''), 500))
             ->field('Subject', (string) ($data['subject'] ?? ''))
             ->field('From', (string) ($data['email'] ?? ''))

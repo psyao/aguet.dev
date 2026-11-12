@@ -80,6 +80,11 @@ These are the platform facts the pipeline is built around — useful to understa
 | `DEPLOY_PORT` | No | SSH port — defaults to `22` |
 | `DOPPLER_TOKEN` | If using Doppler | Service token for the production config |
 
+The production Doppler config holds `ADMIN_EMAIL`, the existing administrator's email:
+the Switch-over's `deploy.sh` fails without it, and `kami:install --email` grants that
+User the `administrator` Role. It also holds `KAMI_TICK_TOKEN` (from
+`php artisan kami:tick:url`), which replaces `CRON_TOKEN`.
+
 **Repository secrets** — `Settings → Secrets and variables → Actions → Secrets`:
 
 | Name | Required | Description |

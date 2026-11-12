@@ -3,7 +3,7 @@
 /*
 | The messages the contact Form can show, in French: Laravel ships English only,
 | and the rest of its messages fall back to it. The attributes also label the
-| fields in the owner's mail.
+| fields in the owner's mail, written in the Admin language.
 */
 return [
     'required' => ':attribute est requis.',

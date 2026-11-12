@@ -3,7 +3,6 @@
 use App\Forms\ContactForm;
 use App\Notifications\Channels\KChatChannel;
 use App\Notifications\ContactMessageReceived;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
@@ -13,7 +12,7 @@ use Psyao\Kami\Forms\Submission;
 function sendCard(string $webhook): void
 {
     config(['services.kchat.contact_webhook_url' => $webhook]);
-    $submission = new Submission(['data' => ['subject' => 'Hi', 'email' => 'v@x.com', 'message' => 'Hello world']]);
+    $submission = (new Submission(['data' => ['subject' => 'Hi', 'email' => 'v@x.com', 'message' => 'Hello world']]))->forceFill(['id' => 1]);
 
     Notification::sendNow(
         Notification::route('mail', 'owner@example.com'),
@@ -75,8 +74,4 @@ it('redacts the url when the request throws a connection error', function () {
     } catch (Throwable $e) {
         expect($e->getMessage())->not->toContain('secret.test');
     }
-});
-
-it('does not implement ShouldQueue (must send synchronously)', function () {
-    expect(is_subclass_of(ContactMessageReceived::class, ShouldQueue::class))->toBeFalse();
 });

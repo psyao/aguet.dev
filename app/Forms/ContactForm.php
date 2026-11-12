@@ -16,6 +16,10 @@ use Psyao\Kami\Forms\Submission;
  */
 final class ContactForm extends Form
 {
+    public const int MAX_SUBJECT = 150;
+
+    public const int MAX_EMAIL = 255;
+
     public const int MAX_MESSAGE = 5000;
 
     /** Not `contact`: the Form's id would clash with the `#contact` section, a public anchor. */
@@ -28,8 +32,8 @@ final class ContactForm extends Form
     public function rules(): array
     {
         return [
-            'subject' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email:rfc', 'max:255'],
+            'subject' => ['required', 'string', 'max:'.self::MAX_SUBJECT],
+            'email' => ['required', 'email:rfc', 'max:'.self::MAX_EMAIL],
             'message' => ['required', 'string', 'max:'.self::MAX_MESSAGE],
         ];
     }
