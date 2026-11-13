@@ -24,11 +24,12 @@ beforeEach(function () {
  * Post the contact Form as a browser does from the given Locale's Home.
  *
  * @param  array<string, string>  $fields
+ * @param  array<string, string>  $headers
  */
-function postContact(array $fields = [], string $locale = 'fr'): TestResponse
+function postContact(array $fields = [], string $locale = 'fr', array $headers = []): TestResponse
 {
     return test()
-        ->withHeader('Sec-Fetch-Site', 'same-origin')
+        ->withHeaders(['Sec-Fetch-Site' => 'same-origin', ...$headers])
         ->post('/kami/forms/contact_form', [
             'subject' => 'Bonjour',
             'email' => 'visitor@example.com',
@@ -54,6 +55,19 @@ it('stores a valid message and sends the visitor back to the Home with the modal
         ->assertSee('Message envoyé. Merci — je te réponds bientôt.')
         ->assertDontSee('name="subject"', false);
 });
+
+it('answers the script with the confirmation in the page\'s Locale', function (string $locale, string $confirmation) {
+    Notification::fake();
+
+    postContact(locale: $locale, headers: ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertExactJson(['message' => $confirmation]);
+
+    expect(Submission::sole()->locale)->toBe($locale);
+})->with([
+    'fr' => ['fr', 'Message envoyé. Merci — je te réponds bientôt.'],
+    'en' => ['en', 'Message sent. Thanks — I’ll get back to you soon.'],
+]);
 
 it('opens the modal on its errors, in French, and stores nothing', function () {
     postContact(['subject' => '', 'email' => 'not-an-email', 'message' => 'é😀'])

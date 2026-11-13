@@ -10,6 +10,7 @@
      block, rendered by the Blade layout for the current locale only.
    The page is fully functional without this script (progressive enhancement). */
 
+import { initContactForm } from './contact-form';
 import { initEasterEggs } from './easter-eggs';
 
 const CFG = (() => {
@@ -474,8 +475,8 @@ function initDialogs() {
   const contactPanel = document.getElementById('contact-modal-panel');
   if (contactPanel) contactPanel.addEventListener('keydown', (e) => { if (e.key === 'Tab') trapTab(e, contactPanel); });
 
-  // The contact Form posts a full page: its confirmation or its errors come
-  // back on a fresh load, inside the modal, which opens itself over them.
+  // Without JavaScript the contact Form posts a full page: its confirmation or
+  // its errors come back on a fresh load, and the modal opens itself over them.
   const modal = document.getElementById('contact-modal');
   if (modal && modal.hasAttribute('data-contact-autoopen')) contact.open();
 }
@@ -497,6 +498,7 @@ initStatusbar();
 initContactRows();
 initDialogs();
 initContactCounter();
+initContactForm();
 
 // ⌘K is Mac-only; the binding accepts Ctrl too, so show "Ctrl K" off Mac.
 {

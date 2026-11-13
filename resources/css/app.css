@@ -317,9 +317,13 @@ main{padding:0 0 30px}
    give it a lighter fill + a visible border (it sits beside the green primary).
    Keeps the "$" glyph (inherited from .tui-btn) for terminal consistency. */
 .cf-cancel{background:var(--color-panel-2);border-color:var(--color-dim);color:var(--color-fg)}
-.cf-success{outline:none}
 .cf-success-line{color:var(--color-accent);font-size:14px;margin-bottom:16px}
-.cf-success-line .prompt{margin-right:6px}
+/* The status element is present, empty, from the page load (a live region):
+   it takes no room until the script or the page fills it. */
+.cf-success-line:empty{margin:0}
+.cf-success-line:focus{outline:none}
+.cf-success-line:not(:empty)::before{content:'$' / '';margin-right:6px;user-select:none}
+.cf-success-line.is-error{color:var(--color-danger)}
 
 @media(max-width:520px){
   .contact-modal{padding:0;align-items:stretch}

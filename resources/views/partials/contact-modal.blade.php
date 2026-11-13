@@ -1,7 +1,10 @@
 {{-- Contact modal, opened by the `contact` object in resources/js/app.js. Its
-     form is the Kami Form App\Forms\ContactForm: it posts a full page, so the
-     modal opens itself on load (data-contact-autoopen) over the confirmation,
-     after `?sent=contact_form`, or over the errors of a refused message. --}}
+     form is the Kami Form App\Forms\ContactForm, which resources/js/contact-form.js
+     submits without a reload: the modal stays open over the errors, or over the
+     confirmation in the status element. Without JavaScript it posts a full page,
+     and the modal opens itself on load (data-contact-autoopen) over the
+     confirmation, after `?sent=contact_form`, or over the errors of a refused
+     message. The script builds the same error markup as this view. --}}
 @php
     $sent = \Psyao\Kami\Facades\Kami::form('contact_form')->sent();
     $refused = isset($errors) && $errors->any();
@@ -18,15 +21,10 @@
                     aria-label="{{ __('site.contact.form.close') }}">✕</button>
         </div>
         <div class="cm-body">
-            @if ($sent)
-                <div class="cf-success" role="status" tabindex="-1" data-contact-focus>
-                    <p class="cf-success-line"><span class="prompt" aria-hidden="true">$</span> {{ __('site.contact.form.success') }}</p>
-                    <button type="button" class="tui-btn" data-contact-close>
-                        <span>{{ __('site.contact.form.close') }}</span>
-                    </button>
-                </div>
-            @else
-                <x-kami::form form="contact_form" class="cf" aria-label="{{ __('site.contact.form.title') }}">
+            @unless ($sent)
+                <x-kami::form form="contact_form" class="cf" aria-label="{{ __('site.contact.form.title') }}"
+                              data-error="{{ __('site.contact.form.error') }}"
+                              data-errors-heading="{{ __('kami::forms.errors.heading') }}">
                     <x-kami::form.errors level="3" class="cf-alert" data-contact-focus />
 
                     {{-- The counter counts UTF-16 units, as maxlength and app.js do.
@@ -79,7 +77,13 @@
                         </button>
                     </div>
                 </x-kami::form>
-            @endif
+            @endunless
+
+            {{-- A live region present, empty, from the page load: the script fills it. --}}
+            <p class="cf-success-line" id="contact_form-status" role="status" tabindex="-1" @if ($sent) data-contact-focus @endif>@if ($sent){{ \Psyao\Kami\Facades\Kami::form('contact_form')->confirmation() }}@endif</p>
+            <button type="button" class="tui-btn" data-contact-close data-cf-done @unless ($sent) hidden @endunless>
+                <span>{{ __('site.contact.form.close') }}</span>
+            </button>
         </div>
     </div>
 </div>

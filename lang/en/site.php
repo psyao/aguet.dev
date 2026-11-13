@@ -65,7 +65,7 @@ return [
             'message_label' => 'Message',
             'message_placeholder' => 'Tell me everything…',
             'send' => 'send',
-            'success' => 'Message sent. Thanks — I’ll get back to you soon.',
+            'error' => 'The message didn’t go through. Try again in a moment.',
             'close' => 'Close',
             'cancel' => 'cancel',
         ],

@@ -66,7 +66,7 @@ return [
             'message_label' => 'Message',
             'message_placeholder' => 'Dis-moi tout…',
             'send' => 'envoyer',
-            'success' => 'Message envoyé. Merci — je te réponds bientôt.',
+            'error' => 'Le message n’est pas parti. Réessaie dans un moment.',
             'close' => 'Fermer',
             'cancel' => 'annuler',
         ],
