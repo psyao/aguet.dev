@@ -3,22 +3,24 @@
 namespace Database\Seeders;
 
 use App\ContentTypes\Home;
-use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use Velox\Cms\Models\Entry;
+use Psyao\Kami\Content\Actions\SaveEntry;
+use Psyao\Kami\Content\Entry;
+use Psyao\Kami\Content\Fields\RichText;
+use Psyao\Kami\Content\RichText\Document;
 
 class HomeSeeder extends Seeder
 {
     /**
-     * The Home Page: its French Origin and English Translation (FR from the
+     * The Home Page: its French and English Translations (FR from the
      * brief; EN translated). hero_title uses the *word* = accent emphasis and
      * \n = line-break convention rendered by the front end; about_body is
-     * written as Markdown here and stored as a rich-text document.
+     * written as Markdown here and stored as a RichText document.
      */
     public function run(): void
     {
-        if (Entry::homePage() !== null) {
+        if (Home::entry() !== null) {
             return;
         }
 
@@ -65,7 +67,7 @@ class HomeSeeder extends Seeder
             ],
         ];
 
-        // Untranslated Fields: entered once, on the Origin.
+        // Shared Fields: one value for every Locale.
         $shared = [
             'contact_email' => 'steve@aguet.dev',
             'contact_linkedin' => 'https://www.linkedin.com/in/steveaguet',
@@ -75,11 +77,11 @@ class HomeSeeder extends Seeder
         ];
 
         $translated['about_body'] = array_map(
-            fn (string $markdown): array => RichContentRenderer::make(Str::markdown($markdown))->toArray(),
+            fn (string $markdown): Document => Document::fromHtml(Str::markdown($markdown), RichText::make('about_body')),
             $translated['about_body'],
         );
 
-        // The page's meta title and description, rendered by Velox's SEO tags.
+        // The page's Meta title and description, printed by <x-kami::seo />.
         $seo = [
             'fr' => [
                 'title' => 'Steve Aguet — Développeur web full-stack Laravel',
@@ -91,23 +93,19 @@ class HomeSeeder extends Seeder
             ],
         ];
 
-        $home = Entry::create([
-            'type' => (new Home)->handle(),
-            'title' => 'Accueil',
-            'status' => 'published',
-            'published_at' => now(),
-            'data' => [...array_map(fn (array $value) => $value['fr'], $translated), ...$shared],
-            'seo' => $seo['fr'],
-        ]);
+        $save = resolve(SaveEntry::class);
+        // kami:install creates the Singleton as a Draft; a fresh test database has none yet.
+        $home = Entry::query()->withUnpublished()->ofType(Home::class)->first();
 
-        $home->translate('en', [
-            'title' => 'Home',
-            'status' => 'published',
-            'published_at' => now(),
-            'data' => array_map(fn (array $value) => $value['en'], $translated),
-            'seo' => $seo['en'],
-        ]);
-
-        Entry::setHomePage($home);
+        foreach (['fr' => 'Accueil', 'en' => 'Home'] as $locale => $title) {
+            $home = $save->handle(Home::class, [
+                'title' => $title,
+                'status' => 'published',
+                'meta_title' => $seo[$locale]['title'],
+                'meta_description' => $seo[$locale]['description'],
+                ...array_map(fn (array $value) => $value[$locale], $translated),
+                ...($locale === 'fr' ? $shared : []),
+            ], $home?->refresh(), $locale);
+        }
     }
 }

@@ -13,12 +13,19 @@
 /.vscode
 /.zed
 /auth.json
+# scripts/backup.sh's snapshots: production's rows, password hashes included.
+/storage/backups
 /node_modules
 /public/build
 /public/fonts
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage
+# Written by Kami: Conversions, the sitemap and the managed robots.txt (kami:install, per environment)
+/public/media
+/public/robots.txt
+/public/sitemap.xml
+/public/sitemaps
 # Filament's published assets — regenerate on deploy: php artisan filament:assets:publish
 /public/css/filament
 /public/js/filament

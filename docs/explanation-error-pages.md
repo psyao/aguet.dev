@@ -30,17 +30,22 @@ tokens (`--bg`, `--fg`, `--accent`, etc. — see the comment at the top of the f
 This means the page renders identically whether the Vite manifest exists, whether
 `composer install` finished, or whether the site is mid-deploy under `artisan down`
 (the 503 case `scripts/deploy.sh` triggers is the exact moment this page is *most*
-likely to be seen).
+likely to be seen). Kami's CSP blocks inline styles, so the `<style>` block passes by
+its sha256 hash under `style-src` in `config/kami.php`: any edit to it means a new
+hash there.
 
-### Locale resolved independently of Velox
+### Locale resolved for every error, not by the page
 
-Velox sets the app locale from the URL on its own pages only. An error raised
-elsewhere (a 500 deep in a request, a 419 from Livewire) renders before or outside
-that, so relying on it here would render those pages in the default locale
-regardless of what the visitor typed. `_shell.blade.php` re-derives the locale
-itself, straight from `request()->segment(1)` against the Locales declared in
-`config('velox.locales')` — duplicated logic, not shared, because the whole point is
-that it must work in the cases where the shared code path didn't run.
+Kami sets the app locale from the URL when it serves one of its pages. An error
+raised elsewhere (a 500 deep in a request, a 404 on a path no page holds, a route of
+aguet's own) renders outside that, so the error page would fall back to the default
+locale regardless of what the visitor typed. `Kami::exceptions($exceptions)`, first
+in `bootstrap/app.php`'s `withExceptions()`, closes that gap: before Laravel renders
+any `errors/{code}` view, it sets the locale from the URL's first segment against the
+Site's Locales, so an error under `/en/…` renders in English. `_shell.blade.php` itself
+only reads `app()->getLocale()`. The one exception: an error raised while the
+application is still booting (a broken config file, say) renders in the default
+locale, since reading the Site then could fail in turn.
 
 ### Title and message derive from the error code alone
 
@@ -56,10 +61,9 @@ the whole shell.
   change to `app.css` has to be manually mirrored into `_shell.blade.php`'s `<style>`
   block, or the two will drift. Accepted because the alternative — depending on the
   Vite-built stylesheet — is exactly the dependency this page exists to avoid.
-- **Locale detection logic is duplicated, not shared, with Velox.** Two places
-  now need to agree on how a locale is derived from a URL segment. Accepted for the
-  same reason: sharing code would mean sharing the code path, and the code path is
-  what's unavailable when this page needs to render.
+- **The locale depends on Kami's exception callback.** If `Kami::exceptions()` were
+  dropped from `bootstrap/app.php`, every error page outside Kami's own pages would
+  render in French. `tests/Feature/ErrorPagesTest.php` covers the English case.
 - **Known gap:** the 419 (expired session / CSRF mismatch) page assumes the session
   store itself is reachable enough to have expired a token in the first place. What
   happens when the session store is *unreachable* — not just expired — is unverified;

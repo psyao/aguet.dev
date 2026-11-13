@@ -34,10 +34,6 @@ jobs:
     # Skip the whole pipeline when CI failed/cancelled — deploy and notify both
     # need build, so they cascade off too.
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    env:
-      # Read-only GitHub token for private Composer packages (psyao/velox), as
-      # {"github-oauth":{"github.com":"<token>"}}. Empty until the secret exists.
-      COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@9af89fc71515a100421586dfdb3dc9c984fbf411 # v2.19.4
@@ -191,11 +187,8 @@ jobs:
       - name: Post-deploy
         env:
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          # Low-value (read-only on psyao/velox): piped on stdin to deploy.sh for the server's
-          # composer install, so the shared host never stores it nor shows it in `ps`.
-          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
         run: |
-          printf '%s\n' "$COMPOSER_AUTH" | ssh -p "$DEPLOY_PORT" -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes \
+          ssh -p "$DEPLOY_PORT" -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             "bash '$DEPLOY_PATH/scripts/deploy.sh' '$DEPLOY_PHP_BIN'"
 

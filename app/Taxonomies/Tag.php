@@ -2,21 +2,17 @@
 
 namespace App\Taxonomies;
 
-use Velox\Cms\Taxonomy;
+use Psyao\Kami\Content\Taxonomy;
 
 /**
  * Shared tech tags (« Laravel », « a11y »…) of Projects and SkillGroups: one
- * name in every Locale, never translated, with no Archive.
+ * name in every Locale, never translated, with no address of their own.
  */
-class Tag extends Taxonomy
+final class Tag extends Taxonomy
 {
-    public function translatable(): bool
-    {
-        return false;
-    }
+    #[\Override]
+    protected bool $translatable = false;
 
-    public function public(): bool
-    {
-        return false;
-    }
+    #[\Override]
+    protected bool $routable = false;
 }

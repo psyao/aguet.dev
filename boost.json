@@ -10,7 +10,7 @@
     "nightwatch": false,
     "packages": [
         "filament/filament",
-        "psyao/velox"
+        "psyao/kami"
     ],
     "sail": false,
     "skills": [
@@ -19,6 +19,6 @@
         "testing-best-practices",
         "tailwindcss-development",
         "filament-development",
-        "velox-development"
+        "kami-development"
     ]
 }

@@ -14,25 +14,24 @@ clean light theme when printed to PDF.
 - [Stack](#stack) · [How it works](#how-it-works) · [Content model](#content-model)
 - [Editing the site (Filament admin)](#editing-the-site-filament-admin) — the day-to-day
   owner workflow
-- [Front-end architecture](#front-end-architecture) — Blade + Alpine, the terminal layer
+- [Front-end architecture](#front-end-architecture) — Blade + plain JS modules, the terminal layer
 - [Local setup](#local-setup) · [Deployment](#deployment--infomaniak-shared-hosting)
 - Companion docs: [visual regression testing](docs/visual-testing.md) ·
   [CI deploy pipeline](DEPLOY.md) ·
   [admin panel internals](docs/reference-admin-panel.md) ·
   [contact message pipeline](docs/explanation-contact-pipeline.md) ·
-  [rotating the cron token](docs/howto-rotate-cron-token.md) ·
   [themed error pages](docs/explanation-error-pages.md)
 
 ## Stack
 
 - **Laravel 13** · PHP 8.5+
+- **Kami** (`psyao/kami`) — the CMS: content types, Locales, routing, page cache, Forms,
+  security headers, and its admin as a plugin on the Filament panel
 - **Filament 5** — admin panel for editing content
-- **spatie/laravel-translatable** + **outerweb/filament-translatable-fields** — per-locale
-  JSON translations, edited as FR/EN tabs in Filament
 - **MySQL**
 - **Tailwind v4** + **Vite** — the terminal aesthetic is authored as custom CSS on top
-- **Alpine.js** — bundled with Filament 5 / Livewire 4 (not installed separately); the
-  front-end registers its components on `alpine:init`
+- **Plain JavaScript modules** — no front-end framework; Alpine and Livewire run in the
+  admin panel only
 - **JetBrains Mono** — self-hosted at build time via the Vite Bunny font helper
 - **pnpm** for front-end tooling
 
@@ -40,42 +39,43 @@ clean light theme when printed to PDF.
 
 ### Bilingual
 
-- French is served at `/`, English at `/en`, both by Velox: the Home Page and its English
-  Translation. Velox sets the locale from the URL; the Locales are declared in
-  `config/velox.php`.
+- French is served at `/`, English at `/en`, both by Kami: the Home Page's French and
+  English Translations. Kami sets the locale from the URL; the Locales are declared in
+  `config/kami.php` (`kami.sites.default.locales`).
 - **UI chrome** strings (nav, buttons, labels) live in `lang/fr/site.php` + `lang/en/site.php`.
 - **Editorial content** (hero, about, projects, contact) lives in the database, is
   translatable, and is edited in Filament — never in Git.
 
 ### Content model
 
-Velox stores the editorial content: each text per language on an Entry's French Origin or
-English Translation, what is shared across languages on the Origin.
+Kami stores the editorial content: each Entry has a Translation per language, French and
+English; a Translatable Field holds one value per language, a Shared Field one value for the
+whole Entry. The types are declared in `app/ContentTypes` and `app/Taxonomies`, their admin
+labels in `lang/<locale>/kami-types.php`.
 
-- **The Home Page** — the one Entry of Velox's `Home` Content Type (`App\ContentTypes\Home`),
-  fetched with `Entry::homePage()`: its French Origin and English Translation. Per language:
-  `hero_title`, `hero_subtitle`, `hero_role`, `hero_location`, `hero_exp`, `hero_focus`,
-  `about_body` (rich text), `contact_lead`. Shared, on the Origin: `contact_email`,
+- **The Home Page** — the one Entry of the `Home` Singleton (`App\ContentTypes\Home`).
+  Per language: `hero_title`, `hero_subtitle`, `hero_role`, `hero_location`, `hero_exp`,
+  `hero_focus`, `about_body` (rich text), `contact_lead`. Shared: `contact_email`,
   `contact_linkedin`, `contact_linkedin_label`, `contact_github`, `contact_github_label`.
-  `hero_title`, `hero_subtitle` and `contact_lead` keep inline Markdown, rendered by
-  `App\Support\Content`: `*word*` becomes a green accent emphasis, a newline in the title
-  a line break.
-- **Projects** — the Entries of Velox's `Project` Content Type (`App\ContentTypes\Project`),
-  not public, ordered by hand, each a French Origin with its English Translation. The title
-  is the project's name; per language: `client`, `role`, `summary` (inline Markdown). Shared,
-  on the Origin: `url`, `featured`. Featured projects render first, full-width. Each Entry is
-  an `App\Models\Project`, whose `host()` derives the card's display host from `url` (strips
-  `www.`). A card's `~/projects/{slug}` reads its Origin's slug, the same in both languages.
+  `hero_title`, `hero_subtitle` and `contact_lead` take inline Markdown (Kami's
+  `->inlineMarkdown()`): `*word*` becomes an emphasis the CSS colours green, a newline in the
+  title a line break.
+- **Projects** — the Entries of the `Project` Content Type (`App\ContentTypes\Project`),
+  with no URL of their own, ordered by hand. The title is the project's name; per language:
+  `client`, `role`, `summary` (inline Markdown). Shared: `website`, `featured`, `directory`.
+  Featured projects render first, full-width. Each Entry is an `App\Models\Project`, whose
+  `host()` derives the card's display host from `website` (strips `www.`) and whose
+  `legend()` gives the card's `~/projects/<directory>`, else the title as a slug.
 - **Skill groups** — the Entries of the `SkillGroup` Content Type (`App\ContentTypes\SkillGroup`),
-  the rows of the `tree ~/stack` skills section, not public, ordered by hand. The title per
-  language, with `text` and `note`. A group renders its Tags, unless `text` is set, which
-  renders that sentence instead (e.g. the « Langues » group). `focus`, shared, flags the ★
-  group, highlighted in the tree, whose `note` feeds the tree footer.
+  the rows of the `tree ~/stack` skills section, with no URL of their own, ordered by hand.
+  The title per language, with `text` and `note`. A group renders its Tags, unless `text` is
+  set, which renders that sentence instead (e.g. the « Langues » group). `focus`, shared,
+  flags the ★ group, highlighted in the tree, whose `note` feeds the tree footer.
 - **Tags** — the Terms of the flat `Tag` Taxonomy (`App\Taxonomies\Tag`), listed by both
-  types: one name in every language (`translatable()` false), never public. An Entry keeps
-  its Tags in the order they were picked.
+  types: one name in every language (not translatable), with no URL of their own. An Entry
+  keeps its Tags in the order they were picked.
 
-The Home Page, Projects and skill groups render as before through `Home::render()`.
+The Home Page, Projects and skill groups render through `Home::render()`.
 
 ## Editing the site (Filament admin)
 
@@ -86,88 +86,101 @@ user: the owner) and themed emerald to match the site.
 ### Sign in
 
 Open **`/admin`** and sign in. The admin user is seeded by `AdminUserSeeder` from the
-`ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` values in `.env`; you can also create one
-with `php artisan make:filament-user`. Translatable fields show **FR / EN** tabs (one per
-locale) — fill both.
+`ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` values in `.env`, with Kami's
+`administrator` Role; `php artisan kami:user:grant <email> administrator` gives the Role to
+an existing user. Each Entry's edit page works on one language: the Locale menu in its
+header switches between the French and English Translations — fill both.
 
 ### Home Page
 
-Velox's **Accueil** item lists the Home Page: edit the French texts on it, the English ones on
-its Translation (the Translations panel), and **Preview** it before saving. In the title,
+The **Page d’accueil** item opens the Home Page: edit the French texts, switch to English
+in the Locale menu for the English ones, and **Preview** before saving. In the title,
 `*mot*` renders the word as a green accent and a line break becomes a `<br>`; the about
 text is edited as rich text. The email, LinkedIn and GitHub URLs and their displayed labels
-(e.g. `/in/steveaguet`) are entered once, on the French Origin; they feed the contact
-section and the ⌘K palette, and the email receives the contact form's messages.
+(e.g. `/in/steveaguet`) are Shared Fields, entered once for both languages; they feed the
+contact section and the ⌘K palette, and the email receives the contact form's messages.
 
 ### Projects
 
-Velox's **Projets** item lists the projects: drag rows to set their order on the page. Each
-project has its `Nom` (the Entry's title), `Client`, `Rôle`, `Résumé` (inline Markdown), per
-language; its `URL du site` and **Projet phare** (renders first, full-width), entered once on
-the French Origin; and its **Tags**. Publish a project to show it; a Draft stays off the page.
+The **Projets** item lists the projects: **Classer les enregistrements** sets their order on the page.
+Each project has its title (the project's name), `Client`, `Rôle`, `Résumé` (inline
+Markdown), per language; its `URL du site`, **Projet phare** (renders first, full-width) and
+`Dossier` (the card's `~/projects/…` legend), shared; and its **Tags**. Publish a project's
+Translation to show it in that language; a Draft stays off the page.
 
 ### Skill groups
 
-Velox's **Compétences** item drives the `tree ~/stack` section, dragged into order the same
-way. Each group has its title, a set of **Tags** and a **Groupe ★ (focus)** toggle. Leave the
-Tags empty and fill **Texte** instead to render a sentence rather than Tags (used for the
+The **Compétences** item drives the `tree ~/stack` section, reordered the same way. Each
+group has its title, a set of **Tags** and a **Groupe ★ (focus)** toggle. Leave the Tags
+empty and fill **Texte** instead to render a sentence rather than Tags (used for the
 « Langues » group). The focus group's **Note** shows in the tree footer.
 
 ### Tags
 
-Velox's **Tags** item lists the shared vocabulary of projects and skill groups, one name in
+The **Tags** item lists the shared vocabulary of projects and skill groups, one name in
 every language, so it offers no translation. You rarely open it directly: the Tags input
 on a project or skill group searches existing Tags and creates a new one inline, and the
 order you pick them in is the order they display.
 
+### Contact messages
+
+The **Messages reçus** item lists the contact form's messages, kept 12 months, with each
+one's delivery state; see the [contact message pipeline](docs/explanation-contact-pipeline.md).
+
 ## Front-end architecture
 
-The site is server-rendered Blade with a thin Alpine.js layer for the terminal feel. It is
-built as **progressive enhancement**: every section renders and every link works with
-JavaScript disabled — the script only adds the boot animation, the live clock,
-click-to-copy, the ⌘K palette, and the status bar's live vim-mode indicator.
+The site is server-rendered Blade with a thin layer of plain JavaScript for the terminal
+feel. It is built as **progressive enhancement**: every section renders and every link works
+with JavaScript disabled — the script only adds the boot animation, the live clock,
+click-to-copy, the ⌘K palette, the contact modal's in-place submit, and the status bar's
+live vim-mode indicator.
 
 ### Request flow
 
-Velox serves the one page: the Home Page at `/`, its Translation at `/en`, setting the
-locale from the URL. `App\ContentTypes\Home::render()` renders the `home` view with the
+Kami serves the one page: the Home Page at `/`, its English Translation at `/en`, setting
+the locale from the URL. `App\ContentTypes\Home::render()` renders the `home` view with the
 Entry as `content`, the visible Projects and skill groups in hand order (each with its Tags as
-`tags`), and
-`locale`, `altUrl` and the per-locale `homeUrls` built from `Velox::locales()` (used by the
-FR/EN switch and the `hreflang` tags). `SetSecurityHeaders`, appended to the `web` group,
-sets the CSP on Velox's public route only.
+`tags`), and `locale`, `altUrl` and the per-locale `homeUrls`, built from the Locales in
+`config('kami.sites.default.locales')` and `$entry->url($locale)` (used by the FR/EN switch
+and the `hreflang` tags). `routes/web.php` adds only a few redirects for old addresses before
+`Kami::routes()`. Kami's `SecurityHeaders`, appended to the `web` group, sets the CSP: no
+inline script or style runs unless its sha256 hash is listed under `kami.security.csp` in
+`config/kami.php`, so every behaviour lives in the built bundle.
 
 ### Layout and chrome
 
 `layouts/app.blade.php` is the shell: window chrome (traffic-light dots, terminal title, the
 ⌘K button, the FR/EN switch), the section `tabs`, the `main` content, a tmux-style
 `statusbar` (a reactive vim-mode pill that also opens the palette, a branch label with a
-deployed-commit popover, a command-line echo, the live clock, locale, year), and the
-command-palette markup. The current locale's UI strings and the palette data (projects,
-contact links) are injected once as `window.__AGUET`, so the script stays locale-agnostic.
+deployed-commit popover, a command-line echo, the live clock, locale, year), the
+command-palette markup and the contact modal. The current locale's UI strings and the
+palette data (projects, contact links) are rendered once in the `#aguet-config` JSON block,
+so the script stays locale-agnostic.
 
-### Alpine, from Livewire
+### Plain JavaScript modules
 
-Alpine is **not** bundled separately. Filament 5 / Livewire 4 ships Alpine, starts it, and
-exposes `window.Alpine`; `resources/js/app.js` registers its components on the `alpine:init`
-event against that shared instance (no `import`, no `Alpine.start()`). The components:
+No front-end framework: Vite bundles `resources/js/app.js` and the two modules it imports.
+Behaviour is wired on `data-*` hooks in the Blade partials (`data-cmdk-open`,
+`data-contact-open`, `data-copy`, `data-clock`, …), never on inline handlers, which the CSP
+would block.
 
-- **`terminal`** (root) — kicks off the one-shot boot intro and the scrollspy that lights
-  the active section tab.
-- **`clock`** — the status-bar clock, `Europe/Zurich`, refreshed every 15 s.
-- **`copy`** — click-to-copy a contact value, with a transient « copied » state and an
-  `execCommand` fallback when the clipboard API is unavailable.
-- **`statusbar`** — the tmux-style bottom bar. A reactive vim-mode pill reflects the current
-  state (NORMAL / INSERT / VISUAL / COMMAND, derived from palette, text-selection and focus)
-  and doubles as the palette trigger; the branch label opens a popover showing the deployed
-  commit (short SHA → GitHub, subject, relative date) read from the generated
-  `config/build_info.php` (written at deploy time, see [DEPLOY.md](DEPLOY.md)).
-- **`$store.cmdk`** — the ⌘K command palette: it builds a grouped item list (navigation,
-  projects, actions), fuzzy-filters it, and supports keyboard navigation. Typing `:` switches
-  it into a vim-style command line (`:q`, `:wq`, `:help`, `:colorscheme`, …). A global `⌘K` / `Ctrl-K` listener
-  toggles it; a bare `:` opens it straight into command mode.
-- **`$store.vim`** — a transient command-line echo (vim-style messages) rendered in the
-  status bar.
+- **`app.js`** — the one-shot boot intro and the scrollspy that lights the active section
+  tab; the status-bar clock (`Europe/Zurich`, refreshed every 15 s); click-to-copy a contact
+  value, with an `execCommand` fallback when the clipboard API is unavailable; the status
+  bar, whose vim-mode pill reflects the current state (NORMAL / INSERT / VISUAL / COMMAND,
+  derived from palette, text-selection and focus) and doubles as the palette trigger, and
+  whose branch label opens a popover showing the deployed commit (short SHA → GitHub,
+  subject, relative date) read from the generated `config/build_info.php` (written at deploy
+  time, see [DEPLOY.md](DEPLOY.md)); the ⌘K command palette, which builds a grouped item list
+  (navigation, projects, actions), fuzzy-filters it and supports keyboard navigation — typing
+  `:` switches it into a vim-style command line (`:q`, `:wq`, `:help`, `:colorscheme`, …), a
+  global `⌘K` / `Ctrl-K` listener toggles it, and a bare `:` opens it straight into command
+  mode; a vim-style command-line echo in the status bar; and the contact modal, an accessible
+  dialog with its own focus trap.
+- **`contact-form.js`** — submits the contact modal's Kami Form with `fetch()` and
+  `Accept: application/json`, so the modal shows the errors or the confirmation without a
+  reload. Without JavaScript the form posts a full page.
+- **`easter-eggs.js`** — keyboard touches for anyone who treats the page like an editor.
 
 The page also rewards anyone who treats it like an actual editor — a few touches are left
 unlabelled for the curious to find. Reading the page source is a fair place to start.
@@ -220,8 +233,9 @@ php artisan key:generate
 mysql -h 127.0.0.1 -u root -e \
   "CREATE DATABASE IF NOT EXISTS aguet_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# 4. Migrate + seed  (schema + FR/EN content + admin user)
+# 4. Migrate + seed  (schema + FR/EN content + admin user), then Kami's install step
 php artisan migrate --seed
+php artisan kami:install --no-interaction   # checks, Filament assets, media link, Paths
 
 # 5. Front-end assets
 pnpm run build                    # or: pnpm run dev  (HMR during development)
@@ -230,55 +244,48 @@ pnpm run build                    # or: pnpm run dev  (HMR during development)
 php artisan serve                 # http://127.0.0.1:8000  (FR)  ·  /en  (EN)
 ```
 
-**Shortcuts.** Once the database exists (step 3), `composer setup` runs the whole
-install in one command (deps, `.env`, key, migrate, `pnpm install` + build). During
-development, `composer dev` runs the server, queue, logs and Vite together.
+**Shortcuts.** Once the database exists (step 3), `composer setup` runs the
+rest of the install in one command (deps, `.env`, key, migrate and seed, `pnpm install` +
+build); run `php artisan kami:install --no-interaction` after it, which `composer setup`
+leaves out. During
+development, `composer dev` runs the queue listener, logs and Vite together.
 
 The admin panel is at **`/admin`**. The admin user is created by `AdminUserSeeder` from the
-`ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` values in `.env`. (You can also create one
-with `php artisan make:filament-user`.)
+`ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` values in `.env`, with Kami's
+`administrator` Role. `php artisan kami:doctor` checks the environment.
 
 ## Deployment — Infomaniak shared hosting
 
-Shared hosting with SSH, Composer and cron is enough; no external services are required.
+Shared hosting with SSH and Composer is enough: no Node, no queue worker, no crontab. A push
+to `main` runs the GitHub Actions pipeline described in [DEPLOY.md](DEPLOY.md): CI builds
+the front-end assets, rsyncs the release with a fresh `.env`, then runs
+[`scripts/deploy.sh`](scripts/deploy.sh) on the server (`composer install`, maintenance
+mode, `storage:link`, `kami:install`, `app:import:velox` on the Switch-over release,
+`kami:media:warm`, `optimize`, then `up`). The document root points at
+**`public/`**, with `APP_ENV=production` and `APP_DEBUG=false`.
+
+Kami's scheduled tasks (contact delivery retries, retention, the sitemap) run in its Tick:
+Infomaniak's task planner calls the URL printed by `php artisan kami:tick:url`, whose token
+goes in `.env` as `KAMI_TICK_TOKEN`.
+
+### Backups
+
+`scripts/backup.sh` runs on your machine, never on the server. Over the `tsumigeya`
+SSH alias (same Infomaniak account), it dumps production's database and copies all
+of `storage/app` into `storage/backups/<timestamp>/`, keeping the last ten. Set
+`PRODUCTION_PATH` in the local `.env` to the app's folder on the server (the
+`DEPLOY_PATH` secret):
 
 ```bash
-# On the server, in the project directory:
-git pull
-composer install --no-dev --optimize-autoloader
-php artisan migrate --force
-
-# Front-end: build locally and deploy public/build, OR build on the server if Node is
-# available:
-pnpm install && pnpm run build
-
-# Filament's static assets (gitignored) — publish them after deploy:
-php artisan filament:assets:publish
-
-# Cache config, routes and views for performance:
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+./scripts/backup.sh
 ```
 
-Point the web server's document root at **`public/`**. Set `APP_ENV=production` and
-`APP_DEBUG=false` in `.env`. After changing `.env` or code, re-run the cache commands
-(`php artisan optimize` does config + route + view + events in one go;
-`php artisan optimize:clear` reverts).
-
-### Database backups
-
-A `mysqldump`-based script is provided (it reads credentials from `.env`, writes a
-timestamped gzip to a directory outside the repo, and prunes old dumps):
+`scripts/restore.sh` loads the latest snapshot, or the folder it is given, into the
+local database and `storage/app`. It refuses to run unless `APP_ENV` is `local`, and
+resets every password to `password` with no second factor.
 
 ```bash
-BACKUP_DIR=~/backups/aguet ./scripts/backup-db.sh
-```
-
-Schedule it with cron, e.g. daily at 03:00:
-
-```cron
-0 3 * * *  BACKUP_DIR=$HOME/backups/aguet /path/to/aguet/scripts/backup-db.sh >> $HOME/backups/aguet/backup.log 2>&1
+./scripts/restore.sh
 ```
 
 ## Security notes (public repo)

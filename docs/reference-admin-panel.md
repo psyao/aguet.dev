@@ -10,19 +10,21 @@ anyone extending it. For how to *use* the panel day to day, see the
 Defined in `app/Providers/Filament/AdminPanelProvider.php`:
 
 - **id/path**: `admin`, mounted at `/admin`.
-- **Auth**: `->login()` — Filament's built-in login page, no registration. Any
-  authenticated `User` can access the panel (`User::canAccessPanel()` always returns
-  `true` — this is a single-owner app, not multi-tenant).
+- **Auth**: `->login()` and `->passwordReset()` — Filament's built-in pages, no
+  registration. A `User` can access the panel once it holds a Kami Role
+  (`User::canAccessPanel()` checks `kamiRoles()`); access inside the panel goes
+  through Kami's Permissions.
 - **Brand**: "aguet.dev", primary color `Color::Emerald`.
-- **Plugin**: `TranslatableFieldsPlugin::make()->supportedLocales(['fr' => 'Français', 'en' => 'English'])`
-  from `outerweb/filament-translatable-fields` — renders FR/EN tabs on any form field
-  marked `.translatable()`.
-- **Navigation groups**: `Contenu`, `Taxonomies`, `Système` — every resource/page
-  declares which group it belongs to.
-- **Discovery**: resources auto-discovered from `app/Filament/Resources`, pages from
-  `app/Filament/Pages`, widgets from `app/Filament/Widgets`. `Dashboard`,
-  `AccountWidget`, and `FilamentInfoWidget` are registered explicitly on top of
-  discovery (Filament's stock dashboard page and its two default widgets).
+- **Plugin**: `Psyao\Kami\Admin\KamiPlugin::make()` — Kami's whole admin: the screens
+  of every declared type (Entries, Terms, the Singleton page), Media, the Audit log and
+  the Submissions screen, among others.
+- **Avatars**: `defaultAvatarProvider(InitialsAvatarProvider::class)` draws initials
+  on the server instead of sending names to ui-avatars.com.
+- **Security headers**: `'kami.security-headers:admin'` ends the panel's middleware
+  (Kami's admin CSP, with the nonce Filament's inline scripts carry).
+- **Discovery**: resources from `app/Filament/Resources`, pages from
+  `app/Filament/Pages`, widgets from `app/Filament/Widgets`. Only the last holds
+  anything today. `Dashboard` (Filament's stock page) is registered explicitly.
 
 ## Resources
 
@@ -30,40 +32,27 @@ Filament 5's file layout splits each resource into a `Resource.php` plus
 `Pages/`, `Schemas/`, and `Tables/` subfolders (no monolithic `getForm()`/`getTable()`
 static methods on the resource class itself).
 
-| Resource | Nav group | CRUD | Notes |
-|---|---|---|---|
-| `ContactMessageResource` | — | Read-only | `canCreate()` returns `false`, no edit page — only `Pages/ListContactMessages`. Uses an **infolist** (`Schemas/ContactMessageInfolist`) instead of a form, since messages aren't editable. Table: `Tables/ContactMessagesTable`. `getNavigationBadge()` returns the unread count. |
+aguet declares no Resource of its own. The contact Form's messages are Kami's
+Submissions, listed on Kami's **Messages reçus** screen, which counts the unread ones.
+The panel runs `->strictAuthorization()`: a Resource added later needs its policy.
 
-Projects, skill groups and Tags have no Resource of aguet's own: Velox's generic Entry
-Resources serve the `Project` and `SkillGroup` Content Types (Projets, Compétences, ordered
-by drag) and its Term Resource the `Tag` Taxonomy.
+Projects, skill groups and Tags have no Resource of aguet's own: Kami's generic Entry
+Resource serves every declared type: the `Project` and `SkillGroup` Content Types
+(Projets, Compétences, ordered by drag) and the `Tag` Taxonomy.
 
 ## Pages (non-resource)
 
 - The Home Page's texts are no longer a page of the panel: they are the Home Page's
-  Entry, edited in Velox's **Accueil** Entry Resource (`App\ContentTypes\Home`).
-- **`DatabaseBackup`** (nav group Système, "Sauvegarde DB") — two header actions:
-  `download` streams a SQL dump via `App\Support\DatabaseDumper`; `restore` (danger
-  color, confirmation required, 50MB `FileUpload` limit) rehydrates via
-  `App\Support\DatabaseRestorer`. Both classes live in `app/Support/` and are injected
-  into the page's actions rather than called statically.
+  Entry, edited on Kami's **Page d’accueil** Singleton page (`App\ContentTypes\Home`).
 
 ## Widgets
 
-Both are auto-discovered (not explicitly registered — see Discovery above).
+Auto-discovered (not explicitly registered — see Discovery above).
 
-- **`StatsOverview`** (`StatsOverviewWidget`) — three stats: unread message count
-  (`ContactMessage::whereNull('read_at')->count()`), published vs. draft project
-  counts, and featured project count, each Project counted once, on its Origin.
-- **`LatestMessages`** (`TableWidget`) — unread `ContactMessage` rows, newest first,
-  not paginated. Each row has a "Voir" action linking to
-  `ContactMessageResource::getUrl('index')`. Empty state when there are no unread
-  messages.
+- **`StatsOverview`** (`StatsOverviewWidget`) — published vs. draft project counts,
+  and featured project count, each Project counted once, on its Origin.
 
 ## Related
 
 - [README: admin panel walkthrough](../README.md#editing-the-site-filament-admin) — how-to,
   end-user perspective.
-- [Explanation: contact message pipeline](explanation-contact-pipeline.md) — the
-  `ContactMessageResource`/`StatsOverview`/`LatestMessages` widgets all read from the
-  same `contact_messages` table this doc describes.

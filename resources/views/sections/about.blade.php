@@ -27,13 +27,13 @@
                         <dt>Lang</dt><dd>FR · EN · DE</dd>
                     </dl>
                     <div class="nf-sw" aria-hidden="true">
-                        <i style="background:var(--color-accent)"></i>
-                        <i style="background:#3a4a40"></i>
-                        <i style="background:#566459"></i>
-                        <i style="background:#869589"></i>
-                        <i style="background:#a6b5ab"></i>
-                        <i style="background:#cdd8d0"></i>
-                        <i style="background:#e7efe9"></i>
+                        <i class="sw-accent"></i>
+                        <i class="sw-3a4a40"></i>
+                        <i class="sw-566459"></i>
+                        <i class="sw-869589"></i>
+                        <i class="sw-a6b5ab"></i>
+                        <i class="sw-cdd8d0"></i>
+                        <i class="sw-e7efe9"></i>
                     </div>
                 </div>
             </div>

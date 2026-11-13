@@ -16,7 +16,8 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Velox\Cms\VeloxPlugin;
+use Psyao\Kami\Admin\InitialsAvatarProvider;
+use Psyao\Kami\Admin\KamiPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -27,13 +28,16 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
+            // Every Resource needs a policy: Kami's have theirs, and aguet adds none.
+            ->strictAuthorization()
             ->brandName('aguet.dev')
             ->colors([
                 'primary' => Color::Emerald,
             ])
-            ->plugins([
-                VeloxPlugin::make(),
-            ])
+            ->plugin(KamiPlugin::make())
+            // Filament's default sends Users' initials to ui-avatars.com; Kami's draws them locally.
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -50,6 +54,8 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                // Kami's admin CSP and security headers, with the nonce Filament's inline scripts carry.
+                'kami.security-headers:admin',
             ])
             ->authMiddleware([
                 Authenticate::class,

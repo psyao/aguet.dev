@@ -3,22 +3,21 @@
 namespace Database\Seeders;
 
 use App\ContentTypes\SkillGroup;
-use App\Taxonomies\Tag;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
-use Velox\Cms\Models\Entry;
-use Velox\Cms\Models\Term;
+use Psyao\Kami\Content\Actions\SaveEntry;
+use Psyao\Kami\Content\Entry;
 
 class SkillGroupSeeder extends Seeder
 {
     /**
      * The five stack groups (previously config/skills.php + lang files), each
-     * a French Origin with its English Translation, in hand order. Skipped
+     * in French and English, in hand order. Skipped
      * once SkillGroups exist.
      */
     public function run(): void
     {
-        if (Entry::ofType(new SkillGroup)->exists()) {
+        if (Entry::query()->withUnpublished()->ofType(SkillGroup::class)->exists()) {
             return;
         }
 
@@ -54,28 +53,24 @@ class SkillGroupSeeder extends Seeder
             ],
         ];
 
+        $save = resolve(SaveEntry::class);
+
         foreach ($groups as $data) {
             $translated = Arr::only($data, ['text', 'note']);
 
-            $group = Entry::create([
-                'type' => (new SkillGroup)->handle(),
+            $group = $save->handle(SkillGroup::class, [
                 'title' => $data['title']['fr'],
                 'status' => 'published',
-                'published_at' => now(),
-                'data' => [...array_map(fn (array $value) => $value['fr'], $translated), 'focus' => $data['focus']],
-            ]);
+                ...array_map(fn (array $value) => $value['fr'], $translated),
+                'focus' => $data['focus'],
+                'tags' => ProjectSeeder::tagIds($data['tags'] ?? []),
+            ], locale: 'fr');
 
-            $group->translate('en', [
+            $save->handle(SkillGroup::class, [
                 'title' => $data['title']['en'],
                 'status' => 'published',
-                'published_at' => now(),
-                'data' => array_map(fn (array $value) => $value['en'], $translated),
-            ]);
-
-            $group->classify(Tag::class, array_map(
-                fn (string $name) => Term::firstOrCreate(['taxonomy' => (new Tag)->handle(), 'name' => $name]),
-                $data['tags'] ?? [],
-            ));
+                ...array_map(fn (array $value) => $value['en'], $translated),
+            ], $group->refresh(), 'en');
         }
     }
 }

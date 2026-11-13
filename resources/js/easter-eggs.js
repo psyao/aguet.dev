@@ -1,6 +1,8 @@
 /* aguet.dev — vim easter eggs (progressive enhancement, keyboard-only).
-   Registered from app.js. Stores are resolved lazily inside handlers because
-   they're created on `alpine:init`; reading them at import time would race. */
+   Registered from app.js, which hands over its palette, contact modal and
+   vim echo. */
+
+let ui;
 
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
@@ -8,11 +10,7 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 function blocked(e) {
   const tgt = e.target;
   if (tgt && tgt.closest && (tgt.matches('input,textarea,select') || tgt.closest('[contenteditable]'))) return true;
-  const A = window.Alpine;
-  if (!A) return false;
-  const cmdk = A.store('cmdk');
-  const contact = A.store('contact');
-  return !!((cmdk && cmdk.isOpen) || (contact && contact.isOpen));
+  return ui.cmdk.isOpen || ui.contact.isOpen;
 }
 
 // Motion targets: the hero (page top) followed by the tab-linked sections.
@@ -163,8 +161,7 @@ function initKonami() {
     if (buf.length === KONAMI.length && KONAMI.every((k, i) => buf[i] === k)) {
       buf = [];
       if (reduce) {
-        const vim = window.Alpine && window.Alpine.store('vim');
-        if (vim) vim.flash('↑↑↓↓←→←→BA 🎉');
+        ui.vim.flash('↑↑↓↓←→←→BA 🎉');
         return;
       }
       startRain();
@@ -172,7 +169,8 @@ function initKonami() {
   });
 }
 
-export function initEasterEggs() {
+export function initEasterEggs(stores) {
+  ui = stores;
   initMotions();
   initKonami();
 }

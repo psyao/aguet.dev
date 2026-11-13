@@ -4,7 +4,6 @@
     // page (no boot intro, no animations, frozen clock/year, real font) so captures
     // are deterministic. Inert in production.
     $shot = app()->environment('testing') && request()->boolean('screenshot');
-    $ogLocales = ['fr' => 'fr_CH', 'en' => 'en_GB'];
     $jsConfig = [
         'locale' => $locale,
         'altUrl' => $altUrl,
@@ -33,7 +32,7 @@
         'projects' => $projects->map(fn ($p) => [
             'label' => $p->title,
             'host' => $p->host(),
-            'url' => $p->url,
+            'url' => $p->website,
         ])->all(),
         'contact' => [
             // Base64 so the address isn't plaintext in the page source; app.js
@@ -76,13 +75,9 @@
     <script>document.addEventListener('DOMContentLoaded',function(){if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){document.documentElement.classList.add('fonts-ready');});}else{document.documentElement.classList.add('fonts-ready');}});</script>
     @endunless
 
-    <x-velox::seo />
-    <meta property="og:locale" content="{{ $ogLocales[$locale] ?? 'fr_CH' }}">
-    @foreach (array_diff_key($ogLocales, [$locale => true]) as $og)
-        <meta property="og:locale:alternate" content="{{ $og }}">
-    @endforeach
+    {{-- Title, description, canonical, hreflang, robots and Open Graph, og:locale included. --}}
+    <x-kami::seo />
 
-    @livewireStyles
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @php
@@ -106,7 +101,7 @@
                 data-cf-beacon='@json(['token' => $cfToken])'></script>
     @endif
 </head>
-<body data-density="comfortable" data-fx="subtle" x-data="terminal">
+<body data-density="comfortable" data-fx="subtle">
     {{-- Re-apply the saved colorscheme before paint (app.js is deferred), so a
          non-default theme doesn't flash the phosphor default first. --}}
     @unless($shot)
@@ -121,8 +116,10 @@
          :colorscheme   paint the site           (default · gruvbox · nord · crt · light)
          ↑↑↓↓←→←→ B A   ...you know this one.
 
-       built with laravel + a bundled alpine. nice of you to drop by.
+       built with laravel + kami, no framework js. nice of you to drop by.
     -->
+
+    <x-kami::preview-banner />
 
     <a class="skip" href="#content">{{ __('site.skip') }}</a>
 
@@ -137,7 +134,7 @@
     @include('partials.command-palette')
     @include('partials.contact-modal')
 
-    <script>window.__AGUET = @json($jsConfig);</script>
-    @livewireScripts
+    {{-- Read by app.js: data, never run, so Kami's CSP needs no hash for it. --}}
+    <script type="application/json" id="aguet-config">@json($jsConfig)</script>
 </body>
 </html>

@@ -66,37 +66,9 @@ return [
             'message_label' => 'Message',
             'message_placeholder' => 'Dis-moi tout…',
             'send' => 'envoyer',
-            'sending' => 'envoi…',
-            'success' => 'Message envoyé. Merci — je te réponds bientôt.',
-            'another' => 'Écrire un autre message',
-
-            // Barre de progression de la remise (interroge les drapeaux de la ligne).
-            'progress' => [
-                'email' => 'email',
-                'kchat' => 'kchat',
-                'state' => [
-                    'pending' => 'envoi…',
-                    'ok' => 'remis ✓',
-                    'fail' => 'échec ✗',
-                    'queued' => 'en file …',
-                ],
-            ],
-            'error' => 'Impossible d’enregistrer le message. Réessaie dans un instant.',
-            'throttled' => 'Trop de tentatives. Patiente une minute avant de réessayer.',
+            'error' => 'Le message n’est pas parti. Réessaie dans un moment.',
             'close' => 'Fermer',
             'cancel' => 'annuler',
-
-            // Custom validation messages (Laravel ships no FR validation file).
-            'err' => [
-                'required' => ':attribute est requis.',
-                'email' => 'Entre une adresse email valide.',
-                'max' => ':attribute est trop long (:max caractères max).',
-            ],
-            'attr' => [
-                'subject' => 'Le sujet',
-                'email' => 'L’email',
-                'message' => 'Le message',
-            ],
         ],
     ],
 
