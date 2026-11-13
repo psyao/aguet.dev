@@ -102,7 +102,7 @@ contact section and the ⌘K palette, and the email receives the contact form's 
 
 ### Projects
 
-The **Projets** item lists the projects: **Reorder records** sets their order on the page.
+The **Projets** item lists the projects: **Classer les enregistrements** sets their order on the page.
 Each project has its title (the project's name), `Client`, `Rôle`, `Résumé` (inline
 Markdown), per language; its `URL du site`, **Projet phare** (renders first, full-width) and
 `Dossier` (the card's `~/projects/…` legend), shared; and its **Tags**. Publish a project's
@@ -244,8 +244,10 @@ pnpm run build                    # or: pnpm run dev  (HMR during development)
 php artisan serve                 # http://127.0.0.1:8000  (FR)  ·  /en  (EN)
 ```
 
-**Shortcuts.** Once the database exists (step 3), `composer setup` runs the whole
-install in one command (deps, `.env`, key, migrate, `pnpm install` + build). During
+**Shortcuts.** Once the database exists (step 3), `composer setup` runs the
+rest of the install in one command (deps, `.env`, key, migrate and seed, `pnpm install` +
+build); run `php artisan kami:install --no-interaction` after it, which `composer setup`
+leaves out. During
 development, `composer dev` runs the queue listener, logs and Vite together.
 
 The admin panel is at **`/admin`**. The admin user is created by `AdminUserSeeder` from the
@@ -258,7 +260,8 @@ Shared hosting with SSH and Composer is enough: no Node, no queue worker, no cro
 to `main` runs the GitHub Actions pipeline described in [DEPLOY.md](DEPLOY.md): CI builds
 the front-end assets, rsyncs the release with a fresh `.env`, then runs
 [`scripts/deploy.sh`](scripts/deploy.sh) on the server (`composer install`, maintenance
-mode, `kami:install`, `kami:media:warm`, `optimize`, then `up`). The document root points at
+mode, `storage:link`, `kami:install`, `app:import:velox` on the Switch-over release,
+`kami:media:warm`, `optimize`, then `up`). The document root points at
 **`public/`**, with `APP_ENV=production` and `APP_DEBUG=false`.
 
 Kami's scheduled tasks (contact delivery retries, retention, the sitemap) run in its Tick:

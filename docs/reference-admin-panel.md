@@ -37,8 +37,8 @@ Submissions, listed on Kami's **Messages reçus** screen, which counts the unrea
 The panel runs `->strictAuthorization()`: a Resource added later needs its policy.
 
 Projects, skill groups and Tags have no Resource of aguet's own: Kami's generic Entry
-Resources serve the `Project` and `SkillGroup` Content Types (Projets, Compétences, ordered
-by drag) and its Term Resource the `Tag` Taxonomy.
+Resource serves every declared type: the `Project` and `SkillGroup` Content Types
+(Projets, Compétences, ordered by drag) and the `Tag` Taxonomy.
 
 ## Pages (non-resource)
 
