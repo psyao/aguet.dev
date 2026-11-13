@@ -23,7 +23,7 @@ scripts/
 
 A push to `main` runs the deploy workflow as **three jobs** in sequence:
 
-1. **`build`** — installs PHP and JS dependencies, audits them, builds the front-end assets, and packages the deployable files into an artifact. This job runs **all third-party/dependency code**, and holds **only** low-value credentials (a private Composer registry login, if you use one).
+1. **`build`** — installs PHP and JS dependencies, audits them, builds the front-end assets, and packages the deployable files into an artifact. This job runs **all third-party/dependency code**, and holds **no** secrets (every dependency, Kami included, comes from public registries).
 2. **`deploy`** — downloads the artifact, generates `.env`, rsyncs to the server, and runs `scripts/deploy.sh`. This job holds the **high-value** secrets (the SSH key, and a secrets-manager token if used) but runs **no** dependency code.
 3. **`notify`** — always runs; reports overall success/failure (across both build and deploy) to a chat webhook.
 
@@ -37,7 +37,7 @@ These are the platform facts the pipeline is built around — useful to understa
 
 - **No Node.js on shared hosting** → front-end assets must be built in CI and shipped; you cannot run `pnpm run build` on the server.
 - **Document root must point at `public/`** → set this when creating the site in the Infomaniak manager (the rsync ships `public/` into the app root, and the site folder targets `…/public`).
-- **The SSH/CLI PHP may differ from the per-site web PHP** → the server steps call an explicit binary via `DEPLOY_PHP_BIN` (default `/opt/php8.4/bin/php`) instead of bare `php`.
+- **The SSH/CLI PHP may differ from the per-site web PHP** → the server steps call an explicit binary via `DEPLOY_PHP_BIN` (default `/opt/php8.5/bin/php`) instead of bare `php`.
 - **`proc_open` / shell functions must be enabled** for Composer to run on the server (toggle in the site's PHP settings).
 - **`vendor/` is rebuilt server-side** by `deploy.sh` (with `--optimize-autoloader`), so it is excluded from the rsync.
 
@@ -56,7 +56,7 @@ These are the platform facts the pipeline is built around — useful to understa
 
 | Area | Where | What to change |
 |---|---|---|
-| **PHP version** | `setup-stack/action.yml`, `deploy.sh`, `DEPLOY_PHP_BIN` var | Match your target PHP (template uses 8.4). Keep all three in sync. |
+| **PHP version** | `setup-stack/action.yml`, `deploy.sh`, `DEPLOY_PHP_BIN` var | Match your target PHP (this repo uses 8.5). Keep all three in sync. |
 | **rsync include list** | `deploy.yml` → *Sync files* | The `--include=` list is the standard Laravel tree. Add/remove top-level paths your app ships. The trailing `--exclude='*'` is what protects server-side `vendor/` and `storage/` from `--delete` — keep it. |
 | **`.env` source** | `deploy.yml` → *Generate .env* | Template uses **Doppler** (`doppler secrets download`). If you don't use Doppler, replace this step — e.g. compose `.env` from GitHub secrets, or decrypt a committed `.env` via `php artisan env:decrypt`. The `.env` must end up in `release/.env` before the rsync. |
 | **Notifications** | `deploy.yml` → `notify` job + `notify-kchat` | Template posts to **Kchat** (Infomaniak chat). Swap the composite for Slack/Discord/etc., or remove the `notify` job entirely. |
@@ -106,7 +106,7 @@ changed (its header says why it needs Apache).
 
 | Name | Required | Description |
 |---|---|---|
-| `DEPLOY_PHP_BIN` | No | Absolute PHP binary path on the server — defaults to `/opt/php8.4/bin/php` |
+| `DEPLOY_PHP_BIN` | No | Absolute PHP binary path on the server — defaults to `/opt/php8.5/bin/php` |
 
 ### First-deploy one-time server setup
 
@@ -144,7 +144,7 @@ Paste the full output into the `DEPLOY_KNOWN_HOSTS` environment secret. Re-captu
 
 The pipeline is built to limit the blast radius of a supply-chain compromise (a malicious dependency or hijacked action):
 
-- **Build/deploy secret isolation.** All untrusted code (Composer/pnpm dependencies, the asset build) runs in the `build` job, which holds only low-value credentials. High-value secrets — the SSH key and any secrets-manager token (which can unlock your entire production secret set) — live only in the `deploy` job, which runs no dependency code. A poisoned dependency therefore cannot reach them.
+- **Build/deploy secret isolation.** All untrusted code (Composer/pnpm dependencies, the asset build) runs in the `build` job, which holds no secrets. High-value secrets — the SSH key and any secrets-manager token (which can unlock your entire production secret set) — live only in the `deploy` job, which runs no dependency code. A poisoned dependency therefore cannot reach them.
 - **Pinned actions.** Third-party actions are pinned to full commit SHAs, not mutable tags. Run [`pinact run`](https://github.com/suzuki-shunsuke/pinact) after editing any workflow to (re)pin, and keep [Dependabot](https://docs.github.com/en/code-security/dependabot) on for the `github-actions` ecosystem to bump pins safely. Any `uses:` line carrying a `# TODO: pin` comment must be resolved before shipping.
 - **Egress monitoring.** Each job runs [`step-security/harden-runner`](https://github.com/step-security/harden-runner) in `audit` mode. Once the egress baseline is known, switch the `deploy` job to `block` mode with an allowlist (GitHub, your secrets manager, and the server) to make exfiltration impossible at the network layer.
 - **Fail-closed dependencies.** `pnpm install --frozen-lockfile` (no unreviewed version resolution); `composer audit --no-dev` fails the build on known CVEs in production dependencies; `composer validate --strict` catches lockfile drift.
@@ -167,7 +167,9 @@ The pipeline is built to limit the blast radius of a supply-chain compromise (a 
 php artisan up
 ```
 
-Caveat the trap can't fix: if `php artisan migrate --force` failed partway, the schema may be partially applied. The site will be back up, but you may need to SSH in and reconcile the migration state by hand.
+The Switch-over release is the exception: from `kami:install` on, its `STAY_DOWN` flag skips the `up`, so a failed step keeps the site at 503 rather than show Kami half-installed or half-imported. Do not bring it up by hand: roll back as described under [Secrets & variables](#secrets--variables).
+
+Caveat the trap can't fix: `kami:install` runs the migrations (`migrate --force`); if one failed partway, the schema may be partially applied. The site will be back up, but you may need to SSH in and reconcile the migration state by hand.
 
 ---
 
@@ -182,6 +184,6 @@ Caveat the trap can't fix: if `php artisan migrate --force` failed partway, the 
 ## Server requirements (Infomaniak shared hosting)
 
 - SSH access enabled on the hosting plan.
-- PHP set per-site to your target version (template: **8.4**), with `proc_open` / shell functions enabled.
+- PHP set per-site to your target version (this repo: **8.5**), with `proc_open` / shell functions enabled.
 - The site's document root pointing at the app's `public/` directory.
 - Composer available on the server (the release script invokes `composer2.phar` next to the PHP binary — adjust the path in `deploy.sh` if your host differs).
