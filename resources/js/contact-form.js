@@ -1,8 +1,8 @@
-// Submits the contact modal's Kami Form without a reload, through the Form
-// route's JSON answers (Kami's Forms guide, "Without a reload"), so the modal
-// stays open over the errors or the confirmation. Built by Vite into the app
-// bundle: no inline script and no eval, so the front's CSP holds. Without
-// JavaScript the form posts a full page, and the page shows the result.
+/* aguet.dev — submits the contact modal's Kami Form without a reload, through
+   the Form route's JSON answers (Kami's Forms guide, "Without a reload"), so
+   the modal stays open over the errors or the confirmation. Built by Vite into
+   the app bundle: no inline script and no eval, so the front's CSP holds.
+   Without JavaScript the form posts a full page, and the page shows the result. */
 
 export function initContactForm() {
   const form = document.getElementById('contact_form');
@@ -31,8 +31,9 @@ export function initContactForm() {
       if (response.status === 200) {
         form.hidden = true;
         status.textContent = body.message ?? '';
-        const done = document.querySelector('[data-cf-done]');
-        if (done) done.hidden = false;
+        document.querySelector('[data-cf-done]').hidden = false;
+        // A modal closed and opened again comes back to the confirmation.
+        status.setAttribute('data-contact-focus', '');
         status.focus();
       } else if (body.errors) {
         showErrors(form, body.errors);
@@ -61,6 +62,8 @@ function showErrors(form, errors) {
   summary.className = 'kami-form-errors cf-alert';
   summary.setAttribute('role', 'alert');
   summary.tabIndex = -1;
+  // A modal closed and opened again comes back to the summary, as on the page.
+  summary.setAttribute('data-contact-focus', '');
   const heading = summary.appendChild(document.createElement('h3'));
   heading.className = 'kami-form-errors-heading';
   heading.textContent = form.dataset.errorsHeading;

@@ -6,7 +6,8 @@
      confirmation, after `?sent=contact_form`, or over the errors of a refused
      message. The script builds the same error markup as this view. --}}
 @php
-    $sent = \Psyao\Kami\Facades\Kami::form('contact_form')->sent();
+    $form = \Psyao\Kami\Facades\Kami::form('contact_form');
+    $sent = $form->sent();
     $refused = isset($errors) && $errors->any();
 @endphp
 <div class="contact-modal" id="contact-modal" hidden @if ($sent || $refused) data-contact-autoopen @endif>
@@ -79,8 +80,10 @@
                 </x-kami::form>
             @endunless
 
-            {{-- A live region present, empty, from the page load: the script fills it. --}}
-            <p class="cf-success-line" id="contact_form-status" role="status" tabindex="-1" @if ($sent) data-contact-focus @endif>@if ($sent){{ \Psyao\Kami\Facades\Kami::form('contact_form')->confirmation() }}@endif</p>
+            {{-- A live region present, empty, from the page load: the script fills it.
+                 Keep its content on one line with no whitespace: `.cf-status:empty`
+                 gives the empty element no room. --}}
+            <p class="cf-status" id="contact_form-status" role="status" tabindex="-1" @if ($sent) data-contact-focus @endif>@if ($sent){{ $form->confirmation() }}@endif</p>
             <button type="button" class="tui-btn" data-contact-close data-cf-done @unless ($sent) hidden @endunless>
                 <span>{{ __('site.contact.form.close') }}</span>
             </button>

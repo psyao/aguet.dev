@@ -8,10 +8,11 @@ use Psyao\Kami\Forms\Submission;
 // /?screenshot=1 so animations are frozen and the real font is restored.
 //
 // resources/js/contact-form.js submits the Kami Form without a reload, through
-// its JSON answers, so the modal stays open over the errors or the confirmation
-// (tests below), states captured like the open one. Without JavaScript the Form posts a full page, and app.js opens
-// the modal by itself over the result: tests/Feature/ContactFormTest.php covers
-// that page, and the `?sent=` test below its opening.
+// its JSON answers, so the modal stays open over the errors or the
+// confirmation (tests below), each state with its baseline. Without
+// JavaScript the Form posts a full page, and app.js opens the modal by itself
+// over the result: tests/Feature/ContactFormTest.php covers that page, and the
+// `?sent=` test below its opening.
 
 it('matches the contact modal open state (FR, desktop)', function () {
     $page = visit('/?screenshot=1')
@@ -122,4 +123,24 @@ it('shows the confirmation in the open modal, without a reload', function () {
         ->assertScreenshotMatches(fullPage: false);
 
     expect(Submission::sole()->data['subject'])->toBe('Bonjour');
+});
+
+it('says in the open modal that a message could not be sent, and keeps it', function () {
+    $page = visit('/');
+
+    // An origin the route cannot find answers 422 with no field errors, like a 403 or a 429.
+    $page->click('.cta')
+        ->type('#subject', 'Bonjour')
+        ->type('#email', 'visitor@example.com')
+        ->type('#message', 'I would like to work with you.')
+        ->script("window.notReloaded = true; document.querySelector('[name=_kami_origin]').value = 'unknown:fr'");
+
+    $page->click('.cf-actions button[type=submit]')
+        ->assertSeeIn('#contact_form-status', 'Le message n’est pas parti. Réessaie dans un moment.')
+        ->assertVisible('#contact_form')
+        ->assertValue('#message', 'I would like to work with you.')
+        ->assertScript('window.notReloaded', true)
+        ->assertNoJavaScriptErrors();
+
+    expect(Submission::count())->toBe(0);
 });
