@@ -10,7 +10,7 @@
         "filament/filament": "^5.10",
         "laravel/framework": "^13.37",
         "laravel/tinker": "^3.0",
-        "psyao/kami": "dev-main"
+        "psyao/kami": "^0.9.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -83,8 +83,7 @@
     "extra": {
         "laravel": {
             "dont-discover": []
-        },
-        "ponytail": "psyao/kami is dev-main, the lock pinning the commit, until 0.9.0 is tagged: Import is unreleased. Raise it to ^0.9 then."
+        }
     },
     "config": {
         "platform": {

@@ -1,12 +1,18 @@
 <?php
 
+use Psyao\Kami\Forms\Submission;
+
 // Contact-modal open-state baselines. Mirrors the cmdk pattern: open the modal
 // by clicking the contact CTA, confirm it actually opened (the "./contact.sh"
 // prompt only renders inside the open dialog), then capture. Run against
 // /?screenshot=1 so animations are frozen and the real font is restored.
 //
-// The Kami Form posts a full page; its confirmation and its errors come back
-// on a fresh load, where app.js opens the modal by itself (tests below).
+// resources/js/contact-form.js submits the Kami Form without a reload, through
+// its JSON answers, so the modal stays open over the errors or the
+// confirmation (tests below), each state with its baseline. Without
+// JavaScript the Form posts a full page, and app.js opens the modal by itself
+// over the result: tests/Feature/ContactFormTest.php covers that page, and the
+// `?sent=` test below its opening.
 
 it('matches the contact modal open state (FR, desktop)', function () {
     $page = visit('/?screenshot=1')
@@ -73,17 +79,68 @@ it('opens the modal by itself over the confirmation of a sent message', function
         ->assertNoJavaScriptErrors();
 });
 
-it('opens the modal by itself over the errors of a refused message', function () {
-    $page = visit('/');
+it('keeps the modal open over the errors of a refused message, without a reload', function () {
+    $page = visit('/?screenshot=1')
+        ->withTimezone('Europe/Zurich')
+        ->withLocale('fr-CH')
+        ->wait(1);
 
     $page->click('.cta')
         ->type('#subject', 'Bonjour')
         ->type('#email', 'visitor@example.com')
         ->type('#message', str_repeat('a', 3))
-        ->script("document.getElementById('email').value = 'not-an-email'; document.getElementById('email').type = 'text'");
+        ->script("window.notReloaded = true; document.getElementById('email').value = 'not-an-email'; document.getElementById('email').type = 'text'");
 
     $page->click('.cf-actions button[type=submit]')
+        ->assertSeeIn('#email-error', 'Entre une adresse email valide.')
         ->assertVisible('#contact-modal-panel')
-        ->assertSee('Entre une adresse email valide.')
+        ->assertAttribute('#email', 'aria-invalid', 'true')
+        ->assertScript('window.notReloaded', true)
+        ->assertNoJavaScriptErrors()
+        ->assertScreenshotMatches(fullPage: false);
+
+    expect(Submission::count())->toBe(0);
+});
+
+it('shows the confirmation in the open modal, without a reload', function () {
+    $page = visit('/?screenshot=1')
+        ->withTimezone('Europe/Zurich')
+        ->withLocale('fr-CH')
+        ->wait(1);
+
+    $page->click('.cta')
+        ->type('#subject', 'Bonjour')
+        ->type('#email', 'visitor@example.com')
+        ->type('#message', 'I would like to work with you.')
+        ->script('window.notReloaded = true');
+
+    $page->click('.cf-actions button[type=submit]')
+        ->assertSeeIn('#contact_form-status', 'Message envoyé. Merci — je te réponds bientôt.')
+        ->assertVisible('#contact-modal-panel')
+        ->assertMissing('#contact_form')
+        ->assertScript('window.notReloaded', true)
+        ->assertNoJavaScriptErrors()
+        ->assertScreenshotMatches(fullPage: false);
+
+    expect(Submission::sole()->data['subject'])->toBe('Bonjour');
+});
+
+it('says in the open modal that a message could not be sent, and keeps it', function () {
+    $page = visit('/');
+
+    // An origin the route cannot find answers 422 with no field errors, like a 403 or a 429.
+    $page->click('.cta')
+        ->type('#subject', 'Bonjour')
+        ->type('#email', 'visitor@example.com')
+        ->type('#message', 'I would like to work with you.')
+        ->script("window.notReloaded = true; document.querySelector('[name=_kami_origin]').value = 'unknown:fr'");
+
+    $page->click('.cf-actions button[type=submit]')
+        ->assertSeeIn('#contact_form-status', 'Le message n’est pas parti. Réessaie dans un moment.')
+        ->assertVisible('#contact_form')
+        ->assertValue('#message', 'I would like to work with you.')
+        ->assertScript('window.notReloaded', true)
         ->assertNoJavaScriptErrors();
+
+    expect(Submission::count())->toBe(0);
 });
