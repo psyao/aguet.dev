@@ -53,7 +53,7 @@ it('stores a valid message and sends the visitor back to the Home with the modal
         ->assertOk()
         ->assertSee('data-contact-autoopen', false)
         ->assertSee('Message envoyé. Merci — je te réponds bientôt.')
-        ->assertDontSee('name="subject"', false);
+        ->assertSee('id="contact_form" class="kami-form cf" aria-label="Écrire un message" hidden="hidden"', false);
 });
 
 it('answers the script with the confirmation in the page\'s Locale', function (string $locale, string $confirmation) {

@@ -10,7 +10,7 @@
      block, rendered by the Blade layout for the current locale only.
    The page is fully functional without this script (progressive enhancement). */
 
-import { initContactForm } from './contact-form';
+import { initContactForm, resetContactForm } from './contact-form';
 import { initEasterEggs } from './easter-eggs';
 
 const CFG = (() => {
@@ -347,13 +347,15 @@ const contact = {
     });
   },
 
-  // Hide only: a draft in the form is kept (ESC, backdrop, ✕).
+  // Hide: a draft in the form is kept (ESC, backdrop, ✕); a sent message gives
+  // way to a new, empty form.
   close() {
     if (!this.isOpen) return;
     this.isOpen = false;
     const tr = this.trigger;
     this.trigger = null;
     showDialog(document.getElementById('contact-modal'), false, '#cmdk', () => tr);
+    resetContactForm();
   },
 };
 
