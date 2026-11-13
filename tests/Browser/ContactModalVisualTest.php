@@ -144,3 +144,33 @@ it('says in the open modal that a message could not be sent, and keeps it', func
 
     expect(Submission::count())->toBe(0);
 });
+
+it('offers a new, empty message once the sent one is closed', function () {
+    $page = visit('/');
+
+    $page->click('.cta')
+        ->type('#subject', 'Bonjour')
+        ->type('#email', 'visitor@example.com')
+        ->type('#message', 'I would like to work with you.');
+
+    $page->click('.cf-actions button[type=submit]')
+        ->assertSeeIn('#contact_form-status', 'Message envoyé.');
+
+    $page->click('[data-cf-done]')
+        ->click('.cta')
+        ->assertVisible('#contact_form')
+        ->assertValue('#subject', '')
+        ->assertSeeNothingIn('#contact_form-status')
+        ->assertMissing('[data-cf-done]')
+        ->assertNoJavaScriptErrors();
+});
+
+it('offers a new message from the page of a message sent without JavaScript', function () {
+    visit('/?sent=contact_form')
+        ->assertSee('Message envoyé.')
+        ->click('[data-cf-done]')
+        ->click('.cta')
+        ->assertVisible('#contact_form')
+        ->assertSeeNothingIn('#contact_form-status')
+        ->assertNoJavaScriptErrors();
+});

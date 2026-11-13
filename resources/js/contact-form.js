@@ -8,7 +8,6 @@ export function initContactForm() {
   const form = document.getElementById('contact_form');
   const status = document.getElementById('contact_form-status');
   const button = form && form.querySelector('[type="submit"]');
-  // The page after `?sent=` holds no form: nothing to submit.
   if (!form || !status || !button) return;
 
   form.addEventListener('submit', async (event) => {
@@ -46,6 +45,18 @@ export function initContactForm() {
       button.disabled = false;
     }
   });
+}
+
+// Once a message is sent, closing the modal offers a new, empty one.
+export function resetContactForm() {
+  const form = document.getElementById('contact_form');
+  const status = document.getElementById('contact_form-status');
+  if (!form || !status || !form.hidden) return;
+  form.reset();
+  form.hidden = false;
+  status.textContent = '';
+  status.removeAttribute('data-contact-focus');
+  document.querySelector('[data-cf-done]').hidden = true;
 }
 
 // A 403, a 429, a server error or no network: the input stays, the status says so.
