@@ -10,19 +10,21 @@ anyone extending it. For how to *use* the panel day to day, see the
 Defined in `app/Providers/Filament/AdminPanelProvider.php`:
 
 - **id/path**: `admin`, mounted at `/admin`.
-- **Auth**: `->login()` — Filament's built-in login page, no registration. Any
-  authenticated `User` can access the panel (`User::canAccessPanel()` always returns
-  `true` — this is a single-owner app, not multi-tenant).
+- **Auth**: `->login()` and `->passwordReset()` — Filament's built-in pages, no
+  registration. A `User` can access the panel once it holds a Kami Role
+  (`User::canAccessPanel()` checks `kamiRoles()`); access inside the panel goes
+  through Kami's Permissions.
 - **Brand**: "aguet.dev", primary color `Color::Emerald`.
-- **Plugin**: `TranslatableFieldsPlugin::make()->supportedLocales(['fr' => 'Français', 'en' => 'English'])`
-  from `outerweb/filament-translatable-fields` — renders FR/EN tabs on any form field
-  marked `.translatable()`.
-- **Navigation groups**: `Contenu`, `Taxonomies`, `Système` — every resource/page
-  declares which group it belongs to.
-- **Discovery**: resources auto-discovered from `app/Filament/Resources`, pages from
-  `app/Filament/Pages`, widgets from `app/Filament/Widgets`. `Dashboard`,
-  `AccountWidget`, and `FilamentInfoWidget` are registered explicitly on top of
-  discovery (Filament's stock dashboard page and its two default widgets).
+- **Plugin**: `Psyao\Kami\Admin\KamiPlugin::make()` — Kami's whole admin: the screens
+  of every declared type (Entries, Terms, the Singleton page), Media, the Audit log and
+  the Submissions screen, among others.
+- **Avatars**: `defaultAvatarProvider(InitialsAvatarProvider::class)` draws initials
+  on the server instead of sending names to ui-avatars.com.
+- **Security headers**: `'kami.security-headers:admin'` ends the panel's middleware
+  (Kami's admin CSP, with the nonce Filament's inline scripts carry).
+- **Discovery**: resources from `app/Filament/Resources`, pages from
+  `app/Filament/Pages`, widgets from `app/Filament/Widgets`. Only the last holds
+  anything today. `Dashboard` (Filament's stock page) is registered explicitly.
 
 ## Resources
 
@@ -34,7 +36,7 @@ aguet declares no Resource of its own. The contact Form's messages are Kami's
 Submissions, listed on Kami's **Messages reçus** screen, which counts the unread ones.
 The panel runs `->strictAuthorization()`: a Resource added later needs its policy.
 
-Projects, skill groups and Tags have no Resource of aguet's own: Velox's generic Entry
+Projects, skill groups and Tags have no Resource of aguet's own: Kami's generic Entry
 Resources serve the `Project` and `SkillGroup` Content Types (Projets, Compétences, ordered
 by drag) and its Term Resource the `Tag` Taxonomy.
 
